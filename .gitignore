@@ -19,4 +19,4 @@ db/*.db-shm
 paper_trading/logs/
 
 # Node
-node_modules/
+node_modules/db/backups/
