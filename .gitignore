@@ -12,5 +12,11 @@ data/historical/*.csv
 backtest/reports/*.csv
 backtest/reports/*.png
 
+# Paper trading state
+db/*.db
+db/*.db-wal
+db/*.db-shm
+paper_trading/logs/
+
 # Node
 node_modules/
