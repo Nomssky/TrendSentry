@@ -8,6 +8,7 @@ crash gara-gara notifikasi gagal.
 import json
 import logging
 import os
+import sys
 import urllib.request
 from pathlib import Path
 
@@ -42,3 +43,14 @@ def send_alert(message: str) -> bool:
     except Exception:
         log.exception("gagal kirim alert telegram")
         return False
+
+
+def main() -> int:
+    """Mode test: kirim 1 pesan manual untuk verifikasi token & delivery."""
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
+    ok = send_alert("[paper-trading] test alert — kalau ini nyampe, alerting OK")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
