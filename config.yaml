@@ -18,7 +18,7 @@ risk:
   max_drawdown_circuit_breaker_pct: 15.0   # auto-pause kalau drawdown modal awal tembus ini
 
 backtest:
-  lookback_years: 3
+  lookback_years: 6                 # diperluas 3->6 (2020-08..2026-08) utk cakup bull-bear-bull penuh, atas instruksi user 2026-08-14
   initial_capital_usd: 1000        # nominal simulasi, bukan modal riil
   fee_pct: 0.1                     # taker fee asumsi, sesuaikan exchange
   slippage_pct: 0.05

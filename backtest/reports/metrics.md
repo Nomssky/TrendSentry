@@ -2,19 +2,19 @@
 
 | Metrik | Nilai |
 |---|---|
-| total_return_pct | 12.51 |
-| cagr_pct | 4.01 |
-| sharpe | 0.46 |
-| sortino | 0.44 |
-| max_drawdown_pct | -12.75 |
-| n_trades | 34 |
-| win_rate_pct | 38.24 |
-| avg_r_multiple | 0.41 |
-| avg_win_r | 2.59 |
-| avg_loss_r | -0.94 |
-| profit_factor | 1.59 |
-| buy_hold_return_pct | 62.83 |
-| final_equity | 1125.1 |
-| period_days | 1094 |
+| total_return_pct | 141.17 |
+| cagr_pct | 15.82 |
+| sharpe | 1.06 |
+| sortino | 0.98 |
+| max_drawdown_pct | -15.36 |
+| n_trades | 62 |
+| win_rate_pct | 41.94 |
+| avg_r_multiple | 1.95 |
+| avg_win_r | 6.05 |
+| avg_loss_r | -1.01 |
+| profit_factor | 2.71 |
+| buy_hold_return_pct | 383.72 |
+| final_equity | 2411.74 |
+| period_days | 2189 |
 
 Keterangan: eksekusi di open hari berikutnya setelah sinyal close (anti look-ahead), fee 0.1% + slippage 0.05% per transaksi.

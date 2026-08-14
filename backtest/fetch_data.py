@@ -11,14 +11,19 @@ from pathlib import Path
 
 import ccxt
 import pandas as pd
+import yaml
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("fetch_data")
 
 PAIRS = ["BTC/USDT", "ETH/USDT"]
 TIMEFRAME = "1d"
-LOOKBACK_YEARS = 3
 OUT_DIR = Path(__file__).resolve().parent.parent / "data" / "historical"
+
+
+def load_lookback_years() -> int:
+    with open(Path(__file__).resolve().parent.parent / "config.yaml") as f:
+        return int(yaml.safe_load(f)["backtest"]["lookback_years"])
 
 
 def fetch_ohlcv(exchange: ccxt.Exchange, symbol: str, timeframe: str, since_ms: int) -> pd.DataFrame:
@@ -42,7 +47,7 @@ def fetch_ohlcv(exchange: ccxt.Exchange, symbol: str, timeframe: str, since_ms: 
 def main() -> None:
     exchange = ccxt.binance({"enableRateLimit": True})
     exchange.load_markets()
-    since_ms = exchange.milliseconds() - LOOKBACK_YEARS * 365 * 24 * 3600 * 1000
+    since_ms = exchange.milliseconds() - load_lookback_years() * 365 * 24 * 3600 * 1000
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     for symbol in PAIRS:

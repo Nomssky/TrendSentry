@@ -6,7 +6,7 @@
 
 - [x] Setup `venv` + install `ccxt`, `pandas`, `vectorbt` (pandas-ta gagal install di Python 3.14 — numba lama; ATR/Donchian diimplementasikan murni pandas + unit test, lebih transparan)
 - [x] Buat `config.yaml` (pair, timeframe, Donchian period, ATR multiplier, risk %)
-- [x] Buat script fetch data historis (`backtest/fetch_data.py`) — BTC/USDT & ETH/USDT, 1D, 3 tahun, simpan ke `data/historical/`
+- [x] Buat script fetch data historis (`backtest/fetch_data.py`) — BTC/USDT & ETH/USDT, 1D, 6 tahun (2020-08..2026-08, diperluas dari 3 tahun atas instruksi user utk cakup bull-bear-bull), simpan ke `data/historical/`
 - [x] Implementasi `backtest/strategy.py`:
   - [x] Fungsi Donchian channel (highest high / lowest low N-hari, shift 1 = anti look-ahead)
   - [x] Fungsi ATR(14) (Wilder smoothing)
@@ -15,7 +15,7 @@
 - [x] Implementasi `backtest/run_backtest.py` (jalankan strategy di data historis, hitung equity curve)
 - [x] Hitung & simpan metrik ke `backtest/reports/`: win rate, avg risk-reward, max drawdown, Sharpe/Sortino, return vs buy-and-hold
 - [x] Buat unit test untuk position sizing & ATR calculation (`pytest`, 7 test pass)
-- [x] Rangkum hasil ke user — **menunggu review user: decision gate BELUM lolos (Sharpe 0.46 < 1)**
+- [x] Rangkum hasil ke user — **menunggu review user: decision gate LOLOS setelah data diperluas ke 6 tahun (Sharpe 1.06, max DD -15.4%)**
 
 ## Fase 2 — Paper Trading
 
