@@ -17,6 +17,8 @@ Sinyal identik dengan backtest (reuse backtest/strategy.py — satu source of tr
 import logging
 import sqlite3
 import sys
+import time
+import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -26,7 +28,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "backtest"))
+sys.path.insert(0, str(ROOT / "monitoring"))
 from strategy import atr, donchian_high, donchian_low, position_size  # noqa: E402
+from telegram_alert import send_alert  # noqa: E402
 
 DB_PATH = ROOT / "db" / "paper_trading.db"
 SCHEMA_PATH = ROOT / "db" / "schema.sql"
@@ -68,7 +72,7 @@ def set_cash(conn: sqlite3.Connection, cash: float) -> None:
 
 
 def log_slippage(conn: sqlite3.Connection, exchange: ccxt.Exchange, pair: str) -> None:
-    ob = exchange.fetch_order_book(pair, limit=5)
+    ob = fetch_retry(lambda: exchange.fetch_order_book(pair, limit=5))
     bid, ask = ob["bids"][0][0], ob["asks"][0][0]
     mid = (bid + ask) / 2
     spread_pct = (ask - bid) / mid * 100 if mid else 0.0
@@ -77,6 +81,24 @@ def log_slippage(conn: sqlite3.Connection, exchange: ccxt.Exchange, pair: str) -
         (datetime.now(timezone.utc).isoformat(), pair, bid, ask, mid, round(spread_pct, 4)),
     )
     conn.commit()
+
+
+def fetch_retry(fn, tries: int = 3, delay: float = 5.0):
+    """Panggil fn() dengan retry sederhana (5s, 10s) sebelum menyerah.
+
+    Hiccup jaringan sesaat tidak boleh menghasilkan "missed day" — baru dianggap
+    gagal setelah 3 percobaan, lalu exception naik ke top-level untuk alert.
+    """
+    last: Exception | None = None
+    for attempt in range(tries):
+        try:
+            return fn()
+        except Exception as e:  # noqa: BLE001 - semua error fetch ditangani sama
+            last = e
+            log.warning("fetch gagal (attempt %d/%d): %s", attempt + 1, tries, e)
+            time.sleep(delay * (attempt + 1))
+    assert last is not None
+    raise last
 
 
 def main() -> int:
@@ -90,7 +112,7 @@ def main() -> int:
     now_ms = exchange.milliseconds()
 
     for pair in strat["pairs"]:
-        ohlcv = exchange.fetch_ohlcv(pair, strat["timeframe"], limit=LOOKBACK_CANDLES)
+        ohlcv = fetch_retry(lambda: exchange.fetch_ohlcv(pair, strat["timeframe"], limit=LOOKBACK_CANDLES))
         df = pd.DataFrame(ohlcv, columns=["ts", "open", "high", "low", "close", "volume"])
         df["date"] = pd.to_datetime(df["ts"], unit="ms", utc=True).dt.date
 
@@ -127,7 +149,7 @@ def main() -> int:
         if pos:  # cek exit dulu (seperti backtest)
             p_id, p_entry, p_units, p_stop, p_risk = pos
             if close <= p_stop or close < don_lo:
-                ticker = exchange.fetch_ticker(pair)
+                ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
                 exit_price = ticker["last"] * (1 - slip)
                 proceeds = p_units * exit_price * (1 - fee - slip)
                 pnl = proceeds - p_units * p_entry
@@ -143,7 +165,7 @@ def main() -> int:
                 reason = f"close {close:.2f} <= stop {p_stop:.2f}" if close <= p_stop else f"close {close:.2f} < don_lo(10) {don_lo:.2f}"
                 log.info("%s: EXIT %s pnl=%.2f r=%.3f", pair, reason, pnl, r)
         elif close > don_hi and n_open < risk["max_concurrent_positions"]:  # entry
-            ticker = exchange.fetch_ticker(pair)
+            ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
             entry_price = ticker["last"] * (1 + slip)
             stop = close - strat["atr_stop_multiplier"] * atr_v
             units = position_size(cash, entry_price, stop, risk["risk_per_trade_pct"])
@@ -175,4 +197,12 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception:
+        log.exception("live_signal crash")
+        send_alert(
+            f"[paper-trading] live_signal.py CRASH {datetime.now(timezone.utc).isoformat()}\n"
+            + traceback.format_exc()[-1200:]
+        )
+        sys.exit(1)

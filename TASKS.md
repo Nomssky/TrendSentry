@@ -32,8 +32,11 @@
 >
 > Referensi ekspektasi = statistik backtest 6 tahun (win rate 41.9%, avg win +6.05R, avg loss -1.01R, PF 2.71, ~5 trade/pair/tahun). Perbandingan "periode yang sama" hanya valid untuk window yang overlap dengan backtest; untuk periode baru gunakan referensi di atas.
 
-- [ ] Buat `paper_trading/live_signal.py` — jalankan signal engine di data real-time (dummy execution, log only)
-- [ ] Setup scheduler (cron / APScheduler) untuk cek signal tiap candle close (harian)
+- [x] Buat `paper_trading/live_signal.py` — jalankan signal engine di data real-time (dummy execution, log only)
+- [x] Alerting failure: Telegram alert kalau script crash / fetch Binance gagal setelah retry (`monitoring/telegram_alert.py`, env dari `.env`)
+- [x] Retry fetch Binance 3x (delay 5/10s) sebelum dianggap gagal — hiccup jaringan tidak jadi "missed day"
+- [x] Backup DB harian (`db/backup_db.sh`, SQLite .backup, simpan 14 hari)
+- [ ] Setup scheduler (cron, wajib `CRON_TZ=UTC` — server local timezone WIB, kalau tidak set eksplisit cron jalan di jam yang salah)
 - [ ] Buat schema log (`db/schema.sql`) — simpan setiap signal, harga, keputusan, timestamp
 - [ ] Ukur slippage real: log bid-ask spread order book di tiap signal (bandingkan dengan asumsi 0.05%)
 - [ ] Jalankan minimal 8 minggu, kumpulkan data
