@@ -1,0 +1,16 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Secrets
+.env
+
+# Data & reports output
+data/historical/*.csv
+backtest/reports/*.csv
+backtest/reports/*.png
+
+# Node
+node_modules/

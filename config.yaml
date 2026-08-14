@@ -1,0 +1,33 @@
+# Config parameter strategi — jangan hardcode angka ini di dalam kode.
+# Perubahan parameter harus dicatat alasannya di PLAN.md sebelum dipakai.
+
+strategy:
+  pairs:
+    - "BTC/USDT"
+    - "ETH/USDT"
+  timeframe: "1d"
+  donchian_entry_period: 20        # hari, untuk breakout entry
+  donchian_exit_period: 10         # hari, untuk exit/breakout arah berlawanan
+  atr_period: 14
+  atr_stop_multiplier: 2.0         # stop loss = entry - (multiplier * ATR)
+  direction: "long_only"           # long_only | long_short
+
+risk:
+  risk_per_trade_pct: 1.0          # persen dari modal per trade
+  max_concurrent_positions: 2
+  max_drawdown_circuit_breaker_pct: 15.0   # auto-pause kalau drawdown modal awal tembus ini
+
+backtest:
+  lookback_years: 3
+  initial_capital_usd: 1000        # nominal simulasi, bukan modal riil
+  fee_pct: 0.1                     # taker fee asumsi, sesuaikan exchange
+  slippage_pct: 0.05
+
+llm_filter:
+  enabled: false                   # aktifkan di Fase 3
+  model: "deepseek-chat"
+  call_only_on_valid_signal: true  # jangan panggil tiap candle, hemat cost
+
+execution:
+  mode: "backtest"                 # backtest | paper | live
+  exchange: "binance"

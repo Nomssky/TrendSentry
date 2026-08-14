@@ -1,0 +1,180 @@
+# PLAN.md — Crypto Trend-Following Bot (Personal Use)
+
+> Status: Riset & backtest phase. Belum live trading.
+> Tujuan: Capital growth jangka panjang, modal kecil, bukan sumber income rutin.
+> Prinsip: Business first, risk-managed, no overengineering, MVP-driven.
+
+---
+
+## 0. Konteks & Prinsip Dasar
+
+- Ini **bukan** proyek untuk dijual/dikomersialkan. Pure personal use.
+- Strategi berbasis **Turtle Trading (trend-following)**, bukan LLM-prediction. LLM dipakai sebagai **filter/reasoning layer**, bukan signal generator utama.
+- Framing yang benar: capital growth project dengan variance tinggi (bisa naik bisa turun), bukan gaji/income pasti.
+- Tidak ada shortcut ke Fase live trading sebelum backtest + paper trading menunjukkan angka yang masuk akal.
+- Kalau ada dorongan untuk "gas modal gede karena udah yakin" atau nambah leverage/martingale — itu red flag, harus direm.
+
+---
+
+## 1. Strategi (Fixed untuk MVP)
+
+| Parameter | Value |
+|---|---|
+| Pair | BTC/USDT, ETH/USDT |
+| Timeframe | 1D (daily candle close) |
+| Entry signal | Donchian Channel breakout 20-hari (harga close > highest high 20 hari = long signal) |
+| Stop loss | Entry price − (2 × ATR(14)) untuk long |
+| Exit / trailing | Breakout arah berlawanan 10-hari, atau trailing stop berbasis ATR |
+| Position sizing | Risk 1% dari modal per trade → size = (1% × modal) / stop_distance |
+| Direction | Long-only dulu di MVP (short nyusul kalau sudah stabil & exchange support futures) |
+| Max concurrent position | 2 (BTC + ETH bersamaan, tidak stacking di pair yang sama) |
+
+Catatan: parameter ini **tidak boleh diutak-atik berdasarkan feeling** selama fase backtest awal. Kalau mau tuning, harus berbasis hasil backtest, dicatat alasannya, dan dites ulang.
+
+---
+
+## 2. Fase Eksekusi
+
+### Fase 1 — Backtest Engine (Target: 1-2 minggu)
+**Tujuan:** Validasi strategi secara statistik sebelum sentuh uang beneran.
+
+- [ ] Setup environment Python (`ccxt`, `pandas`, `pandas-ta` atau `ta-lib`, `vectorbt` atau `backtrader`)
+- [ ] Fetch data historis BTC/USDT & ETH/USDT harian, minimal 3 tahun (kena fase bull, bear, sideways)
+- [ ] Implementasi logic: Donchian breakout + ATR stop + position sizing
+- [ ] Jalankan backtest, catat metrik:
+  - Win rate
+  - Risk-reward ratio rata-rata
+  - Max drawdown
+  - Sharpe / Sortino ratio
+  - Total return vs buy-and-hold (benchmark wajib, biar tau strategi ini beneran nambah value atau kalah sama HODL doang)
+- [ ] **Decision gate:** kalau Sharpe < 1 atau max drawdown > 30%, strategi perlu direvisi/parameter di-tuning ulang sebelum lanjut ke Fase 2. Jangan lanjut kalau angka tidak masuk akal.
+
+**Output:** laporan backtest (bisa markdown/notebook) dengan equity curve, drawdown chart, dan tabel metrik.
+
+### Fase 2 — Paper Trading (Target: 4-8 minggu, live market)
+**Tujuan:** Validasi bahwa signal engine bekerja di kondisi real-time, bukan cuma di data historis (cek overfitting & slippage assumption).
+
+- [ ] Jalankan signal engine live tapi eksekusi **dummy/log only** (tidak eksekusi order beneran)
+- [ ] Bandingkan performa live-paper vs hasil backtest di periode yang sama
+- [ ] **Decision gate:** kalau performa live meleset jauh dari backtest (misal win rate turun drastis), investigasi dulu — kemungkinan overfitting, look-ahead bias, atau asumsi fee/slippage yang tidak realistis.
+
+### Fase 3 — LLM Filter Layer (Setelah Fase 2 lolos)
+**Tujuan:** Tambahkan reasoning layer untuk mengurangi false positive, bukan generate signal baru.
+
+- [ ] Integrasi DeepSeek API sebagai filter: dipanggil hanya saat ada signal valid dari quant engine (bukan tiap candle, hemat cost)
+- [ ] Prompt design: berikan signal + headline/berita terkini + kondisi market, minta DeepSeek identifikasi apakah ada faktor risiko yang kontradiktif (bukan "should I buy?")
+- [ ] Log semua reasoning LLM untuk evaluasi berkala apakah filter ini benar-benar menambah value (bandingkan win rate dengan-tanpa filter LLM)
+
+### Fase 4 — Live Execution (Modal kecil, bertahap)
+**Tujuan:** Live trading dengan modal riil setelah Fase 1-3 menunjukkan hasil yang konsisten.
+
+- [ ] Mulai dengan modal kecil (contoh: $50-100), bukan seluruh modal yang tersedia
+- [ ] Risk manager wajib aktif: max 1% risk per trade, hard stop loss di setiap order (bukan mental stop loss)
+- [ ] Circuit breaker: kalau drawdown menyentuh threshold tertentu (misal -15% dari modal awal), sistem auto-pause dan kirim notifikasi, tidak auto-lanjut tanpa review manual
+- [ ] Evaluasi mingguan/bulanan: bandingkan performa live vs backtest vs paper trading
+
+---
+
+## 3. Arsitektur Teknis
+
+```
+┌─────────────────┐
+│  Data Ingestion  │  ← ccxt (harga OHLCV), RSS/news API (untuk LLM filter)
+└────────┬─────────┘
+         │
+┌────────▼─────────┐
+│  Signal Engine    │  ← Python: Donchian breakout, ATR calc, position sizing
+│  (Python)         │
+└────────┬─────────┘
+         │ raw signal (BUY/SELL/HOLD + confidence)
+┌────────▼─────────┐
+│  LLM Filter Layer │  ← DeepSeek API (Fase 3+), sanity-check risiko
+└────────┬─────────┘
+         │ approved signal
+┌────────▼─────────┐
+│  Risk Manager      │  ← position sizing, max drawdown limit, SL wajib
+└────────┬─────────┘
+         │
+┌────────▼─────────┐
+│  Execution Engine  │  ← Node.js + ccxt → exchange API
+│  (Node.js, Fase 4)  │     idempotent order, retry logic
+└────────┬─────────┘
+         │
+┌────────▼─────────┐
+│  Logger + DB        │  ← PostgreSQL/SQLite: setiap trade, signal, reasoning
+└────────┬─────────┘
+         │
+┌────────▼─────────┐
+│  Monitoring         │  ← Telegram bot alert (entry/exit/circuit breaker)
+└─────────────────────┘
+```
+
+### Stack per Fase
+| Fase | Tools |
+|---|---|
+| Fase 1 (backtest) | Python, `ccxt`, `pandas`, `pandas-ta`, `vectorbt`/`backtrader`, Jupyter/script |
+| Fase 2 (paper trading) | Python (sama seperti fase 1) + scheduler (cron/APScheduler) + SQLite untuk log |
+| Fase 3 (LLM filter) | DeepSeek API, prompt template terpisah dari signal logic |
+| Fase 4 (live) | Node.js + `ccxt` (eksekusi), PostgreSQL (kalau butuh lebih robust dari SQLite), Redis (kalau perlu decouple signal→execution), Telegram Bot API (notifikasi) |
+| Deployment | VPS kecil (Contabo/DigitalOcean, ~$10-20/bulan), Docker untuk isolasi environment |
+
+---
+
+## 4. Struktur Folder (usulan)
+
+```
+crypto-trend-bot/
+├── PLAN.md
+├── CLAUDE.md                 # instruksi eksekusi untuk Claude Code (opsional, fase implementasi)
+├── data/
+│   └── historical/           # cache data OHLCV hasil fetch
+├── backtest/
+│   ├── strategy.py           # logic Donchian + ATR
+│   ├── run_backtest.py
+│   └── reports/              # output equity curve, metrik
+├── paper_trading/
+│   ├── live_signal.py
+│   └── logs/
+├── llm_filter/
+│   ├── deepseek_client.py
+│   └── prompts/
+├── execution/                 # Fase 4, Node.js
+│   ├── src/
+│   └── package.json
+├── risk_manager/
+│   └── position_sizing.py
+├── db/
+│   └── schema.sql
+└── monitoring/
+    └── telegram_bot.py
+```
+
+---
+
+## 5. Risk Rules (Non-negotiable)
+
+1. Risk per trade **maksimal 1%** dari modal — tidak boleh dinaikkan tanpa hasil backtest yang mendukung.
+2. Stop loss **wajib** di setiap order, tidak ada "mental stop loss".
+3. Tidak ada martingale / averaging down untuk menutupi loss.
+4. Tidak ada leverage tinggi di Fase 4 awal — spot atau leverage rendah (max 2x) kalau pakai futures.
+5. Circuit breaker wajib aktif sebelum live trading dengan modal riil.
+6. Setiap perubahan parameter strategi harus dicatat alasan + hasil backtest ulang, tidak berdasarkan feeling setelah beberapa trade loss/win.
+7. Evaluasi berkala (mingguan) wajib — kalau performa live jauh di bawah ekspektasi backtest 2-3 minggu berturut-turut, pause dan investigasi, jangan terus jalan berharap "membaik sendiri".
+
+---
+
+## 6. Next Immediate Action
+
+- [ ] Setup environment lokal (Python + `ccxt` + `pandas` + `vectorbt`)
+- [ ] Fetch data historis BTC/USDT & ETH/USDT (3 tahun, daily)
+- [ ] Implementasi `backtest/strategy.py` (Donchian breakout + ATR sizing)
+- [ ] Jalankan backtest pertama, bandingkan dengan buy-and-hold benchmark
+- [ ] Review hasil sebelum lanjut ke Fase 2
+
+---
+
+## 7. Catatan Jujur
+
+- Tidak ada strategi yang pasti profit. Turtle-style trend-following punya track record panjang, tapi tetap ada periode losing streak panjang yang normal secara statistik.
+- Tujuan proyek ini: sistem yang **terukur dan bisa di-debug**, bukan black-box yang "kelihatan pintar".
+- Kalau backtest menunjukkan hasil yang terlalu bagus (win rate >70%, drawdown minim) — curigai overfitting/look-ahead bias sebelum senang duluan.
