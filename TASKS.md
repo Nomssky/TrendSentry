@@ -19,17 +19,18 @@
 
 ## Fase 2 — Paper Trading
 
-> **Kriteria Sukses Fase 2 (didefinisikan 2026-08-14, sebelum run — anti moving-goalpost):**
-> Semua item di bawah harus terpenuhi sebelum Fase 2 dianggap lolos:
+> **Kriteria Sukses Fase 2 (didefinisikan 2026-08-14, sebelum run — anti moving-goalpost; diamendemen 2026-08-14: 8 minggu = minimum runtime, bukan deadline keras):**
 >
-> - [ ] **Run time:** bot jalan kontinu ≥ 8 minggu tanpa crash/restart manual (scheduler aktif, log tidak bolong)
-> - [ ] **Sample size:** ≥ 10 sinyal entry tercatat (dengan < 10, statistik tidak bermakna — perpanjang window)
-> - [ ] **Win rate:** live dalam toleransi **±15pp** dari backtest (41.9% → rentang 27-57%) selama 2 minggu berturut-turut dengan ≥ 10 trade tertutup. Di luar rentang → pause & investigasi (bukan auto-fail; harus ada penjelasan teknis/market-regime sebelum lanjut)
-> - [ ] **Avg R:** live tidak lebih rendah dari **0.5R** (backtest 1.95; deviasi -1.0R dari ekspektasi = flag). Catatan: backtest di-drive 5 trade outlier (top-5 = ~100% net pnl), jadi avg R window pendek secara natural volatile — gunakan rolling ≥ 10 trade, bukan per-trade
-> - [ ] **Slippage vs asumsi:** ukur spread order book di tiap signal. Realisasi slippage (half-spread + efek harga) rata-rata ≤ **0.10%** (= 2x asumsi 0.05% di config). Konsisten di atas itu → update asumsi di `config.yaml` + re-run backtest + catat alasan di `PLAN.md`
-> - [ ] **Logging:** semua signal tersimpan lengkap di DB (timestamp, harga, alasan, keputusan) — dievaluasi dengan skrip perbandingan, bukan manual
+> - [ ] **Durasi:** minimal 8 minggu berjalan tanpa crash/downtime signifikan. Kalau di minggu ke-8 jumlah trade tertutup < 10, run LANJUT (bukan gagal/sukses) sampai sample ≥ 10 trade, dengan checkpoint review tiap 4 minggu
+> - [ ] **Frekuensi signal:** jumlah signal live vs ekspektasi historis (~62 trade / 6 tahun / 2 pair ≈ 5 trade/pair/tahun ≈ 1 signal per 2-3 minggu per pair). Signal jauh lebih sering dari itu = curigai bug
+> - [ ] **Slippage realita:** dicatat per trade, dibandingkan asumsi backtest (0.05%). Rata-rata > 2x asumsi (0.10%) → position sizing perlu direvisi (update `config.yaml` + re-run backtest + catat alasan di `PLAN.md`)
+> - [ ] **R-multiple realized:** trade closed selama paper trading dibandingkan distribusi backtest (avg win +6.05R, avg loss -1.01R). Deviasi besar (avg R < 0.5) = investigasi, bukan otomatis gagal
+> - [ ] **Anti look-ahead di real-time:** cek log tiap signal — breakout terdeteksi tepat 1 hari setelah candle close (sama seperti backtest)
+> - [ ] **Tidak ada keputusan "strategi gagal" hanya karena flat beberapa minggu** — itu karakteristik yang sudah diverifikasi di backtest (frekuensi trade rendah, periode tanpa entry normal)
+> - [ ] **Evaluasi win rate/avg R HANYA setelah ≥ 10 trade tertutup.** Sebelum itu cukup pantau: sistem jalan tanpa crash, logging lengkap, slippage per-signal tercatat
+> - [ ] **Checkpoint:** review di minggu ke-4 (tengah) dan minggu ke-8 (final), lalu tiap 4 minggu selama window diperpanjang
 >
-> Referensi ekspektasi = statistik backtest 6 tahun (win rate 41.9%, avg win +6.05R, avg loss -1.01R, PF 2.71). Perbandingan "periode yang sama" hanya valid untuk window yang overlap dengan backtest; untuk periode baru gunakan referensi di atas.
+> Referensi ekspektasi = statistik backtest 6 tahun (win rate 41.9%, avg win +6.05R, avg loss -1.01R, PF 2.71, ~5 trade/pair/tahun). Perbandingan "periode yang sama" hanya valid untuk window yang overlap dengan backtest; untuk periode baru gunakan referensi di atas.
 
 - [ ] Buat `paper_trading/live_signal.py` — jalankan signal engine di data real-time (dummy execution, log only)
 - [ ] Setup scheduler (cron / APScheduler) untuk cek signal tiap candle close (harian)
