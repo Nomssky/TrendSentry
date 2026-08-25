@@ -19,4 +19,7 @@ db/*.db-shm
 paper_trading/logs/
 
 # Node
-node_modules/db/backups/
+node_modules/
+
+# Backup lokal (off-disk backup lewat CI commit db/paper_trading.db)
+db/backups/
