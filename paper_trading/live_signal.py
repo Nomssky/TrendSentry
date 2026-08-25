@@ -170,6 +170,11 @@ def main() -> int:
                 decision, signal = "EXIT", "LONG_EXIT"
                 reason = f"close {close:.2f} <= stop {p_stop:.2f}" if close <= p_stop else f"close {close:.2f} < don_lo(10) {don_lo:.2f}"
                 log.info("%s: EXIT %s pnl=%.2f r=%.3f", pair, reason, pnl, r)
+                send_alert(
+                    f"[paper-trading] EXIT {pair} ({d})\n"
+                    f"Harga exit: {exit_price:.2f} | PnL: {pnl:+.2f} USD ({r:+.2f}R)\n"
+                    f"Alasan: {reason}"
+                )
         elif close > don_hi and n_open < risk["max_concurrent_positions"]:  # entry
             ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
             entry_price = ticker["last"] * (1 + slip)
@@ -188,6 +193,12 @@ def main() -> int:
                 decision, signal = "ENTER", "LONG_ENTRY"
                 reason = f"close {close:.2f} > don_hi(20) {don_hi:.2f}"
                 log.info("%s: ENTER @%.2f units=%.4f stop=%.2f (risk 1% = %.2f)", pair, entry_price, units, stop, cash * risk["risk_per_trade_pct"] / 100)
+                send_alert(
+                    f"[paper-trading] ENTER {pair} ({d})\n"
+                    f"Entry: {entry_price:.2f} | Units: {units:.4f}\n"
+                    f"Stop: {stop:.2f} (2xATR) | Risk: {units * (entry_price - stop):.2f} USD\n"
+                    f"Alasan: {reason}"
+                )
 
         conn.execute(
             "INSERT INTO signals (candle_date, processed_at, pair, close_price, donchian_hi, donchian_lo, atr, signal, decision, reason) "
