@@ -36,7 +36,8 @@
 - [x] Alerting failure: Telegram alert kalau script crash / fetch Binance gagal setelah retry (`monitoring/telegram_alert.py`, env dari `.env`)
 - [x] Retry fetch Binance 3x (delay 5/10s) sebelum dianggap gagal — hiccup jaringan tidak jadi "missed day"
 - [x] Backup DB harian (`db/backup_db.sh`, SQLite .backup, simpan 14 hari)
-- [ ] Setup scheduler (cron, wajib `CRON_TZ=UTC` — server local timezone WIB, kalau tidak set eksplisit cron jalan di jam yang salah)
+- [x] Setup scheduler — **GitHub Actions** (`.github/workflows/paper-trading.yml`, cron `0 1 * * *` UTC native, trigger manual tersedia). Crontab lokal dibatalkan: laptop tidak always-on. State DB dipersistenkan via commit balik `db/paper_trading.db` ke repo tiap run = sekaligus backup off-disk harian
+- [x] Fix geo-block 451 (GitHub runner IP US diblokir api.binance.com): live signal pakai mirror `data-api.binance.vision` (data Binance sama persis, endpoint publik) + `fetchMarkets: ['spot']` (fapi futures keblokir terpisah)
 - [ ] Buat schema log (`db/schema.sql`) — simpan setiap signal, harga, keputusan, timestamp
 - [ ] Ukur slippage real: log bid-ask spread order book di tiap signal (bandingkan dengan asumsi 0.05%)
 - [ ] Jalankan minimal 8 minggu, kumpulkan data
