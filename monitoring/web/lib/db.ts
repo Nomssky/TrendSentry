@@ -54,6 +54,7 @@ export type DashboardData = {
   };
   slippage: { avgPct: number | null; maxPct: number | null; n: number };
   yieldInfo: { total: number; days: number; apyAssumed: number };
+  yieldDaily: { date: string; amount: number }[];
   equityCurve: EquityPoint[];
   priceFetchOk: boolean;
 };
@@ -79,6 +80,9 @@ function readDb(): Omit<DashboardData, "equityCurve" | "priceFetchOk" | "daysRun
   const yld = db
     .prepare("SELECT COALESCE(SUM(amount), 0) total, COUNT(*) days FROM yield_log")
     .get() as { total: number; days: number };
+  const yieldDaily = db
+    .prepare("SELECT date, amount FROM yield_log ORDER BY date")
+    .all() as { date: string; amount: number }[];
   db.close();
 
   // APY dari config.yaml (single source of truth) — parse sederhana, tanpa dependency yaml
@@ -137,6 +141,7 @@ function readDb(): Omit<DashboardData, "equityCurve" | "priceFetchOk" | "daysRun
     },
     slippage: { avgPct: slip.avgPct, maxPct: slip.maxPct, n: slip.n },
     yieldInfo: { total: yld.total, days: yld.days, apyAssumed },
+    yieldDaily,
   };
 }
 
@@ -174,6 +179,8 @@ async function buildEquityCurve(data: ReturnType<typeof readDb>): Promise<{ curv
   const curve: EquityPoint[] = [];
   let cash = 1000;
   let evIdx = 0;
+  let yieldCum = 0;
+  const yieldByDate = new Map(data.yieldDaily.map((y) => [y.date, y.amount]));
   let cur = new Date(data.startDate + "T00:00:00Z");
   const today = new Date();
   while (cur <= today) {
@@ -182,13 +189,16 @@ async function buildEquityCurve(data: ReturnType<typeof readDb>): Promise<{ curv
       cash += events[evIdx].cash;
       evIdx++;
     }
+    // yield harian di cash idle masuk ke equity (konsisten dgn kartu Modal & yield)
+    const y = yieldByDate.get(d);
+    if (y) yieldCum += y;
     let mtm = 0;
     if (ok) {
       for (const p of data.openPositions) {
         if (p.entry_date <= d) mtm += p.units * (closesByPair[p.pair]?.get(d) ?? p.entry_price);
       }
     }
-    curve.push({ date: d, equity: Math.round((cash + mtm) * 100) / 100 });
+    curve.push({ date: d, equity: Math.round((cash + mtm + yieldCum) * 100) / 100 });
     cur = new Date(cur.getTime() + 86_400_000);
   }
   return { curve, ok };

@@ -46,9 +46,9 @@ export default async function Home() {
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
       {/* Header */}
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+      <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
             Trend<span className="text-emerald-400">Sentry</span>
             <span className="ml-2 text-sm font-normal text-neutral-400">Paper Trading Monitor</span>
           </h1>
@@ -58,7 +58,7 @@ export default async function Home() {
             {d.startDate} (hari ke-{d.daysRunning})
           </p>
         </div>
-        <div className="text-right text-xs text-neutral-500">
+        <div className="text-xs text-neutral-500 sm:text-right">
           <div>
             Last run: <span className="font-mono text-neutral-300">{lastRunDate}</span>
           </div>

@@ -11,9 +11,20 @@ type OpenPos = { pair: string; units: number; entry_price: number; stop_price: n
 type PriceMap = Record<string, { price: number; changePct: number | null }>;
 type Mode = "connecting" | "live" | "delayed" | "offline";
 
-const PAIRS = ["BTC/USDT", "ETH/USDT"];
+const PAIRS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT"];
+const SYMBOL_TO_PAIR: Record<string, string> = {
+  BTCUSDT: "BTC/USDT",
+  ETHUSDT: "ETH/USDT",
+  SOLUSDT: "SOL/USDT",
+  BNBUSDT: "BNB/USDT",
+  XRPUSDT: "XRP/USDT",
+};
+const BINANCE_WS =
+  "wss://stream.binance.com:9443/stream?streams=" +
+  PAIRS.map((p) => p.replace("/", "").toLowerCase() + "@miniTicker").join("/");
 const REST_URL =
-  'https://data-api.binance.vision/api/v3/ticker/24hr?symbols=%5B"BTCUSDT","ETHUSDT"%5D';
+  "https://data-api.binance.vision/api/v3/ticker/24hr?symbols=" +
+  encodeURIComponent(JSON.stringify(PAIRS.map((p) => p.replace("/", ""))));
 
 function applyPrice(setPrices: React.Dispatch<React.SetStateAction<PriceMap>>, pair: string, price: number, open24: number | null) {
   const changePct = open24 && open24 > 0 ? ((price - open24) / open24) * 100 : null;
@@ -60,7 +71,7 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
           if (!res.ok) throw new Error(String(res.status));
           const rows = (await res.json()) as { symbol: string; lastPrice: string; openPrice: string }[];
           for (const r of rows) {
-            const pair = r.symbol === "BTCUSDT" ? "BTC/USDT" : r.symbol === "ETHUSDT" ? "ETH/USDT" : null;
+            const pair = SYMBOL_TO_PAIR[r.symbol];
             if (pair) applyPrice(setPrices, pair, Number(r.lastPrice), Number(r.openPrice));
           }
           if (!closed) setModeSafe("delayed");
@@ -95,7 +106,7 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
         if (wsOpenTimer) clearTimeout(wsOpenTimer);
         setModeSafe("live");
         if (url.includes("bitget")) {
-          // subscribe ticker spot Bitget v2
+          // subscribe ticker spot Bitget v2 (semua pair)
           ws?.send(JSON.stringify({
             op: "subscribe",
             args: PAIRS.map((p) => ({ instType: "SPOT", channel: "ticker", instId: p.replace("/", "") })),
@@ -121,10 +132,10 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
 
     const onBinanceFrame = (raw: string) => {
       try {
-        const msg = JSON.parse(raw) as { stream?: string; data?: { s: string; c: string; o: string } };
+        const msg = JSON.parse(raw) as { data?: { s: string; c: string; o: string } };
         const d = msg.data;
         if (!d) return;
-        const pair = d.s === "BTCUSDT" ? "BTC/USDT" : d.s === "ETHUSDT" ? "ETH/USDT" : null;
+        const pair = SYMBOL_TO_PAIR[d.s];
         if (pair) applyPrice(setPrices, pair, Number(d.c), Number(d.o));
       } catch { /* ignore */ }
     };
@@ -135,7 +146,7 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
         const instId = msg.arg?.instId;
         const d = msg.data?.[0];
         if (!instId || !d?.lastPr) return;
-        const pair = instId === "BTCUSDT" ? "BTC/USDT" : instId === "ETHUSDT" ? "ETH/USDT" : null;
+        const pair = SYMBOL_TO_PAIR[instId];
         if (pair) applyPrice(setPrices, pair, Number(d.lastPr), d.open24h ? Number(d.open24h) : null);
       } catch { /* ignore */ }
     };
@@ -175,29 +186,31 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
   return (
     <section className="space-y-4">
       {/* Live ticker */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="space-y-3">
         <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${badge.cls}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
           {badge.text}
         </span>
-        {PAIRS.map((pair) => {
-          const p = prices[pair];
-          const up = (p?.changePct ?? 0) >= 0;
-          return (
-            <div key={pair} className="rounded-xl border border-neutral-800 bg-neutral-900/60 px-4 py-2">
-              <div className="text-xs text-neutral-400">{pair}</div>
-              <div className="font-mono text-lg">
-                {p ? `$${p.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
-                {p?.changePct != null && (
-                  <span className={`ml-2 text-sm ${up ? "text-emerald-400" : "text-rose-400"}`}>
-                    {up ? "+" : ""}
-                    {p.changePct.toFixed(2)}%
-                  </span>
-                )}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:grid-cols-5">
+          {PAIRS.map((pair) => {
+            const p = prices[pair];
+            const up = (p?.changePct ?? 0) >= 0;
+            return (
+              <div key={pair} className="rounded-xl border border-neutral-800 bg-neutral-900/60 px-3 py-2 sm:px-4">
+                <div className="text-xs text-neutral-400">{pair}</div>
+                <div className="font-mono text-base sm:text-lg">
+                  {p ? `$${p.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                  {p?.changePct != null && (
+                    <span className={`ml-1.5 text-xs sm:ml-2 sm:text-sm ${up ? "text-emerald-400" : "text-rose-400"}`}>
+                      {up ? "+" : ""}
+                      {p.changePct.toFixed(2)}%
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* Open positions + unrealized PnL realtime */}
