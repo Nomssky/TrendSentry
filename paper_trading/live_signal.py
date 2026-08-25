@@ -192,7 +192,7 @@ def main() -> int:
                 cash -= cost
                 decision, signal = "ENTER", "LONG_ENTRY"
                 reason = f"close {close:.2f} > don_hi(20) {don_hi:.2f}"
-                log.info("%s: ENTER @%.2f units=%.4f stop=%.2f (risk 1% = %.2f)", pair, entry_price, units, stop, cash * risk["risk_per_trade_pct"] / 100)
+                log.info("%s: ENTER @%.2f units=%.4f stop=%.2f (risk 1%% = %.2f)", pair, entry_price, units, stop, cash * risk["risk_per_trade_pct"] / 100)
                 send_alert(
                     f"[paper-trading] ENTER {pair} ({d})\n"
                     f"Entry: {entry_price:.2f} | Units: {units:.4f}\n"
