@@ -33,7 +33,7 @@
 > Referensi ekspektasi = statistik backtest 6 tahun (win rate 41.9%, avg win +6.05R, avg loss -1.01R, PF 2.71, ~5 trade/pair/tahun). Perbandingan "periode yang sama" hanya valid untuk window yang overlap dengan backtest; untuk periode baru gunakan referensi di atas.
 
 - [x] Buat `paper_trading/live_signal.py` — jalankan signal engine di data real-time (dummy execution, log only)
-- [x] Alerting failure: Telegram alert kalau script crash / fetch Binance gagal setelah retry (`monitoring/telegram_alert.py`, env dari `.env`)
+- [x] Alerting: Telegram — crash/fetch gagal (setelah retry) **+ ENTER/EXIT** (dimajukan dari Fase 4; `monitoring/telegram_alert.py`, secrets di repo GitHub). HOLD tidak dinotifikasi (anti-spam harian)
 - [x] Retry fetch Binance 3x (delay 5/10s) sebelum dianggap gagal — hiccup jaringan tidak jadi "missed day"
 - [x] Backup DB harian (`db/backup_db.sh`, SQLite .backup, simpan 14 hari)
 - [x] Setup scheduler — **GitHub Actions** (`.github/workflows/paper-trading.yml`, cron `0 1 * * *` UTC native, trigger manual tersedia). Crontab lokal dibatalkan: laptop tidak always-on. State DB dipersistenkan via commit balik `db/paper_trading.db` ke repo tiap run = sekaligus backup off-disk harian
