@@ -246,8 +246,8 @@ export default async function Home() {
       </Card>
 
       <footer className="pb-4 text-center text-xs text-neutral-600">
-        Data strategi di-bake saat build dari DB yang di-commit bot harian · harga realtime via Binance public
-        WebSocket ·{" "}
+        Data strategi di-bake saat build dari DB yang di-commit bot harian (data: Bitget) · harga realtime: WebSocket
+        Binance → Bitget → REST polling (otomatis fallback) ·{" "}
         <a href="https://github.com/Nomssky/TrendSentry" className="underline hover:text-neutral-400">
           github.com/Nomssky/TrendSentry
         </a>
