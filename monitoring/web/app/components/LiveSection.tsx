@@ -1,87 +1,193 @@
 "use client";
 
-// Komponen live: harga BTC/ETH realtime via Binance public WebSocket (client-side,
-// tanpa backend) + unrealized PnL posisi open yang ngetik seiring harga.
-// Kalau WebSocket gagal (jaringan blokir), fallback tampil pesan + harga terakhir dari build.
+// Harga realtime dengan rantai fallback (jaringan user bisa memblokir WS tertentu):
+// 1. WebSocket Binance (paling likuid)  2. WebSocket Bitget (venue konsisten)
+// 3. REST polling data-api.binance.vision tiap 10 detik (mode "delayed", terbukti
+//    accessible bahkan dari jaringan yang memblokir domain Binance/Bitget utama).
 
 import { useEffect, useRef, useState } from "react";
 
 type OpenPos = { pair: string; units: number; entry_price: number; stop_price: number };
 type PriceMap = Record<string, { price: number; changePct: number | null }>;
+type Mode = "connecting" | "live" | "delayed" | "offline";
 
-const WS_URL = "wss://stream.binance.com:9443/stream?streams=btcusdt@miniTicker/ethusdt@miniTicker";
-const STREAM_TO_PAIR: Record<string, string> = { BTCUSDT: "BTC/USDT", ETHUSDT: "ETH/USDT" };
+const PAIRS = ["BTC/USDT", "ETH/USDT"];
+const REST_URL =
+  'https://data-api.binance.vision/api/v3/ticker/24hr?symbols=%5B"BTCUSDT","ETHUSDT"%5D';
 
-function fmtUsd(n: number, digits = 2) {
-  return n.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+function applyPrice(setPrices: React.Dispatch<React.SetStateAction<PriceMap>>, pair: string, price: number, open24: number | null) {
+  const changePct = open24 && open24 > 0 ? ((price - open24) / open24) * 100 : null;
+  setPrices((prev) => ({ ...prev, [pair]: { price, changePct } }));
 }
 
 export default function LiveSection({ openPositions, fallbackPrices }: { openPositions: OpenPos[]; fallbackPrices: PriceMap }) {
   const [prices, setPrices] = useState<PriceMap>(fallbackPrices);
-  const [live, setLive] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
+  const [mode, setMode] = useState<Mode>("connecting");
+  const modeRef = useRef<Mode>("connecting");
 
   useEffect(() => {
     let closed = false;
-    let retry: ReturnType<typeof setTimeout> | undefined;
-    const connect = () => {
-      if (closed) return;
-      try {
-        const ws = new WebSocket(WS_URL);
-        wsRef.current = ws;
-        ws.onopen = () => setLive(true);
-        ws.onmessage = (ev) => {
-          try {
-            const msg = JSON.parse(ev.data as string) as { data?: { s: string; c: string; o: string } };
-            const d = msg.data;
-            const pair = d && STREAM_TO_PAIR[d.s];
-            if (!d || !pair) return;
-            const price = Number(d.c);
-            const changePct = Number(d.o) > 0 ? ((price - Number(d.o)) / Number(d.o)) * 100 : null;
-            setPrices((prev) => ({ ...prev, [pair]: { price, changePct } }));
-          } catch {
-            /* ignore malformed frame */
-          }
-        };
-        ws.onclose = () => {
-          setLive(false);
-          if (!closed) retry = setTimeout(connect, 5000); // auto-reconnect
-        };
-        ws.onerror = () => ws.close();
-      } catch {
-        setLive(false);
+    let ws: WebSocket | null = null;
+    let wsOpenTimer: ReturnType<typeof setTimeout> | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+    const setModeSafe = (m: Mode) => {
+      modeRef.current = m;
+      if (!closed) setMode(m);
+    };
+
+    const stopAll = () => {
+      if (wsOpenTimer) clearTimeout(wsOpenTimer);
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = null;
+      if (ws) {
+        ws.onclose = null;
+        ws.onerror = null;
+        ws.onmessage = null;
+        try { ws.close(); } catch { /* noop */ }
+        ws = null;
       }
     };
-    connect();
+
+    // Sumber 3: REST polling (paling tahan blokir)
+    const startPolling = () => {
+      if (closed || pollTimer) return;
+      setModeSafe("delayed");
+      const poll = async () => {
+        try {
+          const res = await fetch(REST_URL, { cache: "no-store" });
+          if (!res.ok) throw new Error(String(res.status));
+          const rows = (await res.json()) as { symbol: string; lastPrice: string; openPrice: string }[];
+          for (const r of rows) {
+            const pair = r.symbol === "BTCUSDT" ? "BTC/USDT" : r.symbol === "ETHUSDT" ? "ETH/USDT" : null;
+            if (pair) applyPrice(setPrices, pair, Number(r.lastPrice), Number(r.openPrice));
+          }
+          if (!closed) setModeSafe("delayed");
+        } catch {
+          if (!closed) setModeSafe("offline");
+        }
+      };
+      void poll();
+      pollTimer = setInterval(poll, 10_000);
+    };
+
+    // Sumber 1 & 2: WebSocket dengan timeout — kalau tidak open dalam 6 detik, lanjut sumber berikutnya
+    const tryWebSocket = (url: string, onFrame: (raw: string) => void, next: () => void) => {
+      if (closed) return;
+      let opened = false;
+      try {
+        ws = new WebSocket(url);
+      } catch {
+        next();
+        return;
+      }
+      wsOpenTimer = setTimeout(() => {
+        if (!opened && ws) {
+          ws.onclose = null;
+          try { ws.close(); } catch { /* noop */ }
+          ws = null;
+          next();
+        }
+      }, 6000);
+      ws.onopen = () => {
+        opened = true;
+        if (wsOpenTimer) clearTimeout(wsOpenTimer);
+        setModeSafe("live");
+        if (url.includes("bitget")) {
+          // subscribe ticker spot Bitget v2
+          ws?.send(JSON.stringify({
+            op: "subscribe",
+            args: PAIRS.map((p) => ({ instType: "SPOT", channel: "ticker", instId: p.replace("/", "") })),
+          }));
+        }
+      };
+      ws.onmessage = (ev) => onFrame(String(ev.data));
+      ws.onclose = () => {
+        if (closed) return;
+        if (modeRef.current === "live") {
+          // koneksi terputus di tengah jalan -> coba seluruh rantai lagi
+          retryTimer = setTimeout(start, 5000);
+        } else {
+          next();
+        }
+      };
+      ws.onerror = () => {
+        if (!opened) {
+          ws?.close();
+        }
+      };
+    };
+
+    const onBinanceFrame = (raw: string) => {
+      try {
+        const msg = JSON.parse(raw) as { stream?: string; data?: { s: string; c: string; o: string } };
+        const d = msg.data;
+        if (!d) return;
+        const pair = d.s === "BTCUSDT" ? "BTC/USDT" : d.s === "ETHUSDT" ? "ETH/USDT" : null;
+        if (pair) applyPrice(setPrices, pair, Number(d.c), Number(d.o));
+      } catch { /* ignore */ }
+    };
+
+    const onBitgetFrame = (raw: string) => {
+      try {
+        const msg = JSON.parse(raw) as { arg?: { instId?: string }; data?: { lastPr?: string; open24h?: string }[] };
+        const instId = msg.arg?.instId;
+        const d = msg.data?.[0];
+        if (!instId || !d?.lastPr) return;
+        const pair = instId === "BTCUSDT" ? "BTC/USDT" : instId === "ETHUSDT" ? "ETH/USDT" : null;
+        if (pair) applyPrice(setPrices, pair, Number(d.lastPr), d.open24h ? Number(d.open24h) : null);
+      } catch { /* ignore */ }
+    };
+
+    const start = () => {
+      stopAll();
+      if (closed) return;
+      setModeSafe("connecting");
+      tryWebSocket(
+        "wss://stream.binance.com:9443/stream?streams=btcusdt@miniTicker/ethusdt@miniTicker",
+        onBinanceFrame,
+        () => tryWebSocket(
+          "wss://stream.bitget.com/v2/ws/public",
+          onBitgetFrame,
+          startPolling,
+        ),
+      );
+    };
+
+    start();
     return () => {
       closed = true;
-      if (retry) clearTimeout(retry);
-      wsRef.current?.close();
+      stopAll();
+      if (retryTimer) clearTimeout(retryTimer);
     };
   }, []);
 
-  const pairs = ["BTC/USDT", "ETH/USDT"];
+  const badge =
+    mode === "live"
+      ? { cls: "bg-emerald-500/10 text-emerald-400", dot: "animate-pulse bg-emerald-400", text: "LIVE" }
+      : mode === "delayed"
+        ? { cls: "bg-amber-500/10 text-amber-400", dot: "bg-amber-400", text: "DELAYED (poll 10s)" }
+        : mode === "offline"
+          ? { cls: "bg-rose-500/10 text-rose-400", dot: "bg-rose-400", text: "OFFLINE" }
+          : { cls: "bg-neutral-800 text-neutral-400", dot: "bg-neutral-500", text: "menghubungkan..." };
 
   return (
     <section className="space-y-4">
       {/* Live ticker */}
       <div className="flex flex-wrap items-center gap-3">
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
-            live ? "bg-emerald-500/10 text-emerald-400" : "bg-neutral-800 text-neutral-400"
-          }`}
-        >
-          <span className={`h-1.5 w-1.5 rounded-full ${live ? "animate-pulse bg-emerald-400" : "bg-neutral-500"}`} />
-          {live ? "LIVE" : "menghubungkan..."}
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${badge.cls}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
+          {badge.text}
         </span>
-        {pairs.map((pair) => {
+        {PAIRS.map((pair) => {
           const p = prices[pair];
           const up = (p?.changePct ?? 0) >= 0;
           return (
             <div key={pair} className="rounded-xl border border-neutral-800 bg-neutral-900/60 px-4 py-2">
               <div className="text-xs text-neutral-400">{pair}</div>
               <div className="font-mono text-lg">
-                {p ? `$${fmtUsd(p.price)}` : "—"}
+                {p ? `$${p.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
                 {p?.changePct != null && (
                   <span className={`ml-2 text-sm ${up ? "text-emerald-400" : "text-rose-400"}`}>
                     {up ? "+" : ""}
@@ -98,7 +204,7 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
       {openPositions.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-neutral-800 bg-neutral-900/40 p-6 text-sm text-neutral-400">
           Tidak ada posisi open — bot menunggu breakout 20 hari. Normal untuk strategi ini
-          (~1 sinyal per 2-3 minggu per pair), bukan sistem mati.
+          (ekspektasi ~1 sinyal per 15 hari lintas 5 pair), bukan sistem mati.
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -115,15 +221,15 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                   <span className="text-neutral-400">Entry</span>
-                  <span className="text-right font-mono">{fmtUsd(pos.entry_price)}</span>
+                  <span className="text-right font-mono">{pos.entry_price.toLocaleString("en-US")}</span>
                   <span className="text-neutral-400">Stop (2xATR)</span>
-                  <span className="text-right font-mono text-rose-400">{fmtUsd(pos.stop_price)}</span>
+                  <span className="text-right font-mono text-rose-400">{pos.stop_price.toLocaleString("en-US")}</span>
                   <span className="text-neutral-400">Units</span>
                   <span className="text-right font-mono">{pos.units.toFixed(4)}</span>
                   <span className="text-neutral-400">Unrealized PnL</span>
                   <span className={`text-right font-mono text-lg ${up ? "text-emerald-400" : "text-rose-400"}`}>
                     {up ? "+" : ""}
-                    {fmtUsd(unreal)} USD
+                    {unreal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                   </span>
                 </div>
               </div>

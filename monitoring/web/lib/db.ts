@@ -1,6 +1,7 @@
 // Build-time data layer: baca db/paper_trading.db (SQLite, di-commit bot CI tiap hari)
 // dan hitung semua metrik dashboard. Jalan SAAT BUILD (static export), bukan runtime.
 import Database from "better-sqlite3";
+import { readFileSync } from "fs";
 import path from "path";
 
 export type Position = {
@@ -42,6 +43,7 @@ export type DashboardData = {
   closedTrades: Position[];
   recentSignals: Signal[];
   nSignals: number;
+  pairs: string[];
   realized: {
     nClosed: number;
     wins: number;
@@ -51,6 +53,7 @@ export type DashboardData = {
     avgLossR: number | null;
   };
   slippage: { avgPct: number | null; maxPct: number | null; n: number };
+  yieldInfo: { total: number; days: number; apyAssumed: number };
   equityCurve: EquityPoint[];
   priceFetchOk: boolean;
 };
@@ -73,7 +76,20 @@ function readDb(): Omit<DashboardData, "equityCurve" | "priceFetchOk" | "daysRun
   const slip = db
     .prepare("SELECT AVG(spread_pct) avgPct, MAX(spread_pct) maxPct, COUNT(*) n FROM slippage_log")
     .get() as { avgPct: number | null; maxPct: number | null; n: number };
+  const yld = db
+    .prepare("SELECT COALESCE(SUM(amount), 0) total, COUNT(*) days FROM yield_log")
+    .get() as { total: number; days: number };
   db.close();
+
+  // APY dari config.yaml (single source of truth) — parse sederhana, tanpa dependency yaml
+  let apyAssumed = 0;
+  try {
+    const cfg = readFileSync(path.join(process.cwd(), "..", "..", "config.yaml"), "utf8");
+    const m = cfg.match(/yield_apy_idle_cash:\s*([\d.]+)/);
+    if (m) apyAssumed = Number(m[1]);
+  } catch {
+    /* config tidak tersedia -> 0 */
+  }
 
   const dates = [...new Set(signals.map((s) => s.candle_date))].sort();
   const startDate = dates[0] ?? new Date().toISOString().slice(0, 10);
@@ -110,6 +126,7 @@ function readDb(): Omit<DashboardData, "equityCurve" | "priceFetchOk" | "daysRun
     closedTrades,
     recentSignals: signals.slice(0, 30),
     nSignals: signals.length,
+    pairs: [...new Set(signals.map((s) => s.pair))].sort(),
     realized: {
       nClosed: closedTrades.length,
       wins: wins.length,
@@ -119,6 +136,7 @@ function readDb(): Omit<DashboardData, "equityCurve" | "priceFetchOk" | "daysRun
       avgLossR: avg(lossRs),
     },
     slippage: { avgPct: slip.avgPct, maxPct: slip.maxPct, n: slip.n },
+    yieldInfo: { total: yld.total, days: yld.days, apyAssumed },
   };
 }
 

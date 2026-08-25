@@ -53,7 +53,9 @@ export default async function Home() {
             <span className="ml-2 text-sm font-normal text-neutral-400">Paper Trading Monitor</span>
           </h1>
           <p className="mt-1 text-xs text-neutral-500">
-            Donchian 20/10 + ATR(14)x2 · long-only · risk 1% · mulai {d.startDate} (hari ke-{d.daysRunning})
+            Donchian 20/10 + ATR(14)x2 · long-only · risk 1% · {d.pairs.length} pair:{" "}
+            <span className="font-mono">{d.pairs.join(" ")}</span> · yield idle {d.yieldInfo.apyAssumed}% APY · mulai{" "}
+            {d.startDate} (hari ke-{d.daysRunning})
           </p>
         </div>
         <div className="text-right text-xs text-neutral-500">
@@ -92,7 +94,18 @@ export default async function Home() {
       )}
 
       {/* Kriteria sukses Fase 2 */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card title="Modal & yield idle">
+          <div className="flex items-baseline gap-2">
+            <span className="font-mono text-2xl">${fmtUsd(d.cash)}</span>
+            {d.yieldInfo.total > 0 && <Badge tone="ok">+{fmtUsd(d.yieldInfo.total)} yield</Badge>}
+          </div>
+          <p className="mt-2 text-xs text-neutral-500">
+            Modal awal $1000 · yield {d.yieldInfo.apyAssumed}% APY di cash idle ({d.yieldInfo.days} hari kredit,
+            simulasi earn/DeFi — risiko platform tidak dimodelkan).
+          </p>
+        </Card>
+
         <Card title="Win rate vs backtest">
           <div className="flex items-baseline gap-2">
             <span className="font-mono text-2xl">
