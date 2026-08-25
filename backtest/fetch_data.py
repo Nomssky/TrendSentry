@@ -16,7 +16,14 @@ import yaml
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("fetch_data")
 
-PAIRS = ["BTC/USDT", "ETH/USDT"]
+PAIRS = [
+    "BTC/USDT",
+    "ETH/USDT",
+    # Pair riset capital efficiency (2026-08-25) — backtest saja, bukan pair paper trading
+    "SOL/USDT",
+    "BNB/USDT",
+    "XRP/USDT",
+]
 TIMEFRAME = "1d"
 OUT_DIR = Path(__file__).resolve().parent.parent / "data" / "historical"
 
@@ -45,7 +52,13 @@ def fetch_ohlcv(exchange: ccxt.Exchange, symbol: str, timeframe: str, since_ms: 
 
 
 def main() -> None:
-    exchange = ccxt.binance({"enableRateLimit": True})
+    # Spot-only + mirror market-data-only: api.binance.com keblokir dari beberapa jaringan
+    # (ISP/GitHub runner US). Data identik, endpoint publik.
+    exchange = ccxt.binance({
+        "enableRateLimit": True,
+        "options": {"fetchMarkets": ["spot"]},
+    })
+    exchange.urls["api"]["public"] = "https://data-api.binance.vision/api/v3"
     exchange.load_markets()
     since_ms = exchange.milliseconds() - load_lookback_years() * 365 * 24 * 3600 * 1000
     OUT_DIR.mkdir(parents=True, exist_ok=True)

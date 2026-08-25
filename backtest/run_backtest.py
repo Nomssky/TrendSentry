@@ -122,8 +122,12 @@ def run_backtest(dfs: dict[str, pd.DataFrame], cfg: dict) -> tuple[pd.DataFrame,
             p["units"] * dfs[symbol]["close"].iloc[dfs[symbol].index.get_loc(d)]
             for symbol, p in pos.items()
         )
+        deployed = sum(
+            p["units"] * dfs[symbol]["close"].iloc[dfs[symbol].index.get_loc(d)]
+            for symbol, p in pos.items()
+        )
         equity = mtm
-        curve.append({"date": d, "equity": round(equity, 2)})
+        curve.append({"date": d, "equity": round(equity, 2), "deployed_usd": round(deployed, 2)})
 
     return pd.DataFrame(curve).set_index("date"), pd.DataFrame(trades)
 
