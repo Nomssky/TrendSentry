@@ -1,0 +1,45 @@
+# Paper trading scheduler (Fase 2) — pengganti cron lokal (laptop tidak always-on).
+# Jalankan live_signal.py sekali sehari SETELAH candle 1d close (00:00 UTC), cron GitHub Actions = UTC native.
+# State (SQLite) dipersistenkan dengan commit balik db/paper_trading.db ke repo = sekaligus backup off-disk harian.
+name: paper-trading
+
+on:
+  schedule:
+    - cron: "0 1 * * *"
+  workflow_dispatch: # trigger manual buat tes
+
+permissions:
+  contents: write
+
+concurrency:
+  group: paper-trading
+  cancel-in-progress: false
+
+jobs:
+  signal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps (minimal — live_signal butuh ccxt, pandas, pyyaml saja)
+        run: pip install ccxt pandas pyyaml
+
+      - name: Run signal engine
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python paper_trading/live_signal.py
+
+      - name: Commit DB state (persistensi antar-run + backup harian)
+        run: |
+          git config user.name "trendsentry-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git pull --rebase origin main
+          git add -f db/paper_trading.db
+          git diff --cached --quiet || git commit -m "[paper-trading] update DB state $(date -u +%F)"
+          git push
