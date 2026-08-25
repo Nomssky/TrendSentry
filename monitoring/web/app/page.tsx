@@ -63,14 +63,9 @@ export default async function Home() {
             <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">
               Mulai {d.startDate} · hari ke-{d.daysRunning}
             </span>
-          </div>
-        </div>
-        <div className="text-xs text-neutral-500 sm:text-right">
-          <div>
-            Last run: <span className="font-mono text-neutral-300">{lastRunDate}</span>
-          </div>
-          <div>
-            Data strategi refresh harian 08:00 WIB · harga &amp; PnL realtime via browser
+            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-400">
+              Last run {lastRunDate}
+            </span>
           </div>
         </div>
       </header>
@@ -253,8 +248,8 @@ export default async function Home() {
       </Card>
 
       <footer className="pb-4 text-center text-xs text-neutral-600">
-        Data strategi di-bake saat build dari DB yang di-commit bot harian (data: Bitget) · harga realtime: WebSocket
-        Binance → Bitget → REST polling (otomatis fallback) ·{" "}
+        Data strategi di-bake saat build dari DB yang di-commit bot harian jam 08:00 WIB (data: Bitget) · harga
+        realtime di browser: WS Binance → Bitget → REST polling (otomatis fallback) ·{" "}
         <a href="https://github.com/Nomssky/TrendSentry" className="underline hover:text-neutral-400">
           github.com/Nomssky/TrendSentry
         </a>
