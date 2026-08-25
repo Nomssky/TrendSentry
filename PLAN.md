@@ -180,3 +180,12 @@ crypto-trend-bot/
 - Kalau backtest menunjukkan hasil yang terlalu bagus (win rate >70%, drawdown minim) — curigai overfitting/look-ahead bias sebelum senang duluan.
 - **Concentration of returns (dictatat 2026-08-14, hasil backtest 6 tahun):** top-5 trade = ~100% dari net pnl; trade #1 (BTC Okt 2020→Mar 2021) = 45% dari total. Ini normal untuk trend-following (distribusi fat-tailed, sedikit winner gede yang carry semua), tapi konsekuensinya: Sharpe 1.06 dari 62 trade punya confidence interval lebar (real-nya bisa 0.6-1.5), dan kalau supertrend seperti 2020-21 tidak terjadi di masa depan, performa bisa jauh lebih flat. Jangan overconfident dari angka Sharpe — edge-nya terletak pada potong loss cepat + biarkan winner jalan, bukan pada presisi metrik.
 - **Starting-drawdown context (dictatat 2026-08-14):** paper trading dimulai Aug 2026, kondisi market saat start tidak diketahui di depan. Kalau beberapa minggu pertama flat/loss, itu bisa jadi normal (frekuensi trade rendah, periode tanpa entry lama, atau sedang downtrend). Jangan menilai strategi dari window awal — ikuti kriteria sukses Fase 2 di `TASKS.md`, evaluasi hanya setelah ≥10 trade tertutup. Sebaliknya, kalau profit besar di awal — itu juga belum membuktikan apa-apa secara statistik.
+
+---
+
+## 8. Web Monitoring Dashboard (tambahan 2026-08-25, request eksplisit user)
+
+- **Status:** tambahan di luar scope PLAN awal — diminta user untuk monitoring visual. Murni read-only, TIDAK menyentuh signal engine.
+- **Stack:** Next.js 16 static export + Tailwind + Recharts, di `monitoring/web/`, deploy ke Vercel Hobby (gratis).
+- **Data flow:** bot CI commit `db/paper_trading.db` harian → Vercel auto-redeploy → DB dibaca saat build (bukan runtime). Harga BTC/ETH & unrealized PnL = realtime via Binance public WebSocket dari browser.
+- **Isi:** health/gap detection (kriteria checkpoint), open positions + live PnL, equity curve, trade history, slippage real vs asumsi, win rate/avg R vs referensi backtest (dengan gate "evaluasi setelah ≥10 trade").

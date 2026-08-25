@@ -34,6 +34,7 @@
 
 - [x] Buat `paper_trading/live_signal.py` — jalankan signal engine di data real-time (dummy execution, log only)
 - [x] Alerting: Telegram — crash/fetch gagal (setelah retry) **+ ENTER/EXIT** (dimajukan dari Fase 4; `monitoring/telegram_alert.py`, secrets di repo GitHub). HOLD tidak dinotifikasi (anti-spam harian)
+- [x] Web monitoring dashboard (`monitoring/web/`, Next.js static export → Vercel gratis; request eksplisit user 2026-08-25, lihat PLAN.md Section 8): health/gap, live ticker + unrealized PnL realtime (WebSocket), equity curve, trade log, slippage vs asumsi, win rate/avg R vs backtest. **Deploy: import repo di Vercel, Root Directory = `monitoring/web`**
 - [x] Retry fetch Binance 3x (delay 5/10s) sebelum dianggap gagal — hiccup jaringan tidak jadi "missed day"
 - [x] Backup DB harian (`db/backup_db.sh`, SQLite .backup, simpan 14 hari)
 - [x] Setup scheduler — **GitHub Actions** (`.github/workflows/paper-trading.yml`, cron `0 1 * * *` UTC native, trigger manual tersedia). Crontab lokal dibatalkan: laptop tidak always-on. State DB dipersistenkan via commit balik `db/paper_trading.db` ke repo tiap run = sekaligus backup off-disk harian

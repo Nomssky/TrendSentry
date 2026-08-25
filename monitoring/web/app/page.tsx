@@ -1,0 +1,238 @@
+import LiveSection from "./components/LiveSection";
+import EquityChart from "./components/EquityChart";
+import { getDashboardData } from "@/lib/db";
+import {
+  AVG_R_FLOOR,
+  BACKTEST_REFERENCE,
+  EVAL_MIN_TRADES,
+  SLIPPAGE_ALERT_MULT,
+  SLIPPAGE_ASSUMPTION_PCT,
+  WIN_RATE_TOLERANCE_PP,
+} from "@/lib/reference";
+
+export const dynamic = "force-static";
+
+function fmtUsd(n: number, digits = 2) {
+  return n.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
+function Card({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4 ${className}`}>
+      <h2 className="mb-3 text-sm font-medium text-neutral-300">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function Badge({ tone, children }: { tone: "ok" | "warn" | "neutral"; children: React.ReactNode }) {
+  const tones = {
+    ok: "bg-emerald-500/10 text-emerald-400",
+    warn: "bg-rose-500/10 text-rose-400",
+    neutral: "bg-neutral-800 text-neutral-400",
+  };
+  return <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${tones[tone]}`}>{children}</span>;
+}
+
+export default async function Home() {
+  const d = await getDashboardData();
+  const evaluated = d.realized.nClosed >= EVAL_MIN_TRADES;
+  const wrOk =
+    d.realized.winRatePct != null &&
+    Math.abs(d.realized.winRatePct - BACKTEST_REFERENCE.winRatePct) <= WIN_RATE_TOLERANCE_PP;
+  const slippageOver = d.slippage.avgPct != null && d.slippage.avgPct > SLIPPAGE_ASSUMPTION_PCT * SLIPPAGE_ALERT_MULT;
+  const lastRunDate = d.lastRun ? new Date(d.lastRun).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "—";
+
+  return (
+    <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+      {/* Header */}
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Trend<span className="text-emerald-400">Sentry</span>
+            <span className="ml-2 text-sm font-normal text-neutral-400">Paper Trading Monitor</span>
+          </h1>
+          <p className="mt-1 text-xs text-neutral-500">
+            Donchian 20/10 + ATR(14)x2 · long-only · risk 1% · mulai {d.startDate} (hari ke-{d.daysRunning})
+          </p>
+        </div>
+        <div className="text-right text-xs text-neutral-500">
+          <div>
+            Last run: <span className="font-mono text-neutral-300">{lastRunDate}</span>
+          </div>
+          <div>
+            Data strategi refresh harian 08:00 WIB · harga &amp; PnL realtime via browser
+          </div>
+        </div>
+      </header>
+
+      {/* Gap warning */}
+      {d.gaps.length > 0 && (
+        <div className="rounded-2xl border border-rose-900/50 bg-rose-500/5 p-4 text-sm text-rose-300">
+          ⚠ Downtime terdeteksi: {d.gaps.length} hari tanpa record ({d.gaps[0]} .. {d.gaps[d.gaps.length - 1]}).
+          Sinyal stale sengaja tidak dikejar — ini representasi jujur downtime.
+        </div>
+      )}
+
+      <LiveSection
+        openPositions={d.openPositions.map((p) => ({
+          pair: p.pair,
+          units: p.units,
+          entry_price: p.entry_price,
+          stop_price: p.stop_price,
+        }))}
+        fallbackPrices={{}}
+      />
+
+      <EquityChart data={d.equityCurve} />
+      {!d.priceFetchOk && (
+        <p className="-mt-4 text-xs text-neutral-500">
+          Catatan: chart menampilkan realized cash saja (harga historis tidak tersedia saat build).
+        </p>
+      )}
+
+      {/* Kriteria sukses Fase 2 */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card title="Win rate vs backtest">
+          <div className="flex items-baseline gap-2">
+            <span className="font-mono text-2xl">
+              {d.realized.winRatePct != null ? `${d.realized.winRatePct.toFixed(1)}%` : "—"}
+            </span>
+            {!evaluated ? (
+              <Badge tone="neutral">belum dievaluasi</Badge>
+            ) : wrOk ? (
+              <Badge tone="ok">dalam toleransi</Badge>
+            ) : (
+              <Badge tone="warn">di luar toleransi</Badge>
+            )}
+          </div>
+          <p className="mt-2 text-xs text-neutral-500">
+            Referensi backtest: {BACKTEST_REFERENCE.winRatePct}% ±{WIN_RATE_TOLERANCE_PP}pp. Evaluasi setelah ≥
+            {EVAL_MIN_TRADES} trade tertutup (saat ini: {d.realized.nClosed}).
+          </p>
+        </Card>
+
+        <Card title="Avg R vs backtest">
+          <div className="flex items-baseline gap-2">
+            <span className="font-mono text-2xl">
+              {d.realized.avgR != null ? `${d.realized.avgR >= 0 ? "+" : ""}${d.realized.avgR.toFixed(2)}R` : "—"}
+            </span>
+            {!evaluated ? (
+              <Badge tone="neutral">belum dievaluasi</Badge>
+            ) : (d.realized.avgR ?? 0) >= AVG_R_FLOOR ? (
+              <Badge tone="ok">di atas floor</Badge>
+            ) : (
+              <Badge tone="warn">flag investigasi</Badge>
+            )}
+          </div>
+          <p className="mt-2 text-xs text-neutral-500">
+            Referensi: avg win {BACKTEST_REFERENCE.avgWinR}R / avg loss {BACKTEST_REFERENCE.avgLossR}R (PF{" "}
+            {BACKTEST_REFERENCE.profitFactor}). Floor live: {AVG_R_FLOOR}R.
+          </p>
+        </Card>
+
+        <Card title="Slippage real vs asumsi">
+          <div className="flex items-baseline gap-2">
+            <span className="font-mono text-2xl">
+              {d.slippage.avgPct != null ? `${d.slippage.avgPct.toFixed(4)}%` : "—"}
+            </span>
+            {slippageOver ? <Badge tone="warn">revisi sizing</Badge> : <Badge tone="ok">dalam batas</Badge>}
+          </div>
+          <p className="mt-2 text-xs text-neutral-500">
+            Asumsi backtest {SLIPPAGE_ASSUMPTION_PCT}%; batas {SLIPPAGE_ASSUMPTION_PCT * SLIPPAGE_ALERT_MULT}% (2x).
+            Diukur dari spread order book tiap sinyal ({d.slippage.n} sampel).
+          </p>
+        </Card>
+      </div>
+
+      {/* Trade history */}
+      <Card title={`Trade history (${d.closedTrades.length} closed)`}>
+        {d.closedTrades.length === 0 ? (
+          <p className="text-sm text-neutral-400">
+            Belum ada trade tertutup. Entry/exit pertama akan muncul di sini (dan notif Telegram).
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-neutral-500">
+                  <th className="pb-2 pr-4">Pair</th>
+                  <th className="pb-2 pr-4">Entry</th>
+                  <th className="pb-2 pr-4">Exit</th>
+                  <th className="pb-2 pr-4">Alasan keluar</th>
+                  <th className="pb-2 pr-4 text-right">PnL</th>
+                  <th className="pb-2 text-right">R</th>
+                </tr>
+              </thead>
+              <tbody className="font-mono">
+                {d.closedTrades.map((t) => {
+                  const up = (t.pnl ?? 0) >= 0;
+                  return (
+                    <tr key={t.id} className="border-t border-neutral-800/60">
+                      <td className="py-2 pr-4">{t.pair}</td>
+                      <td className="py-2 pr-4 text-neutral-400">
+                        {t.entry_date} @ {fmtUsd(t.entry_price)}
+                      </td>
+                      <td className="py-2 pr-4 text-neutral-400">
+                        {t.exit_date} @ {fmtUsd(t.exit_price ?? 0)}
+                      </td>
+                      <td className="py-2 pr-4 text-xs text-neutral-500">{t.exit_reason}</td>
+                      <td className={`py-2 pr-4 text-right ${up ? "text-emerald-400" : "text-rose-400"}`}>
+                        {up ? "+" : ""}
+                        {fmtUsd(t.pnl ?? 0)}
+                      </td>
+                      <td className={`py-2 text-right ${up ? "text-emerald-400" : "text-rose-400"}`}>
+                        {(t.r_multiple ?? 0) >= 0 ? "+" : ""}
+                        {(t.r_multiple ?? 0).toFixed(2)}R
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {/* Sinyal terakhir */}
+      <Card title={`Sinyal terakhir (${d.nSignals} total diproses)`}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-neutral-500">
+                <th className="pb-2 pr-4">Candle</th>
+                <th className="pb-2 pr-4">Pair</th>
+                <th className="pb-2 pr-4 text-right">Close</th>
+                <th className="pb-2 pr-4">Signal</th>
+                <th className="pb-2">Alasan</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono text-xs">
+              {d.recentSignals.slice(0, 10).map((s, i) => (
+                <tr key={`${s.candle_date}-${s.pair}`} className="border-t border-neutral-800/60">
+                  <td className="py-2 pr-4 text-neutral-400">{s.candle_date}</td>
+                  <td className="py-2 pr-4">{s.pair}</td>
+                  <td className="py-2 pr-4 text-right">{fmtUsd(s.close_price)}</td>
+                  <td className="py-2 pr-4">
+                    <Badge tone={s.signal === "LONG_ENTRY" ? "ok" : s.signal === "LONG_EXIT" ? "warn" : "neutral"}>
+                      {s.signal}
+                    </Badge>
+                  </td>
+                  <td className="py-2 text-neutral-500">{s.reason}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <footer className="pb-4 text-center text-xs text-neutral-600">
+        Data strategi di-bake saat build dari DB yang di-commit bot harian · harga realtime via Binance public
+        WebSocket ·{" "}
+        <a href="https://github.com/Nomssky/TrendSentry" className="underline hover:text-neutral-400">
+          github.com/Nomssky/TrendSentry
+        </a>
+      </footer>
+    </main>
+  );
+}
