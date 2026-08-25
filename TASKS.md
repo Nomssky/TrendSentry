@@ -19,18 +19,18 @@
 
 ## Fase 2 — Paper Trading
 
-> **Kriteria Sukses Fase 2 (didefinisikan 2026-08-14, sebelum run — anti moving-goalpost; diamendemen 2026-08-14: 8 minggu = minimum runtime, bukan deadline keras):**
+> **Kriteria Sukses Fase 2 — v2 (didefinisikan 2026-08-14, diamendemen 2026-08-25: konfigurasi diubah 2→5 pair + max 5 posisi + simulasi yield 5% APY; sample paper di-RESET 2026-08-25, run time dihitung dari tanggal ini):**
 >
-> - [ ] **Durasi:** minimal 8 minggu berjalan tanpa crash/downtime signifikan. Kalau di minggu ke-8 jumlah trade tertutup < 10, run LANJUT (bukan gagal/sukses) sampai sample ≥ 10 trade, dengan checkpoint review tiap 4 minggu
-> - [ ] **Frekuensi signal:** jumlah signal live vs ekspektasi historis (~62 trade / 6 tahun / 2 pair ≈ 5 trade/pair/tahun ≈ 1 signal per 2-3 minggu per pair). Signal jauh lebih sering dari itu = curigai bug
-> - [ ] **Slippage realita:** dicatat per trade, dibandingkan asumsi backtest (0.05%). Rata-rata > 2x asumsi (0.10%) → position sizing perlu direvisi (update `config.yaml` + re-run backtest + catat alasan di `PLAN.md`)
-> - [ ] **R-multiple realized:** trade closed selama paper trading dibandingkan distribusi backtest (avg win +6.05R, avg loss -1.01R). Deviasi besar (avg R < 0.5) = investigasi, bukan otomatis gagal
+> - [ ] **Durasi:** minimal 8 minggu berjalan tanpa crash/downtime signifikan (sejak reset 2026-08-25). Kalau di minggu ke-8 jumlah trade tertutup < 10, run LANJUT (bukan gagal/sukses) sampai sample ≥ 10 trade, dengan checkpoint review tiap 4 minggu
+> - [ ] **Frekuensi signal:** jumlah signal live vs ekspektasi historis 5 pair (~147 trade / 6 tahun ≈ 24.5 trade/tahun ≈ 1 sinyal per 15 hari lintas pair). Signal jauh lebih sering dari itu = curigai bug
+> - [ ] **Slippage realita:** dicatat per trade (order book Bitget), dibandingkan asumsi backtest (0.05%). Rata-rata > 2x asumsi (0.10%) → position sizing perlu direvisi (update `config.yaml` + re-run backtest + catat alasan di `PLAN.md`)
+> - [ ] **R-multiple realized:** trade closed dibandingkan distribusi backtest 5-pair (win rate 40.1%, avg win +6.63R, avg loss -0.91R, PF 2.48, avg R 2.12). Deviasi besar (avg R < 0.5) = investigasi, bukan otomatis gagal
 > - [ ] **Anti look-ahead di real-time:** cek log tiap signal — breakout terdeteksi tepat 1 hari setelah candle close (sama seperti backtest)
 > - [ ] **Tidak ada keputusan "strategi gagal" hanya karena flat beberapa minggu** — itu karakteristik yang sudah diverifikasi di backtest (frekuensi trade rendah, periode tanpa entry normal)
 > - [ ] **Evaluasi win rate/avg R HANYA setelah ≥ 10 trade tertutup.** Sebelum itu cukup pantau: sistem jalan tanpa crash, logging lengkap, slippage per-signal tercatat
-> - [ ] **Checkpoint:** review di minggu ke-4 (tengah) dan minggu ke-8 (final), lalu tiap 4 minggu selama window diperpanjang
+> - [ ] **Checkpoint:** review di minggu ke-4 (≈ 22 Sep, cek operasional saja) dan minggu ke-8 (≈ 20 Okt, final), lalu tiap 4 minggu selama window diperpanjang
 >
-> Referensi ekspektasi = statistik backtest 6 tahun (win rate 41.9%, avg win +6.05R, avg loss -1.01R, PF 2.71, ~5 trade/pair/tahun). Perbandingan "periode yang sama" hanya valid untuk window yang overlap dengan backtest; untuk periode baru gunakan referensi di atas.
+> Referensi ekspektasi = **statistik backtest 5-pair 6 tahun** (win rate 40.1%, avg win +6.63R, avg loss -0.91R, PF 2.48, ~24.5 trade/tahun; laporan: `backtest/reports/research/capital_efficiency/`). **Caveat tercatat:** konfigurasi 5-pair mengandung survivorship bias (SOL/BNB/XRP dipilih sebagai survivor) & DD backtest -27.3% — angka referensi adalah ekspektasi atas, bukan janji. Perbandingan "periode yang sama" hanya valid untuk window yang overlap dengan backtest; untuk periode baru gunakan referensi di atas.
 
 - [x] Buat `paper_trading/live_signal.py` — jalankan signal engine di data real-time (dummy execution, log only)
 - [x] Alerting: Telegram — crash/fetch gagal (setelah retry) **+ ENTER/EXIT** (dimajukan dari Fase 4; `monitoring/telegram_alert.py`, secrets di repo GitHub). HOLD tidak dinotifikasi (anti-spam harian)

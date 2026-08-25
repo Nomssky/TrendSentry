@@ -101,19 +101,54 @@ def fetch_retry(fn, tries: int = 3, delay: float = 5.0):
     raise last
 
 
+def make_exchange(cfg: dict) -> ccxt.Exchange:
+    """Bangun exchange client sesuai config paper_trading.data_source.
+
+    - bitget: venue konsisten dengan rencana eksekusi Fase 4 (lolos tes dari CI runner 2026-08-25;
+      catatan: api.bitget.com keblokir ISP di jaringan lokal user — jalankan via CI, bukan lokal).
+    - binance_vision: mirror market-data-only (fallback).
+    """
+    source = cfg.get("paper_trading", {}).get("data_source", "binance_vision")
+    if source == "bitget":
+        return ccxt.bitget({"enableRateLimit": True})
+    ex = ccxt.binance({"enableRateLimit": True, "options": {"fetchMarkets": ["spot"]}})
+    ex.urls["api"]["public"] = "https://data-api.binance.vision/api/v3"
+    return ex
+
+
+def credit_yield(conn: sqlite3.Connection, cfg: dict) -> None:
+    """Bunga harian di paper cash idle (simulasi earn/DeFi).
+
+    Idempotent per tanggal UTC (meta.last_yield_date): cron dobel / run manual
+    berulang di hari sama tidak menggandakan bunga.
+    """
+    apy = float(cfg.get("paper_trading", {}).get("yield_apy_idle_cash", 0.0))
+    if apy <= 0:
+        return
+    today = datetime.now(timezone.utc).date().isoformat()
+    last = conn.execute("SELECT value FROM meta WHERE key='last_yield_date'").fetchone()
+    if last is not None and last[0] >= today:
+        return
+    cash = get_cash(conn, cfg)
+    rate_daily = apy / 100.0 / 365.0
+    amount = round(cash * rate_daily, 6)
+    conn.execute("UPDATE meta SET value=? WHERE key='paper_cash'", (cash + amount,))
+    conn.execute(
+        "INSERT INTO yield_log (date, cash_before, rate_daily, amount) VALUES (?,?,?,?)",
+        (today, cash, rate_daily, amount),
+    )
+    conn.execute("INSERT INTO meta VALUES ('last_yield_date', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (today,))
+    conn.commit()
+    log.info("yield %s: +%.6f USD (cash %.2f @ %.4f%%/hari)", today, amount, cash, apy)
+
+
 def main() -> int:
     cfg = load_config()
     strat, risk, bt = cfg["strategy"], cfg["risk"], cfg["backtest"]
     fee, slip = bt["fee_pct"] / 100.0, bt["slippage_pct"] / 100.0
     conn = connect()
     cash = get_cash(conn, cfg)
-    # Spot-only + mirror market-data-only Binance: data sama persis dengan api.binance.com,
-    # tapi tidak kena geo-block 451 dari GitHub Actions runner (IP US).
-    exchange = ccxt.binance({
-        "enableRateLimit": True,
-        "options": {"fetchMarkets": ["spot"]},
-    })
-    exchange.urls["api"]["public"] = "https://data-api.binance.vision/api/v3"
+    exchange = make_exchange(cfg)
     exchange.load_markets()
     now_ms = exchange.milliseconds()
 
@@ -209,6 +244,8 @@ def main() -> int:
         )
         conn.commit()
         log.info("%s %s: %s %s (%s)", pair, d, signal, decision, reason)
+
+    credit_yield(conn, cfg)
     conn.close()
     return 0
 

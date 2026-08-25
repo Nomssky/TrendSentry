@@ -20,14 +20,20 @@
 
 | Parameter | Value |
 |---|---|
-| Pair | BTC/USDT, ETH/USDT |
+| Pair | BTC/USDT, ETH/USDT, SOL/USDT, BNB/USDT, XRP/USDT (dinaikkan 2→5 pada 2026-08-25, lihat catatan di bawah) |
 | Timeframe | 1D (daily candle close) |
 | Entry signal | Donchian Channel breakout 20-hari (harga close > highest high 20 hari = long signal) |
 | Stop loss | Entry price − (2 × ATR(14)) untuk long |
 | Exit / trailing | Breakout arah berlawanan 10-hari, atau trailing stop berbasis ATR |
 | Position sizing | Risk 1% dari modal per trade → size = (1% × modal) / stop_distance |
-| Direction | Long-only dulu di MVP (short nyusul kalau sudah stabil & exchange support futures) |
-| Max concurrent position | 2 (BTC + ETH bersamaan, tidak stacking di pair yang sama) |
+| Direction | Long-only (short & leverage dicoret berbasis riset 2026-08-25: short-only -14%/6th, long-short Sharpe 0.88 < long-only 1.12; laporan `backtest/reports/research/longshort/`) |
+| Max concurrent position | 5 (dinaikkan dari 2 pada 2026-08-25, keputusan eksplisit user — profil agresif; **caveat:** backtest 5-pair mengandung survivorship bias & DD -27.3%) |
+| Yield idle cash | Simulasi 5% APY di paper cash (config `paper_trading.yield_apy_idle_cash`); risiko platform tidak dimodelkan |
+
+Catatan perubahan 2026-08-25 (berdasarkan riset `backtest/reports/research/capital_efficiency/`, keputusan eksplisit user):
+- Pair 2→5 & max concurrent 2→5: return backtest +152%→+862%, Sharpe 1.12→1.44, TAPI DD -15.3%→-27.3% dan mengandung **survivorship bias** (SOL/BNB/XRP dipilih sebagai survivor hari ini) — angka adalah ekspektasi atas, bukan janji.
+- Venue Fase 4: **Bitget Exchange** (API automation + exchange-side stop order; user tidak ingin intervensi manual). Bitget Wallet (self-custody) di-shelve karena tidak mendukung otomasi penuh. Data source paper trading: API publik Bitget (lolos tes dari CI runner 2026-08-25; catatan: api.bitget.com keblokir ISP di jaringan lokal user — jalankan via CI).
+- Simulasi yield 5% APY masuk ke paper engine (temuan riset: +58..93pp return dengan nol perubahan strategi).
 
 Catatan: parameter ini **tidak boleh diutak-atik berdasarkan feeling** selama fase backtest awal. Kalau mau tuning, harus berbasis hasil backtest, dicatat alasannya, dan dites ulang.
 

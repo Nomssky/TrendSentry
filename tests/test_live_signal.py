@@ -68,8 +68,8 @@ def run_scenario(db_path: Path, candles, pre_positions=None, capture_alerts=True
     real_send = ls.send_alert
     if capture_alerts:
         ls.send_alert = lambda m: (sent.append(m), True)[1]
-    real_binance = ls.ccxt.binance
-    ls.ccxt.binance = lambda *a, **k: FakeExchange(candles)
+    real_make_exchange = ls.make_exchange
+    ls.make_exchange = lambda cfg: FakeExchange(candles)
     try:
         if pre_positions:
             conn = sqlite3.connect(db_path)
@@ -83,7 +83,7 @@ def run_scenario(db_path: Path, candles, pre_positions=None, capture_alerts=True
         ls.main()
     finally:
         ls.send_alert = real_send
-        ls.ccxt.binance = real_binance
+        ls.make_exchange = real_make_exchange
     return sent
 
 
@@ -94,11 +94,11 @@ def test_enter_creates_position_and_alert(tmp_path):
     pos = conn.execute("SELECT pair, status FROM positions").fetchall()
     cash = float(conn.execute("SELECT value FROM meta WHERE key='paper_cash'").fetchone()[0])
     conn.close()
-    assert ("BTC/USDT", "LONG_ENTRY", "ENTER") in sig
-    assert ("ETH/USDT", "LONG_ENTRY", "ENTER") in sig
+    pairs = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT"]
+    assert all((p, "LONG_ENTRY", "ENTER") in sig for p in pairs)
     assert all(status == "open" for _, status in pos)
-    assert 0 < cash < 1000  # modal terpakai
-    assert len(sent) == 2 and all("ENTER" in m for m in sent)
+    assert 0 < cash < 1000  # modal terpakai (+ yield harian kecil)
+    assert len(sent) == 5 and all("ENTER" in m for m in sent)
 
 
 def test_exit_closes_position_and_alert(tmp_path):
@@ -123,8 +123,25 @@ def test_idempotent_no_duplicate(tmp_path):
     conn = sqlite3.connect(db)
     n = conn.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
     n_pos = conn.execute("SELECT COUNT(*) FROM positions").fetchone()[0]
+    n_yield = conn.execute("SELECT COUNT(*) FROM yield_log").fetchone()[0]
     conn.close()
-    assert n == 2 and n_pos == 0  # 2 pair x 1 candle, tidak dobel
+    assert n == 5 and n_pos == 0 and n_yield == 1  # 5 pair x 1 candle, yield 1x/hari, tidak dobel
+
+
+def test_yield_credit_once_per_day(tmp_path):
+    db = tmp_path / "y.db"
+    conn = sqlite3.connect(db)
+    conn.executescript((ROOT / "db" / "schema.sql").read_text())
+    conn.execute("INSERT INTO meta VALUES ('paper_cash', '1000')")
+    conn.commit()
+    cfg = {"paper_trading": {"yield_apy_idle_cash": 5.0}}
+    ls.credit_yield(conn, cfg)
+    ls.credit_yield(conn, cfg)  # hari sama -> no-op
+    cash = float(conn.execute("SELECT value FROM meta WHERE key='paper_cash'").fetchone()[0])
+    n = conn.execute("SELECT COUNT(*) FROM yield_log").fetchone()[0]
+    conn.close()
+    assert abs(cash - (1000 + 1000 * 5.0 / 100 / 365)) < 1e-6
+    assert n == 1
 
 
 if __name__ == "__main__":

@@ -50,3 +50,12 @@ CREATE TABLE IF NOT EXISTS slippage_log (
     mid         REAL,
     spread_pct  REAL NOT NULL         -- (ask - bid) / mid * 100
 );
+
+-- Yield harian di paper cash idle (simulasi earn/DeFi, config: yield_apy_idle_cash)
+CREATE TABLE IF NOT EXISTS yield_log (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    date        TEXT NOT NULL UNIQUE, -- sekali per hari (idempotent)
+    cash_before REAL NOT NULL,
+    rate_daily  REAL NOT NULL,        -- apy / 100 / 365
+    amount      REAL NOT NULL
+);

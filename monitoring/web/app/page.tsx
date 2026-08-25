@@ -197,9 +197,10 @@ export default async function Home() {
       {/* Sinyal terakhir */}
       <Card title={`Riwayat cek harian (${d.nSignals} record)`}>
         <p className="mb-3 text-xs text-neutral-500">
-          Setiap hari bot mengecek 2 pair setelah candle close. <b className="text-neutral-400">HOLD</b> = tidak ada
-          breakout hari itu → tidak ada trade → belum ada PnL (itu normal, ~1 sinyal per 2-3 minggu per pair). Trade
-          dan PnL baru muncul kalau close menembus high 20-hari (ENTRY) atau kena stop / low 10-hari (EXIT).
+          Setiap hari bot mengecek {new Set(d.recentSignals.map((s) => s.pair)).size || 5} pair setelah candle close.{" "}
+          <b className="text-neutral-400">HOLD</b> = tidak ada breakout hari itu → tidak ada trade → belum ada PnL (itu
+          normal, ekspektasi ~1 sinyal per 15 hari lintas pair). Trade dan PnL baru muncul kalau close menembus high
+          20-hari (ENTRY) atau kena stop / low 10-hari (EXIT).
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

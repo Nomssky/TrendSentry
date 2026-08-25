@@ -5,17 +5,24 @@ strategy:
   pairs:
     - "BTC/USDT"
     - "ETH/USDT"
+    - "SOL/USDT"
+    - "BNB/USDT"
+    - "XRP/USDT"
   timeframe: "1d"
   donchian_entry_period: 20        # hari, untuk breakout entry
   donchian_exit_period: 10         # hari, untuk exit/breakout arah berlawanan
   atr_period: 14
   atr_stop_multiplier: 2.0         # stop loss = entry - (multiplier * ATR)
-  direction: "long_only"           # long_only | long_short
+  direction: "long_only"           # long_only | long_short (short dicoret berbasis riset 2026-08-25)
 
 risk:
   risk_per_trade_pct: 1.0          # persen dari modal per trade
-  max_concurrent_positions: 2
+  max_concurrent_positions: 5      # dinaikkan 2->5 (2026-08-25, riset capital efficiency, keputusan user agresif; caveat survivorship bias di PLAN.md Section 7)
   max_drawdown_circuit_breaker_pct: 15.0   # auto-pause kalau drawdown modal awal tembus ini
+
+paper_trading:
+  data_source: "bitget"            # bitget | binance_vision — venue konsisten dgn rencana eksekusi Fase 4
+  yield_apy_idle_cash: 5.0         # simulasi bunga harian di paper cash idle (DeFi/earn; risiko platform tidak dimodelkan)
 
 backtest:
   lookback_years: 6                 # diperluas 3->6 (2020-08..2026-08) utk cakup bull-bear-bull penuh, atas instruksi user 2026-08-14
@@ -29,5 +36,5 @@ llm_filter:
   call_only_on_valid_signal: true  # jangan panggil tiap candle, hemat cost
 
 execution:
-  mode: "backtest"                 # backtest | paper | live
-  exchange: "binance"
+  mode: "paper"                    # backtest | paper | live
+  exchange: "bitget"               # venue intent Fase 4: Bitget Exchange (API automation + exchange-side SL)
