@@ -37,8 +37,10 @@ jobs:
 
       - name: Commit DB state (persistensi antar-run + backup harian)
         run: |
-          git config user.name "trendsentry-bot"
-          git config user.email "actions@users.noreply.github.com"
+          # Identitas HARUS milik user (terhubung ke akun GitHub/Vercel) — kalau pakai
+          # identitas bot, Vercel menolak deploy: "Git author must have access to the project".
+          git config user.name "Kresna"
+          git config user.email "als.kresna@gmail.com"
           git pull --rebase origin main
           git add -f db/paper_trading.db
           git diff --cached --quiet || git commit -m "[paper-trading] update DB state $(date -u +%F)"
