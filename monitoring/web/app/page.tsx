@@ -52,11 +52,18 @@ export default async function Home() {
             Trend<span className="text-emerald-400">Sentry</span>
             <span className="ml-2 text-sm font-normal text-neutral-400">Paper Trading Monitor</span>
           </h1>
-          <p className="mt-1 text-xs text-neutral-500">
-            Donchian 20/10 + ATR(14)x2 · long-only · risk 1% · {d.pairs.length} pair:{" "}
-            <span className="font-mono">{d.pairs.join(" ")}</span> · yield idle {d.yieldInfo.apyAssumed}% APY · mulai{" "}
-            {d.startDate} (hari ke-{d.daysRunning})
-          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5 text-[11px] text-neutral-300">
+            <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">Donchian 20/10 + ATR(14)×2</span>
+            <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">Long-only</span>
+            <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">Risk 1%</span>
+            <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">
+              5 pair: <span className="font-mono">{d.pairs.join(" ")}</span>
+            </span>
+            <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">Yield idle {d.yieldInfo.apyAssumed}% APY</span>
+            <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">
+              Mulai {d.startDate} · hari ke-{d.daysRunning}
+            </span>
+          </div>
         </div>
         <div className="text-xs text-neutral-500 sm:text-right">
           <div>
@@ -101,8 +108,8 @@ export default async function Home() {
             {d.yieldInfo.total > 0 && <Badge tone="ok">+{fmtUsd(d.yieldInfo.total)} yield</Badge>}
           </div>
           <p className="mt-2 text-xs text-neutral-500">
-            Modal awal $1000 · yield {d.yieldInfo.apyAssumed}% APY di cash idle ({d.yieldInfo.days} hari kredit,
-            simulasi earn/DeFi — risiko platform tidak dimodelkan).
+            Modal awal $1000. Cash idle dikreditkan bunga {d.yieldInfo.apyAssumed}% APY per hari (simulasi
+            earn/DeFi — risiko platform tidak dimodelkan). Sudah {d.yieldInfo.days} hari kredit.
           </p>
         </Card>
 

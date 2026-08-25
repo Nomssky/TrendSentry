@@ -22,6 +22,7 @@ const SYMBOL_TO_PAIR: Record<string, string> = {
 const BINANCE_WS =
   "wss://stream.binance.com:9443/stream?streams=" +
   PAIRS.map((p) => p.replace("/", "").toLowerCase() + "@miniTicker").join("/");
+const BITGET_WS = "wss://stream.bitget.com/v2/ws/public";
 const REST_URL =
   "https://data-api.binance.vision/api/v3/ticker/24hr?symbols=" +
   encodeURIComponent(JSON.stringify(PAIRS.map((p) => p.replace("/", ""))));
@@ -38,8 +39,8 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
 
   useEffect(() => {
     let closed = false;
-    let ws: WebSocket | null = null;
-    let wsOpenTimer: ReturnType<typeof setTimeout> | null = null;
+    let activeSocket: WebSocket | null = null;
+    let openTimer: ReturnType<typeof setTimeout> | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let pollTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -49,15 +50,17 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
     };
 
     const stopAll = () => {
-      if (wsOpenTimer) clearTimeout(wsOpenTimer);
+      if (openTimer) clearTimeout(openTimer);
+      openTimer = null;
       if (pollTimer) clearInterval(pollTimer);
       pollTimer = null;
-      if (ws) {
-        ws.onclose = null;
-        ws.onerror = null;
-        ws.onmessage = null;
-        try { ws.close(); } catch { /* noop */ }
-        ws = null;
+      if (activeSocket) {
+        activeSocket.onopen = null;
+        activeSocket.onclose = null;
+        activeSocket.onerror = null;
+        activeSocket.onmessage = null;
+        try { activeSocket.close(); } catch { /* noop */ }
+        activeSocket = null;
       }
     };
 
@@ -83,50 +86,76 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
       pollTimer = setInterval(poll, 10_000);
     };
 
-    // Sumber 1 & 2: WebSocket dengan timeout — kalau tidak open dalam 6 detik, lanjut sumber berikutnya
-    const tryWebSocket = (url: string, onFrame: (raw: string) => void, next: () => void) => {
+    // Sumber 1 & 2: WebSocket — tiap percobaan SELF-CONTAINED (socket & timer lokal).
+    // Dulu socket & timer dibagi bersama -> timer percobaan lama bisa menutup koneksi
+    // percobaan berikutnya (race bug) -> sebagian harga tidak pernah terisi.
+    const tryWebSocket = (
+      url: string,
+      onFrame: (raw: string) => void,
+      onSubscribe: ((socket: WebSocket) => void) | null,
+      next: () => void,
+    ) => {
       if (closed) return;
       let opened = false;
-      try {
-        ws = new WebSocket(url);
-      } catch {
+      let done = false;
+      let socket: WebSocket | null = null;
+      let openTimer: ReturnType<typeof setTimeout> | null = null;
+
+      const detach = () => {
+        if (openTimer) clearTimeout(openTimer);
+        openTimer = null;
+        if (socket) {
+          socket.onopen = null;
+          socket.onclose = null;
+          socket.onerror = null;
+          socket.onmessage = null;
+          try { socket.close(); } catch { /* noop */ }
+          if (activeSocket === socket) activeSocket = null;
+          socket = null;
+        }
+      };
+      const finish = () => {
+        if (done) return;
+        done = true;
+        detach();
         next();
+      };
+
+      try {
+        socket = new WebSocket(url);
+      } catch {
+        finish();
         return;
       }
-      wsOpenTimer = setTimeout(() => {
-        if (!opened && ws) {
-          ws.onclose = null;
-          try { ws.close(); } catch { /* noop */ }
-          ws = null;
-          next();
-        }
+      activeSocket = socket;
+      openTimer = setTimeout(() => {
+        if (!opened) finish();  // tidak konek dalam 6 detik -> sumber berikutnya
       }, 6000);
-      ws.onopen = () => {
+      socket.onopen = () => {
+        if (done || !socket) return;
         opened = true;
-        if (wsOpenTimer) clearTimeout(wsOpenTimer);
+        if (openTimer) clearTimeout(openTimer);
+        openTimer = null;
         setModeSafe("live");
-        if (url.includes("bitget")) {
-          // subscribe ticker spot Bitget v2 (semua pair)
-          ws?.send(JSON.stringify({
-            op: "subscribe",
-            args: PAIRS.map((p) => ({ instType: "SPOT", channel: "ticker", instId: p.replace("/", "") })),
-          }));
-        }
+        if (onSubscribe) onSubscribe(socket);
       };
-      ws.onmessage = (ev) => onFrame(String(ev.data));
-      ws.onclose = () => {
-        if (closed) return;
-        if (modeRef.current === "live") {
-          // koneksi terputus di tengah jalan -> coba seluruh rantai lagi
+      socket.onmessage = (ev) => {
+        if (opened && !done) onFrame(String(ev.data));
+      };
+      socket.onclose = () => {
+        if (done || closed) return;
+        if (opened) {
+          // koneksi hidup lalu putus -> coba seluruh rantai dari awal
+          done = true;
+          detach();
+          setModeSafe("connecting");
           retryTimer = setTimeout(start, 5000);
         } else {
-          next();
+          finish();
         }
       };
-      ws.onerror = () => {
-        if (!opened) {
-          ws?.close();
-        }
+      socket.onerror = () => {
+        if (!opened) finish();
       };
     };
 
@@ -156,11 +185,16 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
       if (closed) return;
       setModeSafe("connecting");
       tryWebSocket(
-        "wss://stream.binance.com:9443/stream?streams=btcusdt@miniTicker/ethusdt@miniTicker",
+        BINANCE_WS,
         onBinanceFrame,
+        null,
         () => tryWebSocket(
-          "wss://stream.bitget.com/v2/ws/public",
+          BITGET_WS,
           onBitgetFrame,
+          (socket) => socket.send(JSON.stringify({
+            op: "subscribe",
+            args: PAIRS.map((p) => ({ instType: "SPOT", channel: "ticker", instId: p.replace("/", "") })),
+          })),
           startPolling,
         ),
       );
