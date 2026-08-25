@@ -107,7 +107,13 @@ def main() -> int:
     fee, slip = bt["fee_pct"] / 100.0, bt["slippage_pct"] / 100.0
     conn = connect()
     cash = get_cash(conn, cfg)
-    exchange = ccxt.binance({"enableRateLimit": True})
+    # Spot-only + mirror market-data-only Binance: data sama persis dengan api.binance.com,
+    # tapi tidak kena geo-block 451 dari GitHub Actions runner (IP US).
+    exchange = ccxt.binance({
+        "enableRateLimit": True,
+        "options": {"fetchMarkets": ["spot"]},
+    })
+    exchange.urls["api"]["public"] = "https://data-api.binance.vision/api/v3"
     exchange.load_markets()
     now_ms = exchange.milliseconds()
 
