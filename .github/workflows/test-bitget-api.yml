@@ -1,0 +1,38 @@
+# Tes one-off: apakah API publik Bitget bisa diakses dari GitHub Actions runner (IP US)?
+# Kalau lolos, data source paper trading bisa pindah ke Bitget (konsistensi venue).
+name: test-bitget-api
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ccxt requests
+      - name: Probe Bitget public API (raw HTTP)
+        run: |
+          python - <<'EOF'
+          import requests
+          for host in ["api.bitget.com", "api.bitget.app"]:
+              try:
+                  r = requests.get(f"https://{host}/api/v2/spot/market/tickers?symbol=BTCUSDT", timeout=15)
+                  print(f"{host}: HTTP {r.status_code} -> {r.text[:120]}")
+              except Exception as e:
+                  print(f"{host}: GAGAL {type(e).__name__}: {e}")
+          EOF
+      - name: Probe via ccxt
+        run: |
+          python - <<'EOF'
+          import ccxt
+          try:
+              ex = ccxt.bitget({"enableRateLimit": True})
+              o = ex.fetch_ohlcv("BTC/USDT", "1d", limit=2)
+              print("ccxt bitget OHLCV OK:", o[-1])
+          except Exception as e:
+              print("ccxt bitget GAGAL:", type(e).__name__, str(e)[:300])
+          EOF
