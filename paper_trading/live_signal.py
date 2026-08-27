@@ -19,7 +19,7 @@ import sqlite3
 import sys
 import time
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import ccxt
@@ -121,25 +121,56 @@ def credit_yield(conn: sqlite3.Connection, cfg: dict) -> None:
 
     Idempotent per tanggal UTC (meta.last_yield_date): cron dobel / run manual
     berulang di hari sama tidak menggandakan bunga.
+    Backfill otomatis: kalau ada hari yang kelewat (mis. scheduled run gagal),
+    isi hari yang kelewat sebelum kredit hari ini.
     """
     apy = float(cfg.get("paper_trading", {}).get("yield_apy_idle_cash", 0.0))
     if apy <= 0:
         return
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(timezone.utc).date()
+    today_str = today.isoformat()
     last = conn.execute("SELECT value FROM meta WHERE key='last_yield_date'").fetchone()
-    if last is not None and last[0] >= today:
+    if last is not None and last[0] >= today_str:
         return
-    cash = get_cash(conn, cfg)
+
     rate_daily = apy / 100.0 / 365.0
+    cash = get_cash(conn, cfg)
+
+    # Backfill hari yang kelewat HANYA jika ada last_yield_date sebelum hari ini
+    if last is not None and last[0]:
+        try:
+            last_date = datetime.fromisoformat(last[0]).date()
+            if last_date < today:
+                cur = last_date + timedelta(days=1)
+                while cur < today:
+                    cur_str = cur.isoformat()
+                    cash = get_cash(conn, cfg)
+                    amount = round(cash * rate_daily, 6)
+                    conn.execute("UPDATE meta SET value=? WHERE key='paper_cash'", (cash + amount,))
+                    conn.execute(
+                        "INSERT INTO yield_log (date, cash_before, rate_daily, amount) VALUES (?,?,?,?)",
+                        (cur_str, cash, rate_daily, amount),
+                    )
+                    conn.execute(
+                        "INSERT INTO meta VALUES ('last_yield_date', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                        (cur_str,),
+                    )
+                    log.info("yield backfill %s: +%.6f USD (cash %.2f @ %.4f%%/hari)", cur_str, amount, cash, apy)
+                    cur += timedelta(days=1)
+        except ValueError:
+            pass  # format salah -> skip backfill
+
+    # Kredit hari ini
+    cash = get_cash(conn, cfg)
     amount = round(cash * rate_daily, 6)
     conn.execute("UPDATE meta SET value=? WHERE key='paper_cash'", (cash + amount,))
     conn.execute(
         "INSERT INTO yield_log (date, cash_before, rate_daily, amount) VALUES (?,?,?,?)",
-        (today, cash, rate_daily, amount),
+        (today_str, cash, rate_daily, amount),
     )
-    conn.execute("INSERT INTO meta VALUES ('last_yield_date', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (today,))
+    conn.execute("INSERT INTO meta VALUES ('last_yield_date', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (today_str,))
     conn.commit()
-    log.info("yield %s: +%.6f USD (cash %.2f @ %.4f%%/hari)", today, amount, cash, apy)
+    log.info("yield %s: +%.6f USD (cash %.2f @ %.4f%%/hari)", today_str, amount, cash, apy)
 
 
 def main() -> int:
