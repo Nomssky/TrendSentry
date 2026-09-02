@@ -7,19 +7,18 @@ export async function GET() {
   try {
     const res = await fetch(BITGET_URL, { cache: "no-store" });
     if (!res.ok) return NextResponse.json({ error: res.status }, { status: 502 });
-    const json = (await res.json()) as {
-      data?: { symbol: string; lastPr: string; open24h: string }[];
-    };
+    const json = await res.json();
+    const btcRaw = json.data?.find((d: { symbol: string }) => d.symbol === "BTCUSDT");
     const prices: Record<string, { price: number; changePct: number | null }> = {};
     for (const r of json.data ?? []) {
       if (!PAIRS.includes(r.symbol)) continue;
       const pair = r.symbol.replace("USDT", "/USDT");
       const last = Number(r.lastPr);
-      const open24 = Number(r.open24h);
+      const open24 = Number(r.open);
       const changePct = open24 > 0 ? ((last - open24) / open24) * 100 : null;
       prices[pair] = { price: last, changePct };
     }
-    return NextResponse.json(prices);
+    return NextResponse.json({ prices, _keys: btcRaw ? Object.keys(btcRaw) : [] });
   } catch {
     return NextResponse.json({ error: "fetch failed" }, { status: 502 });
   }

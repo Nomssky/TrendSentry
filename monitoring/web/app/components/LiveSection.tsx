@@ -35,9 +35,9 @@ export default function LiveSection({
       try {
         const res = await fetch("/api/prices", { cache: "no-store" });
         if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as PriceMap;
-        if (!closed) {
-          setPrices(data);
+        const data = (await res.json()) as { prices?: PriceMap };
+        if (!closed && data.prices) {
+          setPrices(data.prices);
           setMode("live");
         }
       } catch {
