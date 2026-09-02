@@ -43,6 +43,14 @@ export default async function Home() {
   const slippageOver = d.slippage.avgPct != null && d.slippage.avgPct > SLIPPAGE_ASSUMPTION_PCT * SLIPPAGE_ALERT_MULT;
   const lastRunDate = d.lastRun ? new Date(d.lastRun).toISOString().replace("T", " ").slice(0, 16) + " UTC" : "—";
 
+  // Compute positions MTM and total equity for breakdown
+  const totalPositionsMTM = d.openPositions.reduce((sum, p) => {
+    // Note: we don't have live prices at build time, use entry_price as fallback
+    // LiveSection will use real-time prices
+    return sum + p.units * p.entry_price;
+  }, 0);
+  const totalEquity = d.cash + totalPositionsMTM + d.yieldInfo.total;
+
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
       {/* Header */}
@@ -84,11 +92,15 @@ export default async function Home() {
           units: p.units,
           entry_price: p.entry_price,
           stop_price: p.stop_price,
+          entry_date: p.entry_date,
         }))}
         fallbackPrices={{}}
+        cash={d.cash}
+        totalEquity={totalEquity}
+        yieldTotal={d.yieldInfo.total}
       />
 
-      <EquityChart data={d.equityCurve} />
+      <EquityChart data={d.equityCurve} totalEquity={totalEquity} cash={d.cash} positionsMTM={totalPositionsMTM} yieldTotal={d.yieldInfo.total} />
       {!d.priceFetchOk && (
         <p className="-mt-4 text-xs text-neutral-500">
           Catatan: chart menampilkan realized cash saja (harga historis tidak tersedia saat build).
@@ -98,9 +110,23 @@ export default async function Home() {
       {/* Kriteria sukses Fase 2 */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card title="Modal & yield idle">
-          <div className="flex items-baseline gap-2">
-            <span className="font-mono text-2xl">${fmtUsd(d.cash)}</span>
-            {d.yieldInfo.total > 0 && <Badge tone="ok">+{fmtUsd(d.yieldInfo.total)} yield</Badge>}
+          <div className="space-y-1.5">
+            <div className="flex items-baseline justify-between text-xs text-neutral-400">
+              <span>Cash idle</span>
+              <span className="font-mono">${fmtUsd(d.cash)}</span>
+            </div>
+            <div className="flex items-baseline justify-between text-xs text-neutral-400">
+              <span>Posisi open (MTM)</span>
+              <span className="font-mono">${fmtUsd(totalPositionsMTM)}</span>
+            </div>
+            <div className="flex items-baseline justify-between text-xs text-neutral-400 border-t border-neutral-800 pt-1.5">
+              <span>Yield earned</span>
+              <span className="font-mono text-emerald-400">+${fmtUsd(d.yieldInfo.total)}</span>
+            </div>
+            <div className="flex items-baseline justify-between text-base font-medium pt-1">
+              <span>Total Equity</span>
+              <span className="font-mono">${fmtUsd(totalEquity)}</span>
+            </div>
           </div>
           <p className="mt-2 text-xs text-neutral-500">
             Modal awal $1000. Cash idle dikreditkan bunga {d.yieldInfo.apyAssumed}% APY per hari (simulasi

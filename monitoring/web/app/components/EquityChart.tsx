@@ -4,7 +4,13 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 
 type Point = { date: string; equity: number };
 
-export default function EquityChart({ data }: { data: Point[] }) {
+export default function EquityChart({
+  data,
+  totalEquity,
+  cash,
+  positionsMTM,
+  yieldTotal,
+}: { data: Point[]; totalEquity: number; cash: number; positionsMTM: number; yieldTotal: number }) {
   const first = data[0]?.equity ?? 1000;
   const last = data[data.length - 1]?.equity ?? 1000;
   const up = last >= first;
@@ -15,8 +21,13 @@ export default function EquityChart({ data }: { data: Point[] }) {
       <div className="mb-2 flex items-baseline justify-between">
         <h2 className="text-sm font-medium text-neutral-300">Equity Curve (paper)</h2>
         <span className="font-mono text-lg" style={{ color }}>
-          ${last.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+          ${totalEquity.toLocaleString("en-US", { maximumFractionDigits: 2 })}
         </span>
+      </div>
+      <div className="mb-2 text-[11px] text-neutral-500 flex gap-4 flex-wrap">
+        <span>Cash: <span className="font-mono text-neutral-300">${cash.toLocaleString("en-US", { maximumFractionDigits: 2 })}</span></span>
+        <span>Posisi: <span className="font-mono text-neutral-300">${positionsMTM.toLocaleString("en-US", { maximumFractionDigits: 2 })}</span></span>
+        <span>Yield: <span className="font-mono text-emerald-400">+${yieldTotal.toLocaleString("en-US", { maximumFractionDigits: 2 })}</span></span>
       </div>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">

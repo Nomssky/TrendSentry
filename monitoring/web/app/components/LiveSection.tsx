@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type OpenPos = { pair: string; units: number; entry_price: number; stop_price: number };
+type OpenPos = { pair: string; units: number; entry_price: number; stop_price: number; entry_date?: string };
 type PriceMap = Record<string, { price: number; changePct: number | null }>;
 type Mode = "connecting" | "live" | "delayed" | "offline";
 
@@ -32,7 +32,19 @@ function applyPrice(setPrices: React.Dispatch<React.SetStateAction<PriceMap>>, p
   setPrices((prev) => ({ ...prev, [pair]: { price, changePct } }));
 }
 
-export default function LiveSection({ openPositions, fallbackPrices }: { openPositions: OpenPos[]; fallbackPrices: PriceMap }) {
+export default function LiveSection({
+  openPositions,
+  fallbackPrices,
+  cash = 0,
+  totalEquity = 0,
+  yieldTotal = 0,
+}: {
+  openPositions: OpenPos[];
+  fallbackPrices: PriceMap;
+  cash?: number;
+  totalEquity?: number;
+  yieldTotal?: number;
+}) {
   const [prices, setPrices] = useState<PriceMap>(fallbackPrices);
   const [mode, setMode] = useState<Mode>("connecting");
   const modeRef = useRef<Mode>("connecting");
@@ -258,14 +270,22 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
           {openPositions.map((pos) => {
             const p = prices[pos.pair];
             const price = p?.price ?? pos.entry_price;
-            const unreal = pos.units * (price - pos.entry_price);
+            const invested = pos.units * pos.entry_price;
+            const marketValue = pos.units * price;
+            const unreal = marketValue - invested;
             const up = unreal >= 0;
+            const pnlPct = invested > 0 ? (unreal / invested) * 100 : 0;
+            const portfolioPct = totalEquity > 0 ? (marketValue / totalEquity) * 100 : 0;
+            const daysOpen = pos.entry_date ? Math.floor((Date.now() - new Date(pos.entry_date).getTime()) / 86400000) : null;
             return (
               <div key={pos.pair} className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">{pos.pair}</span>
                   <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">OPEN</span>
                 </div>
+                {daysOpen !== null && (
+                  <div className="mt-1 text-xs text-neutral-500">Hari ke-{daysOpen} sejak entry ({pos.entry_date})</div>
+                )}
                 <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                   <span className="text-neutral-400">Entry</span>
                   <span className="text-right font-mono">{pos.entry_price.toLocaleString("en-US")}</span>
@@ -273,11 +293,21 @@ export default function LiveSection({ openPositions, fallbackPrices }: { openPos
                   <span className="text-right font-mono text-rose-400">{pos.stop_price.toLocaleString("en-US")}</span>
                   <span className="text-neutral-400">Units</span>
                   <span className="text-right font-mono">{pos.units.toFixed(4)}</span>
+                  <span className="text-neutral-400">Invested</span>
+                  <span className="text-right font-mono">${invested.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="text-neutral-400">Market Value</span>
+                  <span className="text-right font-mono">${marketValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   <span className="text-neutral-400">Unrealized PnL</span>
                   <span className={`text-right font-mono text-lg ${up ? "text-emerald-400" : "text-rose-400"}`}>
                     {up ? "+" : ""}
                     {unreal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
                   </span>
+                  <span className="text-neutral-400">PnL %</span>
+                  <span className={`text-right font-mono ${up ? "text-emerald-400" : "text-rose-400"}`}>
+                    {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%
+                  </span>
+                  <span className="text-neutral-400">% Portfolio</span>
+                  <span className="text-right font-mono">{portfolioPct.toFixed(1)}%</span>
                 </div>
               </div>
             );
