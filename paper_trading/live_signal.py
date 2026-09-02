@@ -181,6 +181,37 @@ def main() -> int:
     exchange.load_markets()
     now_ms = exchange.milliseconds()
 
+    # --- Live stop check: setiap run, cek semua open positions vs live price ---
+    open_positions = conn.execute(
+        "SELECT id, pair, entry_price, units, stop_price, risk_amount FROM positions WHERE status='open'"
+    ).fetchall()
+    for p_id, pair, p_entry, p_units, p_stop, p_risk in open_positions:
+        try:
+            ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
+            live_price = ticker["last"]
+        except Exception:
+            log.warning("%s: gagal fetch live ticker untuk live_stop check", pair)
+            continue
+        if live_price is not None and live_price <= p_stop:
+            exit_price = live_price * (1 - slip)
+            proceeds = p_units * exit_price * (1 - fee - slip)
+            pnl = proceeds - p_units * p_entry
+            r = pnl / p_risk if p_risk else 0.0
+            conn.execute(
+                "UPDATE positions SET status='closed', exit_date=?, exit_price=?, exit_reason=?, pnl=?, r_multiple=? WHERE id=?",
+                (str(datetime.now(timezone.utc).date()), round(exit_price, 2),
+                 "live_stop", round(pnl, 2), round(r, 3), p_id),
+            )
+            set_cash(conn, cash + proceeds)
+            cash += proceeds
+            log.info("%s: LIVE_STOP triggered — live %.2f <= stop %.2f, pnl=%.2f r=%.3f", pair, live_price, p_stop, pnl, r)
+            send_alert(
+                f"[paper-trading] LIVE_STOP {pair}\n"
+                f"Live price: {live_price:.2f} <= Stop: {p_stop:.2f}\n"
+                f"Exit: {exit_price:.2f} | PnL: {pnl:+.2f} USD ({r:+.2f}R)"
+            )
+    conn.commit()
+
     for pair in strat["pairs"]:
       try:
         ohlcv = fetch_retry(lambda: exchange.fetch_ohlcv(pair, strat["timeframe"], limit=LOOKBACK_CANDLES))

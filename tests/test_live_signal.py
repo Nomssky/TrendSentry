@@ -113,7 +113,7 @@ def test_exit_closes_position_and_alert(tmp_path):
     conn.close()
     assert all(status == "closed" and reason in ("stop_loss", "live_stop") and pnl < 0 for _, status, reason, pnl in pos)
     assert cash > 990  # posisi ditutup, cash kembali (dikit) dari 1000
-    assert len(sent) == 2 and all("EXIT" in m for m in sent)
+    assert len(sent) == 2 and all("EXIT" in m or "LIVE_STOP" in m for m in sent)
 
 
 def test_idempotent_no_duplicate(tmp_path):
