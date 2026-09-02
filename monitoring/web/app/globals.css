@@ -33,5 +33,5 @@ body {
   0% { background-color: rgba(251, 113, 133, 0.25); }
   100% { background-color: transparent; }
 }
-.animate-flash-up { animation: flash-up 0.8s ease-out; }
-.animate-flash-down { animation: flash-down 0.8s ease-out; }
+.animate-flash-up { animation: flash-up 1s ease-out; }
+.animate-flash-down { animation: flash-down 1s ease-out; }

@@ -57,7 +57,7 @@ export default function LiveSection({
             if (flashTimer) clearTimeout(flashTimer);
             flashTimer = setTimeout(() => {
               if (!closed) setFlashes({});
-            }, 800);
+            }, 1000);
           }
         }
       } catch {
@@ -99,9 +99,9 @@ export default function LiveSection({
             const flashCls = flash === "up" ? "animate-flash-up" : flash === "down" ? "animate-flash-down" : "";
             const up = (p?.changePct ?? 0) >= 0;
             return (
-              <div key={pair} className={`rounded-xl border border-neutral-800 bg-neutral-900/60 px-3 py-2 sm:px-4 ${flashCls}`}>
+              <div key={pair} className="rounded-xl border border-neutral-800 bg-neutral-900/60 px-3 py-2 sm:px-4">
                 <div className="text-xs text-neutral-400">{pair}</div>
-                <div className="font-mono text-base sm:text-lg">
+                <div className={`font-mono text-base sm:text-lg ${flashCls}`}>
                   {p ? `$${p.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
                   {p?.changePct != null && (
                     <span className={`ml-1.5 text-xs sm:ml-2 sm:text-sm ${up ? "text-emerald-400" : "text-rose-400"}`}>
