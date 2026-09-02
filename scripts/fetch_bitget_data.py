@@ -121,9 +121,16 @@ def main():
             print(f"  NOT in markets. Similar: {found[:5]}", flush=True)
             continue
         m = exchange.markets[pair]
-        print(f"  market type={m.get('type')}, spot={m.get('spot')}, active={m.get('active')}", flush=True)
+        print(f"  market type={m.get('type')}, spot={m.get('spot')}, active={m.get('active')}, precision={m.get('precision',{}).get('amount')}", flush=True)
         df = fetch_pair(exchange, pair)
         if df.empty:
+            # Try direct API call for debugging
+            print(f"  DEBUG: trying direct fetch_ohlcv with different params...", flush=True)
+            try:
+                test = exchange.fetch_ohlcv(pair, '1d', limit=5)
+                print(f"  DEBUG: direct call returned {len(test)} candles: {test[:2]}", flush=True)
+            except Exception as e:
+                print(f"  DEBUG: direct call failed: {e}", flush=True)
             print(f"  SKIP: tidak ada data (0 candles fetched)", flush=True)
             continue
         path = save_csv(df, pair, "1d")
