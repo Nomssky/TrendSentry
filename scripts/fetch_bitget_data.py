@@ -53,6 +53,9 @@ def fetch_pair(exchange: ccxt.Exchange, symbol: str, timeframe: str = "1d") -> p
                     int(datetime(2021, 6, 1, tzinfo=timezone.utc).timestamp() * 1000),
                     int(datetime(2022, 1, 1, tzinfo=timezone.utc).timestamp() * 1000),
                     int(datetime(2023, 1, 1, tzinfo=timezone.utc).timestamp() * 1000),
+                    int(datetime(2024, 1, 1, tzinfo=timezone.utc).timestamp() * 1000),
+                    int(datetime(2024, 6, 1, tzinfo=timezone.utc).timestamp() * 1000),
+                    int(datetime(2025, 1, 1, tzinfo=timezone.utc).timestamp() * 1000),
                 ]
                 for retry_ms in retry_dates:
                     print(f"  {symbol}: retry from {datetime.fromtimestamp(retry_ms/1000, tz=timezone.utc).strftime('%Y-%m-%d')}...", flush=True)
