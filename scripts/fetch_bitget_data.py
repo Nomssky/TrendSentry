@@ -50,7 +50,7 @@ def fetch_pair(exchange: ccxt.Exchange, symbol: str, timeframe: str = "1d") -> p
 
         all_candles.extend(candles)
         last_ts = candles[-1][0]
-        print(f"  {symbol}: fetched {len(candles)} candles s/d {datetime.fromtimestamp(last_ts/1000, tz=timezone.utc).strftime('%Y-%m-%d')}")
+        print(f"  {symbol}: fetched {len(candles)} candles s/d {datetime.fromtimestamp(last_ts/1000, tz=timezone.utc).strftime('%Y-%m-%d')}", flush=True)
 
         if last_ts <= current_ms:
             break  # no progress
