@@ -24,3 +24,14 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes flash-up {
+  0% { background-color: rgba(52, 211, 153, 0.25); }
+  100% { background-color: transparent; }
+}
+@keyframes flash-down {
+  0% { background-color: rgba(251, 113, 133, 0.25); }
+  100% { background-color: transparent; }
+}
+.animate-flash-up { animation: flash-up 0.8s ease-out; }
+.animate-flash-down { animation: flash-down 0.8s ease-out; }
