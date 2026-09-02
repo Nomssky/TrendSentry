@@ -68,7 +68,6 @@ def get_cash(conn: sqlite3.Connection, cfg: dict) -> float:
 
 def set_cash(conn: sqlite3.Connection, cash: float) -> None:
     conn.execute("UPDATE meta SET value=? WHERE key='paper_cash'", (cash,))
-    conn.commit()
 
 
 def log_slippage(conn: sqlite3.Connection, exchange: ccxt.Exchange, pair: str) -> None:
@@ -80,7 +79,6 @@ def log_slippage(conn: sqlite3.Connection, exchange: ccxt.Exchange, pair: str) -
         "INSERT INTO slippage_log (timestamp, pair, bid, ask, mid, spread_pct) VALUES (?, ?, ?, ?, ?, ?)",
         (datetime.now(timezone.utc).isoformat(), pair, bid, ask, mid, round(spread_pct, 4)),
     )
-    conn.commit()
 
 
 def fetch_retry(fn, tries: int = 3, delay: float = 5.0):
@@ -184,6 +182,7 @@ def main() -> int:
     now_ms = exchange.milliseconds()
 
     for pair in strat["pairs"]:
+      try:
         ohlcv = fetch_retry(lambda: exchange.fetch_ohlcv(pair, strat["timeframe"], limit=LOOKBACK_CANDLES))
         df = pd.DataFrame(ohlcv, columns=["ts", "open", "high", "low", "close", "volume"])
         df["date"] = pd.to_datetime(df["ts"], unit="ms", utc=True).dt.date
@@ -221,8 +220,8 @@ def main() -> int:
         if pos:  # cek exit dulu (seperti backtest)
             p_id, p_entry, p_units, p_stop, p_risk = pos
             if close <= p_stop or close < don_lo:
-                ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
-                exit_price = ticker["last"] * (1 - slip)
+                # exit di harga close (bukan live ticker — konsisten dgn backtest)
+                exit_price = close * (1 - slip)
                 proceeds = p_units * exit_price * (1 - fee - slip)
                 pnl = proceeds - p_units * p_entry
                 r = pnl / p_risk if p_risk else 0.0
@@ -242,8 +241,8 @@ def main() -> int:
                     f"Alasan: {reason}"
                 )
             elif candle["open"] <= p_stop:  # gap stop: open <= stop (seperti backtest)
-                ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
-                exit_price = ticker["last"] * (1 - slip)
+                # exit di harga open (gap down — konsisten dgn backtest line 101)
+                exit_price = candle["open"] * (1 - slip)
                 proceeds = p_units * exit_price * (1 - fee - slip)
                 pnl = proceeds - p_units * p_entry
                 r = pnl / p_risk if p_risk else 0.0
@@ -262,14 +261,21 @@ def main() -> int:
                     f"Harga exit: {exit_price:.2f} | PnL: {pnl:+.2f} USD ({r:+.2f}R)\n"
                     f"Alasan: {reason}"
                 )
-        elif close > don_hi and n_open < risk["max_concurrent_positions"]:  # entry
+        # re-query n_open setelah exit (mungkin sudah berkurang)
+        n_open = conn.execute("SELECT COUNT(*) FROM positions WHERE status='open'").fetchone()[0]
+        if not pos and close > don_hi and n_open < risk["max_concurrent_positions"]:  # entry
             ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
             entry_price = ticker["last"] * (1 + slip)
             stop = close - strat["atr_stop_multiplier"] * atr_v
-            units = position_size(cash, entry_price, stop, risk["risk_per_trade_pct"])
+            try:
+                units = position_size(cash, entry_price, stop, risk["risk_per_trade_pct"])
+            except ValueError:
+                log.warning("%s: position_size error (stop >= entry?), skipping", pair)
+                units = 0.0
             cost = units * entry_price * (1 + fee)
             if cost > cash:
                 units = cash / (entry_price * (1 + fee)) if entry_price > 0 else 0.0
+                cost = units * entry_price * (1 + fee)  # recalculate after clamping
             if units > 0:
                 conn.execute(
                     "INSERT INTO positions (pair, entry_date, entry_price, units, stop_price, risk_amount) VALUES (?,?,?,?,?,?)",
@@ -279,7 +285,7 @@ def main() -> int:
                 cash -= cost
                 decision, signal = "ENTER", "LONG_ENTRY"
                 reason = f"close {close:.2f} > don_hi(20) {don_hi:.2f}"
-                log.info("%s: ENTER @%.2f units=%.4f stop=%.2f (risk 1%% = %.2f)", pair, entry_price, units, stop, cash * risk["risk_per_trade_pct"] / 100)
+                log.info("%s: ENTER @%.2f units=%.4f stop=%.2f risk=%.2f", pair, entry_price, units, stop, units * (entry_price - stop))
                 send_alert(
                     f"[paper-trading] ENTER {pair} ({d})\n"
                     f"Entry: {entry_price:.2f} | Units: {units:.4f}\n"
@@ -296,6 +302,10 @@ def main() -> int:
         )
         conn.commit()
         log.info("%s %s: %s %s (%s)", pair, d, signal, decision, reason)
+      except Exception:
+        log.exception("%s: error processing pair, skipping", pair)
+        conn.rollback()
+        continue
 
     credit_yield(conn, cfg)
     conn.close()
