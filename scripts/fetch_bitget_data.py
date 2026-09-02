@@ -42,10 +42,11 @@ def fetch_pair(exchange: ccxt.Exchange, symbol: str, timeframe: str = "1d") -> p
         try:
             candles = exchange.fetch_ohlcv(symbol, timeframe, since=current_ms, limit=1000)
         except Exception as e:
-            print(f"  WARN: {symbol} fetch gagal di {current_ms}: {e}")
+            print(f"  WARN: {symbol} fetch gagal di {current_ms}: {e}", flush=True)
             break
 
         if not candles:
+            print(f"  {symbol}: empty response at {datetime.fromtimestamp(current_ms/1000, tz=timezone.utc).strftime('%Y-%m-%d')}", flush=True)
             break
 
         all_candles.extend(candles)
@@ -83,17 +84,27 @@ def main():
     exchange = make_exchange()
     exchange.load_markets()
 
+    print(f"Bitget spot markets with USDT:", flush=True)
+    spot_usdt = [s for s in exchange.markets if s.endswith("/USDT") and exchange.markets[s].get("spot")]
+    print(f"  {sorted(spot_usdt)[:20]}...", flush=True)
+    print(f"  Total spot USDT: {len(spot_usdt)}", flush=True)
+
     for pair in pairs:
-        print(f"Fetching {pair}...")
+        print(f"Fetching {pair}...", flush=True)
         if pair not in exchange.markets:
-            print(f"  SKIP: {pair} tidak ada di Bitget")
+            # Try with USDT suffix variants
+            alt = pair.replace("/", "")
+            found = [s for s in exchange.markets if alt.replace("/", "") in s.replace("/", "")]
+            print(f"  NOT in markets. Similar: {found[:5]}", flush=True)
             continue
+        m = exchange.markets[pair]
+        print(f"  market type={m.get('type')}, spot={m.get('spot')}, active={m.get('active')}", flush=True)
         df = fetch_pair(exchange, pair)
         if df.empty:
-            print(f"  SKIP: tidak ada data")
+            print(f"  SKIP: tidak ada data (0 candles fetched)", flush=True)
             continue
         path = save_csv(df, pair, "1d")
-        print(f"  Saved: {path} ({len(df)} rows, {df['date'].iloc[0]} .. {df['date'].iloc[-1]})")
+        print(f"  Saved: {path} ({len(df)} rows, {df['date'].iloc[0]} .. {df['date'].iloc[-1]})", flush=True)
 
 
 if __name__ == "__main__":
