@@ -115,10 +115,13 @@ export default function LiveSection({
       let done = false;
       let socket: WebSocket | null = null;
       let openTimer: ReturnType<typeof setTimeout> | null = null;
+      let pingTimer: ReturnType<typeof setInterval> | null = null;
 
       const detach = () => {
         if (openTimer) clearTimeout(openTimer);
         openTimer = null;
+        if (pingTimer) clearInterval(pingTimer);
+        pingTimer = null;
         if (socket) {
           socket.onopen = null;
           socket.onclose = null;
@@ -153,6 +156,10 @@ export default function LiveSection({
         openTimer = null;
         setModeSafe("live");
         if (onSubscribe) onSubscribe(socket);
+        // Bitget requires ping every 30s or connection goes stale
+        pingTimer = setInterval(() => {
+          try { socket?.send("ping"); } catch { /* noop */ }
+        }, 30_000);
       };
       socket.onmessage = (ev) => {
         if (opened && !done) onFrame(String(ev.data));
@@ -175,8 +182,12 @@ export default function LiveSection({
     };
 
     const onBitgetFrame = (raw: string) => {
+      // eslint-disable-next-line no-console
+      console.log("[Bitget WS]", raw.slice(0, 300));
       try {
-        const msg = JSON.parse(raw) as { arg?: { symbol?: string }; data?: { lastPrice?: string; openPrice24h?: string }[] };
+        const msg = JSON.parse(raw);
+        // Handle pong response
+        if (raw === "pong") return;
         const symbol = msg.arg?.symbol;
         const d = msg.data?.[0];
         if (!symbol || !d?.lastPrice) return;
