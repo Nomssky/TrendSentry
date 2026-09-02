@@ -22,7 +22,7 @@ const SYMBOL_TO_PAIR: Record<string, string> = {
   ADAUSDT: "ADA/USDT",
   HYPEUSDT: "HYPE/USDT",
 };
-const BITGET_WS = "wss://api.bitget.com/v2/ws/public";
+const BITGET_WS = "wss://ws.bitget.com/v2/ws/public";
 const BITGET_REST = "https://api.bitget.com/api/v2/spot/market/tickers";
 
 function applyPrice(setPrices: React.Dispatch<React.SetStateAction<PriceMap>>, pair: string, price: number, open24: number | null) {
@@ -176,12 +176,12 @@ export default function LiveSection({
 
     const onBitgetFrame = (raw: string) => {
       try {
-        const msg = JSON.parse(raw) as { arg?: { instId?: string }; data?: { lastPr?: string; open24h?: string }[] };
-        const instId = msg.arg?.instId;
+        const msg = JSON.parse(raw) as { arg?: { symbol?: string }; data?: { lastPrice?: string; openPrice24h?: string }[] };
+        const symbol = msg.arg?.symbol;
         const d = msg.data?.[0];
-        if (!instId || !d?.lastPr) return;
-        const pair = SYMBOL_TO_PAIR[instId];
-        if (pair) applyPrice(setPrices, pair, Number(d.lastPr), d.open24h ? Number(d.open24h) : null);
+        if (!symbol || !d?.lastPrice) return;
+        const pair = SYMBOL_TO_PAIR[symbol];
+        if (pair) applyPrice(setPrices, pair, Number(d.lastPrice), d.openPrice24h ? Number(d.openPrice24h) : null);
       } catch { /* ignore */ }
     };
 
