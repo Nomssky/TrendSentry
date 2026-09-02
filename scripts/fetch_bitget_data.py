@@ -46,8 +46,31 @@ def fetch_pair(exchange: ccxt.Exchange, symbol: str, timeframe: str = "1d") -> p
             break
 
         if not candles:
-            print(f"  {symbol}: empty response at {datetime.fromtimestamp(current_ms/1000, tz=timezone.utc).strftime('%Y-%m-%d')}", flush=True)
-            break
+            # Retry from later date (listing mungkin lebih baru)
+            if current_ms == start_ms:
+                retry_dates = [
+                    int(datetime(2021, 1, 1, tzinfo=timezone.utc).timestamp() * 1000),
+                    int(datetime(2021, 6, 1, tzinfo=timezone.utc).timestamp() * 1000),
+                    int(datetime(2022, 1, 1, tzinfo=timezone.utc).timestamp() * 1000),
+                    int(datetime(2023, 1, 1, tzinfo=timezone.utc).timestamp() * 1000),
+                ]
+                for retry_ms in retry_dates:
+                    print(f"  {symbol}: retry from {datetime.fromtimestamp(retry_ms/1000, tz=timezone.utc).strftime('%Y-%m-%d')}...", flush=True)
+                    try:
+                        candles = exchange.fetch_ohlcv(symbol, timeframe, since=retry_ms, limit=1000)
+                    except Exception as e:
+                        print(f"  WARN: retry gagal: {e}", flush=True)
+                        continue
+                    if candles:
+                        current_ms = retry_ms
+                        print(f"  {symbol}: got {len(candles)} candles from retry", flush=True)
+                        break
+                if not candles:
+                    print(f"  {symbol}: empty response at all retry dates", flush=True)
+                    break
+            else:
+                print(f"  {symbol}: empty response at {datetime.fromtimestamp(current_ms/1000, tz=timezone.utc).strftime('%Y-%m-%d')}", flush=True)
+                break
 
         all_candles.extend(candles)
         last_ts = candles[-1][0]
