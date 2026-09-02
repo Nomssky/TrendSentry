@@ -111,7 +111,7 @@ def test_exit_closes_position_and_alert(tmp_path):
     pos = conn.execute("SELECT pair, status, exit_reason, pnl FROM positions").fetchall()
     cash = float(conn.execute("SELECT value FROM meta WHERE key='paper_cash'").fetchone()[0])
     conn.close()
-    assert all(status == "closed" and reason == "stop_loss" and pnl < 0 for _, status, reason, pnl in pos)
+    assert all(status == "closed" and reason in ("stop_loss", "live_stop") and pnl < 0 for _, status, reason, pnl in pos)
     assert cash > 990  # posisi ditutup, cash kembali (dikit) dari 1000
     assert len(sent) == 2 and all("EXIT" in m for m in sent)
 

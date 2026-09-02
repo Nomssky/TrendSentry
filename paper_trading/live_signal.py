@@ -219,7 +219,16 @@ def main() -> int:
 
         if pos:  # cek exit dulu (seperti backtest)
             p_id, p_entry, p_units, p_stop, p_risk = pos
-            if close <= p_stop or close < don_lo:
+            # Cek live price dulu — kalau sudah di bawah stop, paksa exit di close hari ini
+            live_price = None
+            try:
+                ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
+                live_price = ticker["last"]
+            except Exception:
+                log.warning("%s: gagal fetch live ticker untuk stop check", pair)
+
+            stopped_by_live = live_price is not None and live_price <= p_stop
+            if close <= p_stop or close < don_lo or stopped_by_live:
                 # exit di harga close (bukan live ticker — konsisten dgn backtest)
                 exit_price = close * (1 - slip)
                 proceeds = p_units * exit_price * (1 - fee - slip)
@@ -227,13 +236,19 @@ def main() -> int:
                 r = pnl / p_risk if p_risk else 0.0
                 conn.execute(
                     "UPDATE positions SET status='closed', exit_date=?, exit_price=?, exit_reason=?, pnl=?, r_multiple=? WHERE id=?",
-                    (d, round(exit_price, 2), "stop_loss" if close <= p_stop else "donchian_exit",
+                    (d, round(exit_price, 2),
+                     "live_stop" if stopped_by_live else ("stop_loss" if close <= p_stop else "donchian_exit"),
                      round(pnl, 2), round(r, 3), p_id),
                 )
                 set_cash(conn, cash + proceeds)
                 cash += proceeds
                 decision, signal = "EXIT", "LONG_EXIT"
-                reason = f"close {close:.2f} <= stop {p_stop:.2f}" if close <= p_stop else f"close {close:.2f} < don_lo(10) {don_lo:.2f}"
+                if stopped_by_live:
+                    reason = f"live price {live_price:.2f} <= stop {p_stop:.2f}"
+                elif close <= p_stop:
+                    reason = f"close {close:.2f} <= stop {p_stop:.2f}"
+                else:
+                    reason = f"close {close:.2f} < don_lo(10) {don_lo:.2f}"
                 log.info("%s: EXIT %s pnl=%.2f r=%.3f", pair, reason, pnl, r)
                 send_alert(
                     f"[paper-trading] EXIT {pair} ({d})\n"

@@ -24,13 +24,15 @@ const SYMBOL_TO_PAIR: Record<string, string> = {
   ADAUSDT: "ADA/USDT",
   HYPEUSDT: "HYPE/USDT",
 };
+// HYPE tidak ada di Binance — fetch dari Bitget REST langsung
+const BINANCE_PAIRS = PAIRS.filter((p) => p !== "HYPE/USDT");
 const BINANCE_WS =
   "wss://stream.binance.com:9443/stream?streams=" +
-  PAIRS.map((p) => p.replace("/", "").toLowerCase() + "@miniTicker").join("/");
+  BINANCE_PAIRS.map((p) => p.replace("/", "").toLowerCase() + "@miniTicker").join("/");
 const BITGET_WS = "wss://stream.bitget.com/v2/ws/public";
 const REST_URL =
   "https://data-api.binance.vision/api/v3/ticker/24hr?symbols=" +
-  encodeURIComponent(JSON.stringify(PAIRS.map((p) => p.replace("/", ""))));
+  encodeURIComponent(JSON.stringify(BINANCE_PAIRS.map((p) => p.replace("/", ""))));
 
 function applyPrice(setPrices: React.Dispatch<React.SetStateAction<PriceMap>>, pair: string, price: number, open24: number | null) {
   const changePct = open24 && open24 > 0 ? ((price - open24) / open24) * 100 : null;
