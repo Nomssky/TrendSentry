@@ -1,9 +1,7 @@
 "use client";
 
-// Harga realtime dengan rantai fallback (jaringan user bisa memblokir WS tertentu):
-// 1. WebSocket Binance (paling likuid)  2. WebSocket Bitget (venue konsisten)
-// 3. REST polling data-api.binance.vision tiap 10 detik (mode "delayed", terbukti
-//    accessible bahkan dari jaringan yang memblokir domain Binance/Bitget utama).
+// Harga realtime SEMUA dari Bitget (konsisten dengan venue eksekusi Fase 4).
+// 1. WebSocket Bitget (primary)  2. REST polling api.bitget.com tiap 10 detik (fallback).
 
 import { useEffect, useRef, useState } from "react";
 
@@ -24,15 +22,8 @@ const SYMBOL_TO_PAIR: Record<string, string> = {
   ADAUSDT: "ADA/USDT",
   HYPEUSDT: "HYPE/USDT",
 };
-// HYPE tidak ada di Binance — fetch dari Bitget REST langsung
-const BINANCE_PAIRS = PAIRS.filter((p) => p !== "HYPE/USDT");
-const BINANCE_WS =
-  "wss://stream.binance.com:9443/stream?streams=" +
-  BINANCE_PAIRS.map((p) => p.replace("/", "").toLowerCase() + "@miniTicker").join("/");
-const BITGET_WS = "wss://stream.bitget.com/v2/ws/public";
-const REST_URL =
-  "https://data-api.binance.vision/api/v3/ticker/24hr?symbols=" +
-  encodeURIComponent(JSON.stringify(BINANCE_PAIRS.map((p) => p.replace("/", ""))));
+const BITGET_WS = "wss://api.bitget.com/v2/ws/public";
+const BITGET_REST = "https://api.bitget.com/api/v2/spot/market/tickers";
 
 function applyPrice(setPrices: React.Dispatch<React.SetStateAction<PriceMap>>, pair: string, price: number, open24: number | null) {
   const changePct = open24 && open24 > 0 ? ((price - open24) / open24) * 100 : null;
@@ -83,18 +74,23 @@ export default function LiveSection({
       }
     };
 
-    // Sumber 3: REST polling (paling tahan blokir)
+    // Sumber 2: REST polling Bitget (fallback kalau WS gagal)
     const startPolling = () => {
       if (closed || pollTimer) return;
       setModeSafe("delayed");
       const poll = async () => {
         try {
-          const res = await fetch(REST_URL, { cache: "no-store" });
+          const res = await fetch(BITGET_REST, { cache: "no-store" });
           if (!res.ok) throw new Error(String(res.status));
-          const rows = (await res.json()) as { symbol: string; lastPrice: string; openPrice: string }[];
-          for (const r of rows) {
+          const json = (await res.json()) as { data?: { symbol: string; lastPr: string; change24h: string; open24h: string }[] };
+          for (const r of json.data ?? []) {
+            // Bitget symbol format: BTCUSDT (no slash)
             const pair = SYMBOL_TO_PAIR[r.symbol];
-            if (pair) applyPrice(setPrices, pair, Number(r.lastPrice), Number(r.openPrice));
+            if (pair) {
+              const last = Number(r.lastPr);
+              const open24 = Number(r.open24h);
+              applyPrice(setPrices, pair, last, open24 > 0 ? open24 : null);
+            }
           }
           if (!closed) setModeSafe("delayed");
         } catch {
@@ -178,16 +174,6 @@ export default function LiveSection({
       };
     };
 
-    const onBinanceFrame = (raw: string) => {
-      try {
-        const msg = JSON.parse(raw) as { data?: { s: string; c: string; o: string } };
-        const d = msg.data;
-        if (!d) return;
-        const pair = SYMBOL_TO_PAIR[d.s];
-        if (pair) applyPrice(setPrices, pair, Number(d.c), Number(d.o));
-      } catch { /* ignore */ }
-    };
-
     const onBitgetFrame = (raw: string) => {
       try {
         const msg = JSON.parse(raw) as { arg?: { instId?: string }; data?: { lastPr?: string; open24h?: string }[] };
@@ -204,18 +190,13 @@ export default function LiveSection({
       if (closed) return;
       setModeSafe("connecting");
       tryWebSocket(
-        BINANCE_WS,
-        onBinanceFrame,
-        null,
-        () => tryWebSocket(
-          BITGET_WS,
-          onBitgetFrame,
-          (socket) => socket.send(JSON.stringify({
-            op: "subscribe",
-            args: PAIRS.map((p) => ({ instType: "SPOT", channel: "ticker", instId: p.replace("/", "") })),
-          })),
-          startPolling,
-        ),
+        BITGET_WS,
+        onBitgetFrame,
+        (socket) => socket.send(JSON.stringify({
+          op: "subscribe",
+          args: PAIRS.map((p) => ({ instType: "SPOT", channel: "ticker", instId: p.replace("/", "") })),
+        })),
+        startPolling,
       );
     };
 
