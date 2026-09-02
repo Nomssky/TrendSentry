@@ -101,8 +101,8 @@ export default function LiveSection({
             return (
               <div key={pair} className="rounded-xl border border-neutral-800 bg-neutral-900/60 px-3 py-2 sm:px-4">
                 <div className="text-xs text-neutral-400">{pair}</div>
-                <div className={`font-mono text-base sm:text-lg ${flashCls}`}>
-                  {p ? `$${p.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}
+                <div className="font-mono text-base sm:text-lg">
+                  <span className={flashCls}>{p ? `$${p.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</span>
                   {p?.changePct != null && (
                     <span className={`ml-1.5 text-xs sm:ml-2 sm:text-sm ${up ? "text-emerald-400" : "text-rose-400"}`}>
                       {up ? "+" : ""}
