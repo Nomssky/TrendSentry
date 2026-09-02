@@ -1,0 +1,38 @@
+name: Fetch Bitget Historical Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      pair:
+        description: 'Pair to fetch (e.g. BTC/USDT). Leave empty for all pairs.'
+        required: false
+        default: ''
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install ccxt pandas pyyaml
+
+      - name: Fetch data from Bitget
+        run: |
+          if [ -n "${{ github.event.inputs.pair }}" ]; then
+            python scripts/fetch_bitget_data.py "${{ github.event.inputs.pair }}"
+          else
+            python scripts/fetch_bitget_data.py
+          fi
+
+      - name: Commit updated data
+        run: |
+          git config user.name "Kresna"
+          git config user.email "als.kresna@gmail.com"
+          git add data/historical/
+          git diff --cached --quiet || git commit -m "[data] update historical OHLCV dari Bitget"
+          git push
