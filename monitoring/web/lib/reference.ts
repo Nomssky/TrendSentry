@@ -1,17 +1,17 @@
-// Referensi statistik backtest 6 tahun, 5 pair (2020-08..2026-08) — sumber:
-// backtest/reports/research/capital_efficiency/trades_5pair_max5.csv (kriteria sukses v2, TASKS.md).
+// Referensi statistik backtest 6 tahun, 10 pair Bitget (2020-11..2026-09) — sumber:
+// backtest/run_backtest.py dengan data Bitget OHLCV.
 // JANGAN diubah tanpa re-run backtest.
 export const BACKTEST_REFERENCE = {
-  period: "2020-08 .. 2026-08 (6 tahun, 5 pair)",
-  winRatePct: 40.1,
-  avgWinR: 6.63,
-  avgLossR: -0.91,
-  avgR: 2.12,
-  profitFactor: 2.48,
-  maxDrawdownPct: -27.34,
-  totalReturnPct: 862.42,
-  trades: 147,
-  tradesPerYear: 24.5, // ~1 sinyal per 15 hari lintas 5 pair
+  period: "2020-11 .. 2026-09 (6 tahun, 10 pair Bitget)",
+  winRatePct: 33.72,
+  avgWinR: 3.59,
+  avgLossR: -0.89,
+  avgR: 0.62,
+  profitFactor: 1.68,
+  maxDrawdownPct: -58.49,
+  totalReturnPct: 155.56,
+  trades: 172,
+  tradesPerYear: 28.7, // ~1 sinyal per 12 hari lintas 10 pair
 } as const;
 
 export const EVAL_MIN_TRADES = 10; // kriteria sukses Fase 2: evaluasi hanya setelah >=10 trade tertutup

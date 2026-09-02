@@ -38,12 +38,7 @@ jobs:
         run: |
           git config user.name "Kresna"
           git config user.email "als.kresna@gmail.com"
-          git status
           git add data/historical/
-          git status
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "[data] update historical OHLCV dari Bitget"
-            git push
-          fi
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "[data] update historical OHLCV dari Bitget"
+          git push

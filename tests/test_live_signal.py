@@ -125,7 +125,7 @@ def test_idempotent_no_duplicate(tmp_path):
     n_pos = conn.execute("SELECT COUNT(*) FROM positions").fetchone()[0]
     n_yield = conn.execute("SELECT COUNT(*) FROM yield_log").fetchone()[0]
     conn.close()
-    assert n == 5 and n_pos == 0 and n_yield == 1  # 5 pair x 1 candle, yield 1x/hari, tidak dobel
+    assert n == 10 and n_pos == 0 and n_yield == 1  # 10 pair x 1 candle, yield 1x/hari, tidak dobel
 
 
 def test_yield_credit_once_per_day(tmp_path):

@@ -118,14 +118,13 @@ def run_backtest(dfs: dict[str, pd.DataFrame], cfg: dict) -> tuple[pd.DataFrame,
                 cash += proceeds
                 del pos[symbol]
 
-        mtm = cash + sum(
-            p["units"] * dfs[symbol]["close"].iloc[dfs[symbol].index.get_loc(d)]
-            for symbol, p in pos.items()
-        )
-        deployed = sum(
-            p["units"] * dfs[symbol]["close"].iloc[dfs[symbol].index.get_loc(d)]
-            for symbol, p in pos.items()
-        )
+        mtm = cash
+        deployed = 0.0
+        for symbol, p in pos.items():
+            if d in dfs[symbol].index:
+                price = dfs[symbol]["close"].iloc[dfs[symbol].index.get_loc(d)]
+                mtm += p["units"] * price
+                deployed += p["units"] * price
         equity = mtm
         curve.append({"date": d, "equity": round(equity, 2), "deployed_usd": round(deployed, 2)})
 

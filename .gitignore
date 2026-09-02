@@ -22,3 +22,4 @@ node_modules/
 
 # Backup lokal (off-disk backup lewat CI commit db/paper_trading.db)
 db/backups/
+.dump

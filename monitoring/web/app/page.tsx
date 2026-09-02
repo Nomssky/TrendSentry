@@ -65,7 +65,7 @@ export default async function Home() {
             <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">Long-only</span>
             <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">Risk 1%</span>
             <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">
-              5 pair: <span className="font-mono">{d.pairs.join(" ")}</span>
+              {d.pairs.length} pair: <span className="font-mono">{d.pairs.join(" ")}</span>
             </span>
             <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">Yield idle {d.yieldInfo.apyAssumed}% APY</span>
             <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">

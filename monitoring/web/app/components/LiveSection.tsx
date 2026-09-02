@@ -11,13 +11,18 @@ type OpenPos = { pair: string; units: number; entry_price: number; stop_price: n
 type PriceMap = Record<string, { price: number; changePct: number | null }>;
 type Mode = "connecting" | "live" | "delayed" | "offline";
 
-const PAIRS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT"];
+const PAIRS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "AVAX/USDT", "LINK/USDT", "DOGE/USDT", "ADA/USDT", "HYPE/USDT"];
 const SYMBOL_TO_PAIR: Record<string, string> = {
   BTCUSDT: "BTC/USDT",
   ETHUSDT: "ETH/USDT",
   SOLUSDT: "SOL/USDT",
   BNBUSDT: "BNB/USDT",
   XRPUSDT: "XRP/USDT",
+  AVAXUSDT: "AVAX/USDT",
+  LINKUSDT: "LINK/USDT",
+  DOGEUSDT: "DOGE/USDT",
+  ADAUSDT: "ADA/USDT",
+  HYPEUSDT: "HYPE/USDT",
 };
 const BINANCE_WS =
   "wss://stream.binance.com:9443/stream?streams=" +
