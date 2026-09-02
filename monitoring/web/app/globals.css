@@ -33,5 +33,5 @@ body {
   0% { color: #ff4444; text-shadow: 0 0 12px #ff4444, 0 0 24px rgba(255, 68, 68, 0.4); }
   100% { color: inherit; text-shadow: none; }
 }
-.animate-flash-up { animation: flash-up 1s ease-out; }
-.animate-flash-down { animation: flash-down 1s ease-out; }
+.animate-flash-up { animation: flash-up 3s ease-out; }
+.animate-flash-down { animation: flash-down 3s ease-out; }

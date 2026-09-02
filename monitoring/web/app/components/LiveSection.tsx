@@ -57,7 +57,7 @@ export default function LiveSection({
             if (flashTimer) clearTimeout(flashTimer);
             flashTimer = setTimeout(() => {
               if (!closed) setFlashes({});
-            }, 1000);
+            }, 3000);
           }
         }
       } catch {
