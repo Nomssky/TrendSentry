@@ -8,7 +8,6 @@ __pycache__/
 .env
 
 # Data & reports output
-data/historical/*.csv
 backtest/reports/*.csv
 backtest/reports/*.png
 
