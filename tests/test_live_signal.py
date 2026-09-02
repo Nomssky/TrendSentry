@@ -144,6 +144,29 @@ def test_yield_credit_once_per_day(tmp_path):
     assert n == 1
 
 
+def test_gap_stop_closes_position(tmp_path):
+    """Gap stop: candle open <= stop tapi close > stop -> close position via gap_stop."""
+    base = int(datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).timestamp() * 1000)
+    candles = []
+    for i in range(40):
+        ts = base - (40 - i) * DAY_MS
+        if i == 39:
+            candles.append([ts, 98.0, 103.0, 97.0, 102.0, 1.0])
+        else:
+            candles.append([ts, 100.0, 101.0, 99.0, 100.0, 1.0])
+    pre = [
+        ("BTC/USDT", "2026-08-01", 105.0, 0.5, 101.0, 2.0),
+    ]
+    sent = run_scenario(tmp_path / "t.db", candles, pre_positions=pre)
+    conn = sqlite3.connect(tmp_path / "t.db")
+    btc = conn.execute("SELECT pair, status, exit_reason, exit_price FROM positions WHERE pair='BTC/USDT'").fetchone()
+    conn.close()
+    assert btc is not None
+    assert btc[1] == "closed"
+    assert btc[2] == "gap_stop"
+    assert "GAP STOP" in sent[0]
+
+
 if __name__ == "__main__":
     if "--real" not in sys.argv:
         print("Regresi: pytest tests/test_live_signal.py")

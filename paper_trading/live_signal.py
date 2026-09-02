@@ -241,6 +241,27 @@ def main() -> int:
                     f"Harga exit: {exit_price:.2f} | PnL: {pnl:+.2f} USD ({r:+.2f}R)\n"
                     f"Alasan: {reason}"
                 )
+            elif candle["open"] <= p_stop:  # gap stop: open <= stop (seperti backtest)
+                ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
+                exit_price = ticker["last"] * (1 - slip)
+                proceeds = p_units * exit_price * (1 - fee - slip)
+                pnl = proceeds - p_units * p_entry
+                r = pnl / p_risk if p_risk else 0.0
+                conn.execute(
+                    "UPDATE positions SET status='closed', exit_date=?, exit_price=?, exit_reason=?, pnl=?, r_multiple=? WHERE id=?",
+                    (d, round(exit_price, 2), "gap_stop",
+                     round(pnl, 2), round(r, 3), p_id),
+                )
+                set_cash(conn, cash + proceeds)
+                cash += proceeds
+                decision, signal = "EXIT", "LONG_EXIT"
+                reason = f"open {candle['open']:.2f} <= stop {p_stop:.2f} (gap down)"
+                log.info("%s: GAP STOP %s pnl=%.2f r=%.3f", pair, reason, pnl, r)
+                send_alert(
+                    f"[paper-trading] GAP STOP {pair} ({d})\n"
+                    f"Harga exit: {exit_price:.2f} | PnL: {pnl:+.2f} USD ({r:+.2f}R)\n"
+                    f"Alasan: {reason}"
+                )
         elif close > don_hi and n_open < risk["max_concurrent_positions"]:  # entry
             ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
             entry_price = ticker["last"] * (1 + slip)
