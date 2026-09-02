@@ -192,6 +192,7 @@ def main() -> int:
         except Exception:
             log.warning("%s: gagal fetch live ticker untuk live_stop check", pair)
             continue
+        log.info("%s: live_stop check — live=%.2f stop=%.2f", pair, live_price, p_stop)
         if live_price is not None and live_price <= p_stop:
             exit_price = live_price * (1 - slip)
             proceeds = p_units * exit_price * (1 - fee - slip)
