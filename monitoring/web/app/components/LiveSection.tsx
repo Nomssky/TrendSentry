@@ -1,34 +1,15 @@
 "use client";
 
-// Harga realtime SEMUA dari Bitget (konsisten dengan venue eksekusi Fase 4).
-// 1. WebSocket Bitget (primary)  2. REST polling api.bitget.com tiap 10 detik (fallback).
+// Harga realtime dari Bitget via Next.js API route proxy (browser -> Vercel -> Bitget).
+// Tidak ada direct WS/REST dari browser ke Bitget (ISP blocking).
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 type OpenPos = { pair: string; units: number; entry_price: number; stop_price: number; entry_date?: string };
 type PriceMap = Record<string, { price: number; changePct: number | null }>;
-type Mode = "connecting" | "live" | "delayed" | "offline";
+type Mode = "loading" | "live" | "delayed" | "offline";
 
 const PAIRS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "AVAX/USDT", "LINK/USDT", "DOGE/USDT", "ADA/USDT", "HYPE/USDT"];
-const SYMBOL_TO_PAIR: Record<string, string> = {
-  BTCUSDT: "BTC/USDT",
-  ETHUSDT: "ETH/USDT",
-  SOLUSDT: "SOL/USDT",
-  BNBUSDT: "BNB/USDT",
-  XRPUSDT: "XRP/USDT",
-  AVAXUSDT: "AVAX/USDT",
-  LINKUSDT: "LINK/USDT",
-  DOGEUSDT: "DOGE/USDT",
-  ADAUSDT: "ADA/USDT",
-  HYPEUSDT: "HYPE/USDT",
-};
-const BITGET_WS = "wss://ws.bitget.com/v2/ws/public";
-const BITGET_REST = "https://api.bitget.com/api/v2/spot/market/tickers";
-
-function applyPrice(setPrices: React.Dispatch<React.SetStateAction<PriceMap>>, pair: string, price: number, open24: number | null) {
-  const changePct = open24 && open24 > 0 ? ((price - open24) / open24) * 100 : null;
-  setPrices((prev) => ({ ...prev, [pair]: { price, changePct } }));
-}
 
 export default function LiveSection({
   openPositions,
@@ -44,178 +25,32 @@ export default function LiveSection({
   yieldTotal?: number;
 }) {
   const [prices, setPrices] = useState<PriceMap>(fallbackPrices);
-  const [mode, setMode] = useState<Mode>("connecting");
-  const modeRef = useRef<Mode>("connecting");
+  const [mode, setMode] = useState<Mode>("loading");
 
   useEffect(() => {
     let closed = false;
-    let activeSocket: WebSocket | null = null;
-    let openTimer: ReturnType<typeof setTimeout> | null = null;
-    let retryTimer: ReturnType<typeof setTimeout> | null = null;
-    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    let timer: ReturnType<typeof setInterval> | null = null;
 
-    const setModeSafe = (m: Mode) => {
-      modeRef.current = m;
-      if (!closed) setMode(m);
-    };
-
-    const stopAll = () => {
-      if (openTimer) clearTimeout(openTimer);
-      openTimer = null;
-      if (pollTimer) clearInterval(pollTimer);
-      pollTimer = null;
-      if (activeSocket) {
-        activeSocket.onopen = null;
-        activeSocket.onclose = null;
-        activeSocket.onerror = null;
-        activeSocket.onmessage = null;
-        try { activeSocket.close(); } catch { /* noop */ }
-        activeSocket = null;
-      }
-    };
-
-    // Sumber 2: REST polling Bitget (fallback kalau WS gagal)
-    const startPolling = () => {
-      if (closed || pollTimer) return;
-      setModeSafe("delayed");
-      const poll = async () => {
-        try {
-          const res = await fetch(BITGET_REST, { cache: "no-store" });
-          if (!res.ok) throw new Error(String(res.status));
-          const json = (await res.json()) as { data?: { symbol: string; lastPr: string; change24h: string; open24h: string }[] };
-          for (const r of json.data ?? []) {
-            // Bitget symbol format: BTCUSDT (no slash)
-            const pair = SYMBOL_TO_PAIR[r.symbol];
-            if (pair) {
-              const last = Number(r.lastPr);
-              const open24 = Number(r.open24h);
-              applyPrice(setPrices, pair, last, open24 > 0 ? open24 : null);
-            }
-          }
-          if (!closed) setModeSafe("delayed");
-        } catch {
-          if (!closed) setModeSafe("offline");
-        }
-      };
-      void poll();
-      pollTimer = setInterval(poll, 10_000);
-    };
-
-    // Sumber 1 & 2: WebSocket — tiap percobaan SELF-CONTAINED (socket & timer lokal).
-    // Dulu socket & timer dibagi bersama -> timer percobaan lama bisa menutup koneksi
-    // percobaan berikutnya (race bug) -> sebagian harga tidak pernah terisi.
-    const tryWebSocket = (
-      url: string,
-      onFrame: (raw: string) => void,
-      onSubscribe: ((socket: WebSocket) => void) | null,
-      next: () => void,
-    ) => {
-      if (closed) return;
-      let opened = false;
-      let done = false;
-      let socket: WebSocket | null = null;
-      let openTimer: ReturnType<typeof setTimeout> | null = null;
-      let pingTimer: ReturnType<typeof setInterval> | null = null;
-
-      const detach = () => {
-        if (openTimer) clearTimeout(openTimer);
-        openTimer = null;
-        if (pingTimer) clearInterval(pingTimer);
-        pingTimer = null;
-        if (socket) {
-          socket.onopen = null;
-          socket.onclose = null;
-          socket.onerror = null;
-          socket.onmessage = null;
-          try { socket.close(); } catch { /* noop */ }
-          if (activeSocket === socket) activeSocket = null;
-          socket = null;
-        }
-      };
-      const finish = () => {
-        if (done) return;
-        done = true;
-        detach();
-        next();
-      };
-
+    const poll = async () => {
       try {
-        socket = new WebSocket(url);
+        const res = await fetch("/api/prices", { cache: "no-store" });
+        if (!res.ok) throw new Error(String(res.status));
+        const data = (await res.json()) as PriceMap;
+        if (!closed) {
+          setPrices(data);
+          setMode("live");
+        }
       } catch {
-        finish();
-        return;
+        if (!closed) setMode((prev) => (prev === "live" ? "delayed" : "offline"));
       }
-      activeSocket = socket;
-      openTimer = setTimeout(() => {
-        if (!opened) finish();  // tidak konek dalam 6 detik -> sumber berikutnya
-      }, 6000);
-      socket.onopen = () => {
-        if (done || !socket) return;
-        opened = true;
-        if (openTimer) clearTimeout(openTimer);
-        openTimer = null;
-        setModeSafe("live");
-        if (onSubscribe) onSubscribe(socket);
-        // Bitget requires ping every 30s or connection goes stale
-        pingTimer = setInterval(() => {
-          try { socket?.send("ping"); } catch { /* noop */ }
-        }, 30_000);
-      };
-      socket.onmessage = (ev) => {
-        if (opened && !done) onFrame(String(ev.data));
-      };
-      socket.onclose = () => {
-        if (done || closed) return;
-        if (opened) {
-          // koneksi hidup lalu putus -> coba seluruh rantai dari awal
-          done = true;
-          detach();
-          setModeSafe("connecting");
-          retryTimer = setTimeout(start, 5000);
-        } else {
-          finish();
-        }
-      };
-      socket.onerror = () => {
-        if (!opened) finish();
-      };
     };
 
-    const onBitgetFrame = (raw: string) => {
-      // eslint-disable-next-line no-console
-      console.log("[Bitget WS]", raw.slice(0, 300));
-      try {
-        const msg = JSON.parse(raw);
-        // Handle pong response
-        if (raw === "pong") return;
-        const symbol = msg.arg?.symbol;
-        const d = msg.data?.[0];
-        if (!symbol || !d?.lastPrice) return;
-        const pair = SYMBOL_TO_PAIR[symbol];
-        if (pair) applyPrice(setPrices, pair, Number(d.lastPrice), d.openPrice24h ? Number(d.openPrice24h) : null);
-      } catch { /* ignore */ }
-    };
+    void poll();
+    timer = setInterval(poll, 10_000);
 
-    const start = () => {
-      stopAll();
-      if (closed) return;
-      setModeSafe("connecting");
-      tryWebSocket(
-        BITGET_WS,
-        onBitgetFrame,
-        (socket) => socket.send(JSON.stringify({
-          op: "subscribe",
-          args: PAIRS.map((p) => ({ instType: "SPOT", channel: "ticker", instId: p.replace("/", "") })),
-        })),
-        startPolling,
-      );
-    };
-
-    start();
     return () => {
       closed = true;
-      stopAll();
-      if (retryTimer) clearTimeout(retryTimer);
+      if (timer) clearInterval(timer);
     };
   }, []);
 
@@ -223,10 +58,10 @@ export default function LiveSection({
     mode === "live"
       ? { cls: "bg-emerald-500/10 text-emerald-400", dot: "animate-pulse bg-emerald-400", text: "LIVE" }
       : mode === "delayed"
-        ? { cls: "bg-amber-500/10 text-amber-400", dot: "bg-amber-400", text: "DELAYED (poll 10s)" }
+        ? { cls: "bg-amber-500/10 text-amber-400", dot: "bg-amber-400", text: "DELAYED" }
         : mode === "offline"
           ? { cls: "bg-rose-500/10 text-rose-400", dot: "bg-rose-400", text: "OFFLINE" }
-          : { cls: "bg-neutral-800 text-neutral-400", dot: "bg-neutral-500", text: "menghubungkan..." };
+          : { cls: "bg-neutral-800 text-neutral-400", dot: "bg-neutral-500", text: "memuat..." };
 
   return (
     <section className="space-y-4">

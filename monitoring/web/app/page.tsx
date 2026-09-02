@@ -275,7 +275,7 @@ export default async function Home() {
 
       <footer className="pb-4 text-center text-xs text-neutral-600">
         Data strategi di-bake saat build dari DB yang di-commit bot harian jam 08:00 WIB (data: Bitget) · harga
-        realtime di browser: WS Binance → Bitget → REST polling (otomatis fallback) ·{" "}
+        realtime: Bitget via Vercel proxy (polling 10s) ·{" "}
         <a href="https://github.com/Nomssky/TrendSentry" className="underline hover:text-neutral-400">
           github.com/Nomssky/TrendSentry
         </a>
