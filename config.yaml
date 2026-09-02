@@ -8,6 +8,10 @@ strategy:
     - "SOL/USDT"
     - "BNB/USDT"
     - "XRP/USDT"
+    - "AVAX/USDT"
+    - "LINK/USDT"
+    - "DOGE/USDT"
+    - "ADA/USDT"
   timeframe: "1d"
   donchian_entry_period: 20        # hari, untuk breakout entry
   donchian_exit_period: 10         # hari, untuk exit/breakout arah berlawanan
