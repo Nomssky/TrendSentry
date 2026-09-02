@@ -66,7 +66,7 @@ export default function LiveSection({
     };
 
     void poll();
-    timer = setInterval(poll, 10_000);
+    timer = setInterval(poll, 3_000);
 
     return () => {
       closed = true;

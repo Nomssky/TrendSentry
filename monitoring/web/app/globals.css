@@ -26,12 +26,12 @@ body {
 }
 
 @keyframes flash-up {
-  0% { background-color: rgba(52, 211, 153, 0.25); }
-  100% { background-color: transparent; }
+  0% { color: #34d399; text-shadow: 0 0 8px rgba(52, 211, 153, 0.5); }
+  100% { color: inherit; text-shadow: none; }
 }
 @keyframes flash-down {
-  0% { background-color: rgba(251, 113, 133, 0.25); }
-  100% { background-color: transparent; }
+  0% { color: #fb7185; text-shadow: 0 0 8px rgba(251, 113, 133, 0.5); }
+  100% { color: inherit; text-shadow: none; }
 }
 .animate-flash-up { animation: flash-up 1s ease-out; }
 .animate-flash-down { animation: flash-down 1s ease-out; }
