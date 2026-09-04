@@ -167,6 +167,34 @@ def test_gap_stop_closes_position(tmp_path):
     assert "GAP STOP" in sent[0]
 
 
+def test_yield_backfill_multiple_days(tmp_path):
+    """Yield backfill: jika cron down beberapa hari, backfill otomatis meliputi hari yang terlewat."""
+    db = tmp_path / "y.db"
+    conn = sqlite3.connect(db)
+    conn.executescript((ROOT / "db" / "schema.sql").read_text())
+    conn.execute("INSERT INTO meta VALUES ('paper_cash', '1000')")
+    # Simulasi: last_yield_date adalah 3 hari lalu
+    from datetime import datetime, timedelta, timezone
+    three_days_ago = (datetime.now(timezone.utc) - timedelta(days=3)).date().isoformat()
+    conn.execute("INSERT INTO meta VALUES ('last_yield_date', ?)", (three_days_ago,))
+    conn.commit()
+    
+    # Run credit_yield
+    cfg = {"paper_trading": {"yield_apy_idle_cash": 5.0}}
+    ls.credit_yield(conn, cfg)
+    
+    # Check: dari 3 hari lalu sampai hari ini = 3 hari backfill (2 hari gap + 1 hari hari ini)
+    # last_yield_date = 3 hari lalu, backfill 2 hari gap, credit hari ini = 3 total
+    n = conn.execute("SELECT COUNT(*) FROM yield_log").fetchone()[0]
+    cash = float(conn.execute("SELECT value FROM meta WHERE key='paper_cash'").fetchone()[0])
+    conn.close()
+    
+    assert n == 3, f"Expected 3 yield entries (2 backfill + today), got {n}"
+    # Verify cash compounding: 1000 * (1 + 5%/365)^3
+    expected_cash = 1000.0 * ((1.0 + 5.0 / 100.0 / 365.0) ** 3)
+    assert abs(cash - expected_cash) < 0.01, f"Expected cash ~{expected_cash}, got {cash}"
+
+
 if __name__ == "__main__":
     if "--real" not in sys.argv:
         print("Regresi: pytest tests/test_live_signal.py")

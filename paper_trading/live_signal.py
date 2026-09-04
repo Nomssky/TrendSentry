@@ -195,7 +195,7 @@ def main() -> int:
         log.info("%s: live_stop check — live=%.2f stop=%.2f", pair, live_price, p_stop)
         if live_price is not None and live_price <= p_stop:
             exit_price = live_price * (1 - slip)
-            proceeds = p_units * exit_price * (1 - fee - slip)
+            proceeds = p_units * exit_price * (1 - fee)
             pnl = proceeds - p_units * p_entry
             r = pnl / p_risk if p_risk else 0.0
             conn.execute(
@@ -263,7 +263,7 @@ def main() -> int:
             if close <= p_stop or close < don_lo or stopped_by_live:
                 # exit di harga close (bukan live ticker — konsisten dgn backtest)
                 exit_price = close * (1 - slip)
-                proceeds = p_units * exit_price * (1 - fee - slip)
+                proceeds = p_units * exit_price * (1 - fee)
                 pnl = proceeds - p_units * p_entry
                 r = pnl / p_risk if p_risk else 0.0
                 conn.execute(
@@ -290,7 +290,7 @@ def main() -> int:
             elif candle["open"] <= p_stop:  # gap stop: open <= stop (seperti backtest)
                 # exit di harga open (gap down — konsisten dgn backtest line 101)
                 exit_price = candle["open"] * (1 - slip)
-                proceeds = p_units * exit_price * (1 - fee - slip)
+                proceeds = p_units * exit_price * (1 - fee)
                 pnl = proceeds - p_units * p_entry
                 r = pnl / p_risk if p_risk else 0.0
                 conn.execute(

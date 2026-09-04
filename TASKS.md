@@ -30,7 +30,7 @@
 > - [ ] **Evaluasi win rate/avg R HANYA setelah ≥ 10 trade tertutup.** Sebelum itu cukup pantau: sistem jalan tanpa crash, logging lengkap, slippage per-signal tercatat
 > - [ ] **Checkpoint:** review di minggu ke-4 (≈ 22 Sep, cek operasional saja) dan minggu ke-8 (≈ 20 Okt, final), lalu tiap 4 minggu selama window diperpanjang
 >
-> Referensi ekspektasi = **statistik backtest 5-pair 6 tahun** (win rate 40.1%, avg win +6.63R, avg loss -0.91R, PF 2.48, ~24.5 trade/tahun; laporan: `backtest/reports/research/capital_efficiency/`). **Caveat tercatat:** konfigurasi 5-pair mengandung survivorship bias (SOL/BNB/XRP dipilih sebagai survivor) & DD backtest -27.3% — angka referensi adalah ekspektasi atas, bukan janji. Perbandingan "periode yang sama" hanya valid untuk window yang overlap dengan backtest; untuk periode baru gunakan referensi di atas.
+> Referensi ekspektasi = **statistik backtest 10-pair 6 tahun** (win rate 33.72%, avg win +3.59R, avg loss -0.89R, PF 1.68, ~28.7 trade/tahun; laporan: backtest reports + monitoring/web/lib/reference.ts). **Caveat tercatat:** konfigurasi 10-pair mengandung survivorship bias (SOL/BNB/XRP dipilih sebagai survivor, + 7 pair lainnya) & DD backtest -58.49% — angka referensi adalah expectation atas basis historical data, bukan janji. Perbandingan "periode yang sama" hanya valid untuk window yang overlap dengan backtest; untuk periode baru gunakan referensi di atas.
 
 - [x] Buat `paper_trading/live_signal.py` — jalankan signal engine di data real-time (dummy execution, log only)
 - [x] Alerting: Telegram — crash/fetch gagal (setelah retry) **+ ENTER/EXIT** (dimajukan dari Fase 4; `monitoring/telegram_alert.py`, secrets di repo GitHub). HOLD tidak dinotifikasi (anti-spam harian)
