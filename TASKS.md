@@ -22,9 +22,9 @@
 > **Kriteria Sukses Fase 2 — v2 (didefinisikan 2026-08-14, diamendemen 2026-08-25: konfigurasi diubah 2→5 pair + max 5 posisi + simulasi yield 5% APY; sample paper di-RESET 2026-08-25, run time dihitung dari tanggal ini):**
 >
 > - [ ] **Durasi:** minimal 8 minggu berjalan tanpa crash/downtime signifikan (sejak reset 2026-08-25). Kalau di minggu ke-8 jumlah trade tertutup < 10, run LANJUT (bukan gagal/sukses) sampai sample ≥ 10 trade, dengan checkpoint review tiap 4 minggu
-> - [ ] **Frekuensi signal:** jumlah signal live vs ekspektasi historis 5 pair (~147 trade / 6 tahun ≈ 24.5 trade/tahun ≈ 1 sinyal per 15 hari lintas pair). Signal jauh lebih sering dari itu = curigai bug
+> - [ ] **Frekuensi signal:** jumlah signal live vs ekspektasi historis 10 pair (~28.7 trade/tahun ≈ 1 sinyal per 12 hari lintas pair). Signal jauh lebih sering dari itu = curigai bug
 > - [ ] **Slippage realita:** dicatat per trade (order book Bitget), dibandingkan asumsi backtest (0.05%). Rata-rata > 2x asumsi (0.10%) → position sizing perlu direvisi (update `config.yaml` + re-run backtest + catat alasan di `PLAN.md`)
-> - [ ] **R-multiple realized:** trade closed dibandingkan distribusi backtest 5-pair (win rate 40.1%, avg win +6.63R, avg loss -0.91R, PF 2.48, avg R 2.12). Deviasi besar (avg R < 0.5) = investigasi, bukan otomatis gagal
+> - [ ] **R-multiple realized:** trade closed dibandingkan distribusi backtest 10-pair (win rate 33.72%, avg win +3.59R, avg loss -0.89R, PF 1.68, avg R 0.62). Deviasi besar (avg R < 0.5) = investigasi, bukan otomatis gagal
 > - [ ] **Anti look-ahead di real-time:** cek log tiap signal — breakout terdeteksi tepat 1 hari setelah candle close (sama seperti backtest)
 > - [ ] **Tidak ada keputusan "strategi gagal" hanya karena flat beberapa minggu** — itu karakteristik yang sudah diverifikasi di backtest (frekuensi trade rendah, periode tanpa entry normal)
 > - [ ] **Evaluasi win rate/avg R HANYA setelah ≥ 10 trade tertutup.** Sebelum itu cukup pantau: sistem jalan tanpa crash, logging lengkap, slippage per-signal tercatat
@@ -39,7 +39,7 @@
 - [x] Backup DB harian (`db/backup_db.sh`, SQLite .backup, simpan 14 hari)
 - [x] Setup scheduler — **GitHub Actions** (`.github/workflows/paper-trading.yml`, cron `0 1 * * *` UTC native, trigger manual tersedia). Crontab lokal dibatalkan: laptop tidak always-on. State DB dipersistenkan via commit balik `db/paper_trading.db` ke repo tiap run = sekaligus backup off-disk harian
 - [x] Fix geo-block 451 (GitHub runner IP US diblokir api.binance.com): live signal pakai mirror `data-api.binance.vision` (data Binance sama persis, endpoint publik) + `fetchMarkets: ['spot']` (fapi futures keblokir terpisah)
-- [ ] Buat schema log (`db/schema.sql`) — simpan setiap signal, harga, keputusan, timestamp
+- [x] Buat schema log (`db/schema.sql`) — simpan setiap signal, harga, keputusan, timestamp
 - [ ] Ukur slippage real: log bid-ask spread order book di tiap signal (bandingkan dengan asumsi 0.05%)
 - [ ] Jalankan minimal 8 minggu, kumpulkan data
 - [ ] Buat script perbandingan performa live vs backtest periode yang sama

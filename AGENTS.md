@@ -37,7 +37,7 @@ Kamu bertindak sebagai:
 
 | Area | Tools | Konvensi |
 |---|---|---|
-| Backtest & signal engine | Python 3.11+, `ccxt`, `pandas`, `pandas-ta`, `vectorbt` | PEP8, type hints wajib di fungsi publik |
+| Backtest & signal engine | Python 3.11+, `ccxt`, `pandas`, `vectorbt` | PEP8, type hints wajib di fungsi publik |
 | Execution (Fase 4) | Node.js + TypeScript, `ccxt` | ESLint + Prettier, async/await (no callback hell) |
 | DB | SQLite (Fase 1-2), PostgreSQL (Fase 4 kalau perlu) | Migration tersimpan di `db/migrations/` |
 | Config | `.env` + `config.yaml` untuk parameter strategi (jangan hardcode di kode) | Semua magic number (period, multiplier) harus di config, bukan inline |

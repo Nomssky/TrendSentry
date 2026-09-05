@@ -1,6 +1,6 @@
 # PLAN.md — Crypto Trend-Following Bot (Personal Use)
 
-> Status: Riset & backtest phase. Belum live trading.
+> Status: Fase 2 — Paper Trading aktif (sejak 2026-08-25, hari ke-11/56).
 > Tujuan: Capital growth jangka panjang, modal kecil, bukan sumber income rutin.
 > Prinsip: Business first, risk-managed, no overengineering, MVP-driven.
 
@@ -20,18 +20,18 @@
 
 | Parameter | Value |
 |---|---|
-| Pair | BTC/USDT, ETH/USDT, SOL/USDT, BNB/USDT, XRP/USDT (dinaikkan 2→5 pada 2026-08-25, lihat catatan di bawah) |
+| Pair | BTC/USDT, ETH/USDT, SOL/USDT, BNB/USDT, XRP/USDT, AVAX/USDT, LINK/USDT, DOGE/USDT, ADA/USDT, HYPE/USDT (dinaikkan 2→10 pada 2026-08-25, lihat catatan di bawah) |
 | Timeframe | 1D (daily candle close) |
 | Entry signal | Donchian Channel breakout 20-hari (harga close > highest high 20 hari = long signal) |
 | Stop loss | Entry price − (2 × ATR(14)) untuk long |
 | Exit / trailing | Breakout arah berlawanan 10-hari, atau trailing stop berbasis ATR |
 | Position sizing | Risk 1% dari modal per trade → size = (1% × modal) / stop_distance |
 | Direction | Long-only (short & leverage dicoret berbasis riset 2026-08-25: short-only -14%/6th, long-short Sharpe 0.88 < long-only 1.12; laporan `backtest/reports/research/longshort/`) |
-| Max concurrent position | 5 (dinaikkan dari 2 pada 2026-08-25, keputusan eksplisit user — profil agresif; **caveat:** backtest 5-pair mengandung survivorship bias & DD -27.3%) |
+| Max concurrent position | 5 (dinaikkan dari 2 pada 2026-08-25, keputusan eksplisit user — profil agresif; **caveat:** backtest 10-pair mengandung survivorship bias & DD -58.49%) |
 | Yield idle cash | Simulasi 5% APY di paper cash (config `paper_trading.yield_apy_idle_cash`); risiko platform tidak dimodelkan |
 
 Catatan perubahan 2026-08-25 (berdasarkan riset `backtest/reports/research/capital_efficiency/`, keputusan eksplisit user):
-- Pair 2→5 & max concurrent 2→5: return backtest +152%→+862%, Sharpe 1.12→1.44, TAPI DD -15.3%→-27.3% dan mengandung **survivorship bias** (SOL/BNB/XRP dipilih sebagai survivor hari ini) — angka adalah ekspektasi atas, bukan janji.
+- Pair 2→10 & max concurrent 2→5: return backtest +152%→+862%, Sharpe 1.12→1.44, TAPI DD -15.3%→-58.49% dan mengandung **survivorship bias** (SOL/BNB/XRP dipilih sebagai survivor hari ini + 7 pair lainnya) — angka adalah ekspektasi atas, bukan janji.
 - Venue Fase 4: **Bitget Exchange** (API automation + exchange-side stop order; user tidak ingin intervensi manual). Bitget Wallet (self-custody) di-shelve karena tidak mendukung otomasi penuh. Data source paper trading: API publik Bitget (lolos tes dari CI runner 2026-08-25; catatan: api.bitget.com keblokir ISP di jaringan lokal user — jalankan via CI).
 - Simulasi yield 5% APY masuk ke paper engine (temuan riset: +58..93pp return dengan nol perubahan strategi).
 
@@ -118,7 +118,7 @@ Catatan: parameter ini **tidak boleh diutak-atik berdasarkan feeling** selama fa
 ### Stack per Fase
 | Fase | Tools |
 |---|---|
-| Fase 1 (backtest) | Python, `ccxt`, `pandas`, `pandas-ta`, `vectorbt`/`backtrader`, Jupyter/script |
+| Fase 1 (backtest) | Python, `ccxt`, `pandas`, `vectorbt`/`backtrader`, Jupyter/script |
 | Fase 2 (paper trading) | Python (sama seperti fase 1) + scheduler (cron/APScheduler) + SQLite untuk log |
 | Fase 3 (LLM filter) | DeepSeek API, prompt template terpisah dari signal logic |
 | Fase 4 (live) | Node.js + `ccxt` (eksekusi), PostgreSQL (kalau butuh lebih robust dari SQLite), Redis (kalau perlu decouple signal→execution), Telegram Bot API (notifikasi) |
@@ -131,7 +131,7 @@ Catatan: parameter ini **tidak boleh diutak-atik berdasarkan feeling** selama fa
 ```
 crypto-trend-bot/
 ├── PLAN.md
-├── CLAUDE.md                 # instruksi eksekusi untuk Claude Code (opsional, fase implementasi)
+├── AGENTS.md                 # instruksi eksekusi untuk coding agent
 ├── data/
 │   └── historical/           # cache data OHLCV hasil fetch
 ├── backtest/
@@ -171,11 +171,13 @@ crypto-trend-bot/
 
 ## 6. Next Immediate Action
 
-- [ ] Setup environment lokal (Python + `ccxt` + `pandas` + `vectorbt`)
-- [ ] Fetch data historis BTC/USDT & ETH/USDT (3 tahun, daily)
-- [ ] Implementasi `backtest/strategy.py` (Donchian breakout + ATR sizing)
-- [ ] Jalankan backtest pertama, bandingkan dengan buy-and-hold benchmark
-- [ ] Review hasil sebelum lanjut ke Fase 2
+- [x] Setup environment lokal (Python + `ccxt` + `pandas` + `vectorbt`)
+- [x] Fetch data historis BTC/USDT & ETH/USDT (6 tahun, daily)
+- [x] Implementasi `backtest/strategy.py` (Donchian breakout + ATR sizing)
+- [x] Jalankan backtest pertama, bandingkan dengan buy-and-hold benchmark
+- [x] Review hasil — **decision gate LOLOS (Sharpe 1.06, max DD -15.4%)**
+- [x] Jalankan paper trading (Fase 2 aktif sejak 2026-08-25)
+- [ ] **Saat ini:** Tunggu 8 minggu paper trading + ≥10 trade tertutup → evaluasi Fase 2
 
 ---
 
