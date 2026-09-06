@@ -29,7 +29,7 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "backtest"))
 sys.path.insert(0, str(ROOT / "monitoring"))
-from strategy import atr, donchian_high, donchian_low, position_size  # noqa: E402
+from strategy import atr, donchian_high, donchian_low, position_size, cluster_position_count  # noqa: E402
 from telegram_alert import send_alert  # noqa: E402
 
 DB_PATH = ROOT / "db" / "paper_trading.db"
@@ -207,9 +207,11 @@ def main() -> int:
             cash += proceeds
             log.info("%s: LIVE_STOP triggered — live %.2f <= stop %.2f, pnl=%.2f r=%.3f", pair, live_price, p_stop, pnl, r)
             send_alert(
-                f"[paper-trading] LIVE_STOP {pair}\n"
-                f"Live price: {live_price:.2f} <= Stop: {p_stop:.2f}\n"
-                f"Exit: {exit_price:.2f} | PnL: {pnl:+.2f} USD ({r:+.2f}R)"
+                f"🔴 LIVE_STOP {pair}\n"
+                f"Live price {live_price:.2f} ≤ Stop {p_stop:.2f}\n"
+                f"────────────────────\n"
+                f"Exit: {exit_price:.2f}\n"
+                f"PnL: {pnl:+.2f} USD · {r:+.2f}R"
             )
     conn.commit()
 
@@ -283,9 +285,11 @@ def main() -> int:
                     reason = f"close {close:.2f} < don_lo(10) {don_lo:.2f}"
                 log.info("%s: EXIT %s pnl=%.2f r=%.3f", pair, reason, pnl, r)
                 send_alert(
-                    f"[paper-trading] EXIT {pair} ({d})\n"
-                    f"Harga exit: {exit_price:.2f} | PnL: {pnl:+.2f} USD ({r:+.2f}R)\n"
-                    f"Alasan: {reason}"
+                    f"🟢 EXIT {pair}"
+                    + (f"\n{reason}" if not stopped_by_live else "")
+                    + f"\n────────────────────\n"
+                    f"Exit: {exit_price:.2f}\n"
+                    f"PnL: {pnl:+.2f} USD · {r:+.2f}R"
                 )
             elif candle["open"] <= p_stop:  # gap stop: open <= stop (seperti backtest)
                 # exit di harga open (gap down — konsisten dgn backtest line 101)
@@ -304,41 +308,56 @@ def main() -> int:
                 reason = f"open {candle['open']:.2f} <= stop {p_stop:.2f} (gap down)"
                 log.info("%s: GAP STOP %s pnl=%.2f r=%.3f", pair, reason, pnl, r)
                 send_alert(
-                    f"[paper-trading] GAP STOP {pair} ({d})\n"
-                    f"Harga exit: {exit_price:.2f} | PnL: {pnl:+.2f} USD ({r:+.2f}R)\n"
-                    f"Alasan: {reason}"
+                    f"🔴 GAP STOP {pair} ({d})\n"
+                    f"Open {candle['open']:.2f} ≤ Stop {p_stop:.2f}\n"
+                    f"────────────────────\n"
+                    f"Exit: {exit_price:.2f}\n"
+                    f"PnL: {pnl:+.2f} USD · {r:+.2f}R"
                 )
         # re-query n_open setelah exit (mungkin sudah berkurang)
         n_open = conn.execute("SELECT COUNT(*) FROM positions WHERE status='open'").fetchone()[0]
         if not pos and close > don_hi and n_open < risk["max_concurrent_positions"]:  # entry
-            ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
-            entry_price = ticker["last"] * (1 + slip)
-            stop = close - strat["atr_stop_multiplier"] * atr_v
-            try:
-                units = position_size(cash, entry_price, stop, risk["risk_per_trade_pct"])
-            except ValueError:
-                log.warning("%s: position_size error (stop >= entry?), skipping", pair)
-                units = 0.0
-            cost = units * entry_price * (1 + fee)
-            if cost > cash:
-                units = cash / (entry_price * (1 + fee)) if entry_price > 0 else 0.0
-                cost = units * entry_price * (1 + fee)  # recalculate after clamping
-            if units > 0:
-                conn.execute(
-                    "INSERT INTO positions (pair, entry_date, entry_price, units, stop_price, risk_amount) VALUES (?,?,?,?,?,?)",
-                    (pair, d, round(entry_price, 2), round(units, 6), round(stop, 2), round(units * (entry_price - stop), 2)),
-                )
-                set_cash(conn, cash - cost)
-                cash -= cost
-                decision, signal = "ENTER", "LONG_ENTRY"
-                reason = f"close {close:.2f} > don_hi(20) {don_hi:.2f}"
-                log.info("%s: ENTER @%.2f units=%.4f stop=%.2f risk=%.2f", pair, entry_price, units, stop, units * (entry_price - stop))
-                send_alert(
-                    f"[paper-trading] ENTER {pair} ({d})\n"
-                    f"Entry: {entry_price:.2f} | Units: {units:.4f}\n"
-                    f"Stop: {stop:.2f} (2xATR) | Risk: {units * (entry_price - stop):.2f} USD\n"
-                    f"Alasan: {reason}"
-                )
+            max_per_cluster = strat.get("max_positions_per_cluster", 0)
+            cluster_skip = False
+            if max_per_cluster > 0:
+                existing_open = conn.execute("SELECT pair FROM positions WHERE status='open'").fetchall()
+                pos_dict = {r[0]: {} for r in existing_open}
+                if cluster_position_count(pos_dict, pair) >= max_per_cluster:
+                    cluster_skip = True
+                    decision, reason, signal = "IGNORE", f"cluster limit ({max_per_cluster} per cluster)", "HOLD"
+                    log.info("%s: CLUSTER LIMIT skip — %s", pair, reason)
+            if not cluster_skip:
+                ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
+                entry_price = ticker["last"] * (1 + slip)
+                stop = close - strat["atr_stop_multiplier"] * atr_v
+                try:
+                    units = position_size(cash, entry_price, stop, risk["risk_per_trade_pct"])
+                except ValueError:
+                    log.warning("%s: position_size error (stop >= entry?), skipping", pair)
+                    units = 0.0
+                cost = units * entry_price * (1 + fee)
+                if cost > cash:
+                    units = cash / (entry_price * (1 + fee)) if entry_price > 0 else 0.0
+                    cost = units * entry_price * (1 + fee)
+                if units > 0:
+                    conn.execute(
+                        "INSERT INTO positions (pair, entry_date, entry_price, units, stop_price, risk_amount) VALUES (?,?,?,?,?,?)",
+                        (pair, d, round(entry_price, 2), round(units, 6), round(stop, 2), round(units * (entry_price - stop), 2)),
+                    )
+                    set_cash(conn, cash - cost)
+                    cash -= cost
+                    decision, signal = "ENTER", "LONG_ENTRY"
+                    reason = f"close {close:.2f} > don_hi(20) {don_hi:.2f}"
+                    log.info("%s: ENTER @%.2f units=%.4f stop=%.2f risk=%.2f", pair, entry_price, units, stop, units * (entry_price - stop))
+                    send_alert(
+                        f"🟢 ENTER {pair}\n"
+                        f"Close {close:.2f} > DonHi(20) {don_hi:.2f}\n"
+                        f"────────────────────\n"
+                        f"Entry: {entry_price:.2f}\n"
+                        f"Units: {units:.4f}\n"
+                        f"Stop: {stop:.2f} (2×ATR)\n"
+                        f"Risk: {units * (entry_price - stop):.2f} USD"
+                    )
 
         conn.execute(
             "INSERT INTO signals (candle_date, processed_at, pair, close_price, donchian_hi, donchian_lo, atr, signal, decision, reason) "
@@ -355,6 +374,22 @@ def main() -> int:
         continue
 
     credit_yield(conn, cfg)
+
+    # One-time patch notification: cluster limit aktif
+    max_per_cluster = strat.get("max_positions_per_cluster", 0)
+    if max_per_cluster > 0 and not conn.execute(
+        "SELECT 1 FROM meta WHERE key='patch_cluster_limit_sent'"
+    ).fetchone():
+        conn.execute("INSERT OR IGNORE INTO meta VALUES ('patch_cluster_limit_sent', '1')")
+        conn.commit()
+        send_alert(
+            "🟡 PATCH v1.1.0 — Cluster limit aktif\n"
+            "Max 2 posisi per cluster korelasi:\n"
+            "• Cluster A: BTC/ETH/SOL/BNB/XRP/AVAX/LINK/DOGE/ADA\n"
+            "• Cluster B: HYPE\n"
+            "DD target: -58% → -26% (lihat decision_log.md)"
+        )
+
     conn.close()
     return 0
 

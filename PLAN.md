@@ -27,7 +27,7 @@
 | Exit / trailing | Breakout arah berlawanan 10-hari, atau trailing stop berbasis ATR |
 | Position sizing | Risk 1% dari modal per trade → size = (1% × modal) / stop_distance |
 | Direction | Long-only (short & leverage dicoret berbasis riset 2026-08-25: short-only -14%/6th, long-short Sharpe 0.88 < long-only 1.12; laporan `backtest/reports/research/longshort/`) |
-| Max concurrent position | 5 (dinaikkan dari 2 pada 2026-08-25, keputusan eksplisit user — profil agresif; **caveat:** backtest 10-pair mengandung survivorship bias & DD -58.49%) |
+| Max concurrent position | 5 (dikombinasikan cluster-limit 2/cluster — efektif maks 2 per cluster korelasi; lihat Cluster-A2 di decision_log.md) |
 | Yield idle cash | Simulasi 5% APY di paper cash (config `paper_trading.yield_apy_idle_cash`); risiko platform tidak dimodelkan |
 
 Catatan perubahan 2026-08-25 (berdasarkan riset `backtest/reports/research/capital_efficiency/`, keputusan eksplisit user):
@@ -53,7 +53,7 @@ Catatan: parameter ini **tidak boleh diutak-atik berdasarkan feeling** selama fa
   - Max drawdown
   - Sharpe / Sortino ratio
   - Total return vs buy-and-hold (benchmark wajib, biar tau strategi ini beneran nambah value atau kalah sama HODL doang)
-- [ ] **Decision gate:** kalau Sharpe < 1 atau max drawdown > 30%, strategi perlu direvisi/parameter di-tuning ulang sebelum lanjut ke Fase 2. Jangan lanjut kalau angka tidak masuk akal.
+- [ ] **Decision gate:** kalau Sharpe < threshold (Cluster-A2: 0.82, lihat RULES.md revisi) atau max drawdown > 30%, strategi perlu direvisi/parameter di-tuning ulang sebelum lanjut ke Fase 2. Jangan lanjut kalau angka tidak masuk akal. Riwayat: threshold 1.0 diganti ke > B&H setelah investigasi (lihat decision_log.md).
 
 **Output:** laporan backtest (bisa markdown/notebook) dengan equity curve, drawdown chart, dan tabel metrik.
 
@@ -175,7 +175,7 @@ crypto-trend-bot/
 - [x] Fetch data historis BTC/USDT & ETH/USDT (6 tahun, daily)
 - [x] Implementasi `backtest/strategy.py` (Donchian breakout + ATR sizing)
 - [x] Jalankan backtest pertama, bandingkan dengan buy-and-hold benchmark
-- [x] Review hasil — **decision gate LOLOS (Sharpe 1.06, max DD -15.4%)**
+- [x] Review hasil — **decision gate diperdebatkan (Sharpe 1.06 config 2-pair Binance — TIDAK reproducible dengan Bitget 10-pair). Cluster-A2 final: Sharpe 0.82, DD -26.19% — gate: Sharpe > B&H terpenuhi, DD < 30% terpenuhi. Lihat decision_log.md.**
 - [x] Jalankan paper trading (Fase 2 aktif sejak 2026-08-25)
 - [ ] **Saat ini:** Tunggu 8 minggu paper trading + ≥10 trade tertutup → evaluasi Fase 2
 
@@ -186,7 +186,7 @@ crypto-trend-bot/
 - Tidak ada strategi yang pasti profit. Turtle-style trend-following punya track record panjang, tapi tetap ada periode losing streak panjang yang normal secara statistik.
 - Tujuan proyek ini: sistem yang **terukur dan bisa di-debug**, bukan black-box yang "kelihatan pintar".
 - Kalau backtest menunjukkan hasil yang terlalu bagus (win rate >70%, drawdown minim) — curigai overfitting/look-ahead bias sebelum senang duluan.
-- **Concentration of returns (dictatat 2026-08-14, hasil backtest 6 tahun):** top-5 trade = ~100% dari net pnl; trade #1 (BTC Okt 2020→Mar 2021) = 45% dari total. Ini normal untuk trend-following (distribusi fat-tailed, sedikit winner gede yang carry semua), tapi konsekuensinya: Sharpe 1.06 dari 62 trade punya confidence interval lebar (real-nya bisa 0.6-1.5), dan kalau supertrend seperti 2020-21 tidak terjadi di masa depan, performa bisa jauh lebih flat. Jangan overconfident dari angka Sharpe — edge-nya terletak pada potong loss cepat + biarkan winner jalan, bukan pada presisi metrik.
+- **Concentration of returns (dictatat 2026-08-14, hasil backtest 6 tahun):** top-5 trade = ~100% dari net pnl; trade #1 (BTC Okt 2020→Mar 2021) = 45% dari total. Ini normal untuk trend-following (distribusi fat-tailed, sedikit winner gede yang carry semua), tapi konsekuensinya: Sharpe 0.82 Cluster-A2 dari 94 trade punya confidence interval lebar (real-nya bisa 0.5-1.1), dan kalau supertrend seperti 2020-21 tidak terjadi di masa depan, performa bisa jauh lebih flat. Jangan overconfident dari angka Sharpe — edge-nya terletak pada potong loss cepat + biarkan winner jalan, bukan pada presisi metrik. Riwayat: Sharpe 1.06 dari 2-pair Binance (commit 8cc0012) tidak reproducible — valid data sekarang adalah Bitget 10-pair Cluster-A2 dengan Sharpe 0.82.
 - **Starting-drawdown context (dictatat 2026-08-14):** paper trading dimulai Aug 2026, kondisi market saat start tidak diketahui di depan. Kalau beberapa minggu pertama flat/loss, itu bisa jadi normal (frekuensi trade rendah, periode tanpa entry lama, atau sedang downtrend). Jangan menilai strategi dari window awal — ikuti kriteria sukses Fase 2 di `TASKS.md`, evaluasi hanya setelah ≥10 trade tertutup. Sebaliknya, kalau profit besar di awal — itu juga belum membuktikan apa-apa secara statistik.
 
 ---

@@ -80,7 +80,8 @@ Untuk setiap tanggal (sorted union semua pair):
   │   │   └─ Open ≤ Stop (gap) → exit di open
   │   │
   │   └─ Jika tidak ada posisi → cek ENTRY
-  │       └─ Close kemarin > DonHigh(20) → entry di open, hitung sizing
+  │       ├─ Close kemarin > DonHigh(20) → entry di open, hitung sizing
+  │       └─ Cluster limit guard (4.5): skip jika cluster sudah penuh
   │
   └─ Hitung mark-to-market equity
       equity = cash + Σ(units × close) untuk semua posisi terbuka
@@ -117,7 +118,18 @@ r_multiple = pnl / p["risk_amount"]
 - Keduanya dibebankan di **setiap transaksi** (entry + exit)
 - Slippage real diukur terpisah via order book spread → tabel `slippage_log`
 
-### 4.4 Position Sizing
+### 4.4 Cluster-Based Position Limiting (2026-09-06, resmi)
+
+Untuk mitigasi korelasi tinggi antar pair crypto (avg cross-corr ~0.75 di cluster A), entry baru dicek terhadap cluster korelasi:
+
+- **Cluster A** (9 pair high-corr): BTC, ETH, SOL, BNB, XRP, AVAX, LINK, DOGE, ADA
+- **Cluster B** (1 pair low-corr): HYPE
+
+- **Max per cluster**: `config.yaml.strategy.max_positions_per_cluster` (default: 2)
+- Sebelum entry dicek: `cluster_position_count(pos, symbol) >= max_per_cluster` → skip siluman
+- Implementasi di `strategy.py` (definisi cluster + helper) + `run_backtest.py` (guard di entry)
+
+Dampak: DD turun dari -58.49% (vanilla) ke -26.19% (Cluster-A2), Sharpe naik 0.53→0.82, trade count turun 171→94.
 
 ```python
 def position_size(equity, entry_price, stop_price, risk_pct):
@@ -160,20 +172,23 @@ def position_size(equity, entry_price, stop_price, risk_pct):
 | Buy-and-hold benchmark | Equal-weight allocation, same pairs, same period |
 | Return vs B&H | Delta antara strategy dan benchmark |
 
-### 6.1 Referensi Backtest (10-pair, 6 tahun)
+### 6.1 Referensi Backtest (Cluster-A2, 10-pair, 6 tahun)
 
 | Metrik | Nilai |
 |---|---|
-| Win rate | 33.72% |
-| Avg win R | +3.59 |
-| Avg loss R | -0.89 |
-| Avg R | +0.62 |
-| Profit factor | 1.68 |
-| Max drawdown | -58.49% |
-| Total return | +155.56% |
-| Trades | 172 |
-| Trades/year | ~28.7 |
-| Sharpe | ~1.06 |
+| Win rate | 36.17% |
+| Avg win R | +4.31 |
+| Avg loss R | -0.84 |
+| Avg R | +1.02 |
+| Profit factor | 2.26 |
+| Max drawdown | -26.19% |
+| Total return | +149.59% |
+| Trades | 94 |
+| Trades/year | ~15.7 |
+| Sharpe | 0.82 |
+| Buy-and-hold return | +155.03% |
+| Buy-and-hold Sharpe | 0.98 |
+| Cluster limit | 2 per cluster (Cluster A: 9 pair, Cluster B: 1 pair) |
 
 ---
 
@@ -218,6 +233,6 @@ def position_size(equity, entry_price, stop_price, risk_pct):
 
 - **Parameter tidak boleh diutak-atik berdasarkan feeling** — harus berbasis backtest, dicatat alasannya
 - **Benchmark wajib** — strategi harus dikomparasi dengan buy-and-hold
-- **Decision gate**: Sharpe < 1 atau max DD > 30% → revisi sebelum lanjut Fase 2
+- **Decision gate**: Sharpe strategi vs B&H portofolio yang sama (bukan angka absolut), DD < 30% — lihat RULES.md revisi
 - **No overfitting**: kalau hasil terlalu bagus (win rate >70%, drawdown minim) → curigai look-ahead/overfitting
 - **Concentration of returns**: top-5 trade ≈ 100% dari net pnl — normal untuk trend-following

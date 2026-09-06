@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import yaml
 
-from strategy import atr, donchian_high, donchian_low, position_size
+from strategy import atr, donchian_high, donchian_low, position_size, cluster_position_count
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("run_backtest")
@@ -82,6 +82,9 @@ def run_backtest(dfs: dict[str, pd.DataFrame], cfg: dict) -> tuple[pd.DataFrame,
             else:  # cek entry: breakout di close kemarin -> eksekusi open hari ini
                 prev = df.iloc[i - 1] if i > 0 else None
                 if prev is not None and prev["close"] > prev["don_hi"] and len(pos) < risk["max_concurrent_positions"]:
+                    max_per_cluster = strat.get("max_positions_per_cluster", 0)
+                    if max_per_cluster > 0 and cluster_position_count(pos, symbol) >= max_per_cluster:
+                        continue
                     entry_price = df["open"].iloc[i] * (1 + slip)
                     stop = prev["close"] - strat["atr_stop_multiplier"] * prev["atr"]
                     units = position_size(equity, entry_price, stop, risk["risk_per_trade_pct"])

@@ -1,12 +1,37 @@
-"""Strategy logic: Donchian breakout + ATR stop + position sizing.
+"""Strategy logic: Donchian breakout + ATR stop + position sizing + cluster limit.
 
 Pure pandas, tanpa look-ahead bias:
 - Breakout dicek terhadap 20 hari SEBELUMNYA (donchian di-shift 1).
 - ATR dihitung dari candle penutupan hari sinyal, bukan hari berikutnya.
+- Cluster-based position limiting untuk mitigasi korelasi (10 pair -> 2 cluster).
 Semua nilai period/multiplier dibaca dari config.yaml, bukan hardcode.
 """
 
 import pandas as pd
+
+# Cluster korelasi — hasil riset correlation_mitigation_experiment.md.
+# Cluster A: 9 pair high-corr (avg cross-corr ~0.75), Cluster B: HYPE (low-corr ~0.52).
+CLUSTERS = {
+    "A": {"BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT",
+          "AVAX/USDT", "LINK/USDT", "DOGE/USDT", "ADA/USDT"},
+    "B": {"HYPE/USDT"},
+}
+
+
+def cluster_name(symbol: str) -> str | None:
+    """Return cluster label for symbol, or None if unclustered."""
+    for name, members in CLUSTERS.items():
+        if symbol in members:
+            return name
+    return None
+
+
+def cluster_position_count(pos: dict[str, dict], symbol: str) -> int:
+    """Count open positions in the same cluster as symbol (pos itself excluded)."""
+    c = cluster_name(symbol)
+    if c is None:
+        return 0
+    return sum(1 for p_sym in pos if cluster_name(p_sym) == c)
 
 
 def atr(df: pd.DataFrame, period: int) -> pd.Series:

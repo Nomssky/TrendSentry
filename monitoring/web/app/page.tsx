@@ -64,6 +64,7 @@ export default async function Home() {
             <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">Donchian 20/10 + ATR(14)×2</span>
             <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">Long-only</span>
             <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">Risk 1%</span>
+            <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">Cluster limit 2/cluster</span>
             <span className="rounded-full bg-neutral-800/70 px-2 py-0.5">
               {d.pairs.length} pair: <span className="font-mono">{d.pairs.join(" ")}</span>
             </span>
@@ -85,6 +86,13 @@ export default async function Home() {
           Sinyal stale sengaja tidak dikejar — ini representasi jujur downtime.
         </div>
       )}
+
+      {/* Patch notes */}
+      <div className="rounded-2xl border border-sky-900/40 bg-sky-500/5 p-4 text-xs text-sky-300">
+        <span className="font-medium text-sky-200">Patch 2026-09-06:</span> Cluster-based position limiting resmi aktif
+        — maks 2 posisi per cluster korelasi. Cluster A (9 pair high-corr), Cluster B (HYPE). Tujuan: turunkan DD dari
+        -58% ke -26%. Lihat <a href="https://github.com/Nomssky/TrendSentry/blob/main/backtest/reports/decision_log.md" className="underline">decision_log.md</a>.
+      </div>
 
       <LiveSection
         openPositions={d.openPositions.map((p) => ({

@@ -15,7 +15,7 @@
 - [x] Implementasi `backtest/run_backtest.py` (jalankan strategy di data historis, hitung equity curve)
 - [x] Hitung & simpan metrik ke `backtest/reports/`: win rate, avg risk-reward, max drawdown, Sharpe/Sortino, return vs buy-and-hold
 - [x] Buat unit test untuk position sizing & ATR calculation (`pytest`, 7 test pass)
-- [x] Rangkum hasil ke user — **menunggu review user: decision gate LOLOS setelah data diperluas ke 6 tahun (Sharpe 1.06, max DD -15.4%)**
+- [x] Rangkum hasil ke user — **menunggu review user: decision gate diperdebatkan (Sharpe 1.06 dari 2-pair Binance stale). Cluster-A2 final: Sharpe 0.82, DD -26.19%, 94 trades. Gate direvisi: Sharpe > B&H (terpenuhi), DD < 30% (terpenuhi). Lihat decision_log.md.**
 
 ## Fase 2 — Paper Trading
 

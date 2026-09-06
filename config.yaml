@@ -19,10 +19,12 @@ strategy:
   atr_period: 14
   atr_stop_multiplier: 2.0         # stop loss = entry - (multiplier * ATR)
   direction: "long_only"           # long_only | long_short (short dicoret berbasis riset 2026-08-25)
+  max_positions_per_cluster: 2     # Cluster-A2 (2026-09-06): maks 2 posisi per cluster korelasi. Cluster A (9 pair high-corr) + Cluster B (HYPE).
+                                   # Mencegah overconcentration karena korelasi tinggi (avg cross-corr ~0.75). Hasil akhir: Sharpe 0.82, DD -26.19%.
 
 risk:
   risk_per_trade_pct: 1.0          # persen dari modal per trade
-  max_concurrent_positions: 5      # dinaikkan 2->5 (2026-08-25, riset capital efficiency, keputusan user agresif; caveat survivorship bias di PLAN.md Section 7)
+  max_concurrent_positions: 5      # dikombinasikan dengan cluster-limit 2/cluster -> effective max ditentukan oleh yg lebih ketat
   max_drawdown_circuit_breaker_pct: 15.0   # auto-pause kalau drawdown modal awal tembus ini
 
 paper_trading:

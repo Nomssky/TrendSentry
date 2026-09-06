@@ -90,15 +90,23 @@ def run_scenario(db_path: Path, candles, pre_positions=None, capture_alerts=True
 def test_enter_creates_position_and_alert(tmp_path):
     sent = run_scenario(tmp_path / "t.db", make_candles(spike=True))
     conn = sqlite3.connect(tmp_path / "t.db")
-    sig = conn.execute("SELECT pair, signal, decision FROM signals").fetchall()
+    sig = conn.execute("SELECT pair, signal, decision, reason FROM signals").fetchall()
     pos = conn.execute("SELECT pair, status FROM positions").fetchall()
     cash = float(conn.execute("SELECT value FROM meta WHERE key='paper_cash'").fetchone()[0])
     conn.close()
-    pairs = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT"]
-    assert all((p, "LONG_ENTRY", "ENTER") in sig for p in pairs)
+    # With cluster limit 2 per cluster: 2 from A (BTC, ETH) + 1 from B (HYPE) = 3
+    entries = [(p, s, d) for p, s, d, _ in sig if s == "LONG_ENTRY"]
+    # 10 pair: cluster A (9) max 2 enter, cluster B (HYPE) 1 enter = 3 total
+    assert len(entries) == 3, f"expected 3 entries (2A + 1B), got {len(entries)}"
+    entries_pairs = {p for p, _, _ in entries}
+    assert "HYPE/USDT" in entries_pairs  # cluster B has its own slot
     assert all(status == "open" for _, status in pos)
-    assert 0 < cash < 1000  # modal terpakai (+ yield harian kecil)
-    assert len(sent) == 5 and all("ENTER" in m for m in sent)
+    assert len(pos) == 3
+    # Remaining 7 cluster-A pairs skipped by cluster limit
+    skips = [r for r in sig if "cluster limit" in (r[3] or "")]
+    assert len(skips) == 7, f"expected 7 cluster limit skips, got {len(skips)}"
+    assert 0 < cash < 1000
+    assert len(sent) == 4 and sum(1 for m in sent if "ENTER" in m) == 3
 
 
 def test_exit_closes_position_and_alert(tmp_path):
@@ -113,7 +121,7 @@ def test_exit_closes_position_and_alert(tmp_path):
     conn.close()
     assert all(status == "closed" and reason in ("stop_loss", "live_stop") and pnl < 0 for _, status, reason, pnl in pos)
     assert cash > 990  # posisi ditutup, cash kembali (dikit) dari 1000
-    assert len(sent) == 2 and all("EXIT" in m or "LIVE_STOP" in m for m in sent)
+    assert len(sent) == 3 and sum(1 for m in sent if "EXIT" in m or "LIVE_STOP" in m) == 2
 
 
 def test_idempotent_no_duplicate(tmp_path):

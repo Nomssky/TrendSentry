@@ -1,17 +1,18 @@
-// Referensi statistik backtest 6 tahun, 10 pair Bitget (2020-11..2026-09) — sumber:
-// backtest/run_backtest.py dengan data Bitget OHLCV.
-// JANGAN diubah tanpa re-run backtest.
+// Referensi statistik backtest — Cluster-A2 (2026-09-06, official config):
+// 10 pair Bitget, Donchian 20/10, ATR(14)x2, long-only, risk 1%, cluster limit 2/cluster.
+// sumber: backtest/run_backtest.py (lihat backtest/reports/decision_log.md).
+// Sebelumnya: vanilla 10-pair (Sharpe 0.53, DD -58.49%, 172 trades) — distale 2026-09-06.
 export const BACKTEST_REFERENCE = {
-  period: "2020-11 .. 2026-09 (6 tahun, 10 pair Bitget)",
-  winRatePct: 33.72,
-  avgWinR: 3.59,
-  avgLossR: -0.89,
-  avgR: 0.62,
-  profitFactor: 1.68,
-  maxDrawdownPct: -58.49,
-  totalReturnPct: 155.56,
-  trades: 172,
-  tradesPerYear: 28.7, // ~1 sinyal per 12 hari lintas 10 pair
+  period: "2020-08 .. 2026-08 (6 tahun, 10 pair Bitget, Cluster-A2)",
+  winRatePct: 36.17,
+  avgWinR: 4.31,
+  avgLossR: -0.84,
+  avgR: 1.02,
+  profitFactor: 2.26,
+  maxDrawdownPct: -26.19,
+  totalReturnPct: 149.59,
+  trades: 94,
+  tradesPerYear: 15.7, // ~1 sinyal per 23 hari lintas 10 pair (cluster limit mengurangi frekuensi)
 } as const;
 
 export const EVAL_MIN_TRADES = 10; // kriteria sukses Fase 2: evaluasi hanya setelah >=10 trade tertutup
