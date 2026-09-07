@@ -75,6 +75,11 @@ Semua dependency baru harus ditambahkan ke `requirements.txt` / `package.json`, 
 - Jangan tambahkan fitur "auto-increase risk setelah winning streak" atau sejenisnya tanpa diminta dan didiskusikan risknya.
 - Jangan buat dashboard/fitur tambahan di luar `PLAN.md` tanpa dikonfirmasi dulu ke user (hindari scope creep).
 
+## 9. Frontend vs Backend
+
+- **Web dashboard (`monitoring/web/`) adalah read-only display layer.** Boleh ubah tampilan, layout, metrik yang ditampilkan. **DILARANG** mengubah logic backend (signal, entry/exit, risk, DB schema, config trading) dari file frontend.
+- Kalau butuh data/metric baru dari backend → tambahin di endpoint/logic backend dulu, baru tampilkan di frontend.
+
 ---
 
 *Update file ini kalau ada keputusan arsitektur baru yang perlu jadi konteks permanen buat agent.*
