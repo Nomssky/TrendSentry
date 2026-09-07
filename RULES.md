@@ -9,7 +9,7 @@
 
 | # | Aturan |
 |---|---|
-| 1 | **Personal use, bukan komersial** — ini capital growth project, bukan sumber income rutin |
+| 1 | **Capital growth & SaaS readiness** — TrendSentry menjual disiplin eksekusi; Cluster-A2 adalah dogfooding/bukti kredibilitas, bukan produk |
 | 2 | Strategi = **Turtle Trading (trend-following)**, bukan prediksi LLM. LLM hanya filter, bukan signal generator |
 | 3 | **Variance tinggi** — bisa naik, bisa turun, bukan gaji pasti |
 | 4 | **Tidak ada shortcut ke live** — harus backtest + paper trading dulu, baru live |

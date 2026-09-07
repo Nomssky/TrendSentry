@@ -2,7 +2,7 @@
 
 > File ini dibaca otomatis oleh OpenCode sebagai konteks kerja.
 > Referensi utama: `PLAN.md` (roadmap & risk rules), `TASKS.md` (checklist eksekusi per fase).
-> Proyek: Crypto trend-following bot, personal use, non-komersial.
+> Proyek: Crypto trend-following bot, berkembang ke arah SaaS.
 
 ---
 

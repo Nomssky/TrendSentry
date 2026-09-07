@@ -1,4 +1,4 @@
-# PLAN.md — Crypto Trend-Following Bot (Personal Use)
+# PLAN.md — Crypto Trend-Following Bot
 
 > Status: Fase 2 — Paper Trading aktif (sejak 2026-08-25, hari ke-11/56).
 > Tujuan: Capital growth jangka panjang, modal kecil, bukan sumber income rutin.
@@ -8,7 +8,7 @@
 
 ## 0. Konteks & Prinsip Dasar
 
-- Ini **bukan** proyek untuk dijual/dikomersialkan. Pure personal use.
+- Dimulai sebagai personal project, berkembang ke arah SaaS. TrendSentry menjual **disiplin eksekusi** — Cluster-A2 adalah bukti kredibilitas (dogfooding), bukan produk yang dijual.
 - Strategi berbasis **Turtle Trading (trend-following)**, bukan LLM-prediction. LLM dipakai sebagai **filter/reasoning layer**, bukan signal generator utama.
 - Framing yang benar: capital growth project dengan variance tinggi (bisa naik bisa turun), bukan gaji/income pasti.
 - Tidak ada shortcut ke Fase live trading sebelum backtest + paper trading menunjukkan angka yang masuk akal.
