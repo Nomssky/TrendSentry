@@ -195,5 +195,5 @@ crypto-trend-bot/
 
 - **Status:** tambahan di luar scope PLAN awal — diminta user untuk monitoring visual. Murni read-only, TIDAK menyentuh signal engine.
 - **Stack:** Next.js 16 static export + Tailwind + Recharts, di `monitoring/web/`, deploy ke Vercel Hobby (gratis).
-- **Data flow:** bot CI commit `db/paper_trading.db` harian → Vercel auto-redeploy → DB dibaca saat build (bukan runtime). Harga BTC/ETH & unrealized PnL = realtime via Binance public WebSocket dari browser.
+- **Data flow:** bot CI commit `db/paper_trading.db` harian → Vercel auto-redeploy → DB dibaca saat build (bukan runtime). Equity curve dari tabel `equity_log` (ditulis engine tiap run, definisi tunggal total=cash+MTM, venue tunggal Bitget — tanpa fetch harga saat build sejak 2026-09-08). Harga realtime & unrealized PnL via Bitget proxy `/api/prices` (polling 3s) dari browser.
 - **Isi:** health/gap detection (kriteria checkpoint), open positions + live PnL, equity curve, trade history, slippage real vs asumsi, win rate/avg R vs referensi backtest (dengan gate "evaluasi setelah ≥10 trade").

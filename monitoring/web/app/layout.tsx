@@ -1,29 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const display = Space_Grotesk({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const mono = JetBrains_Mono({
+  variable: "--font-mono-tech",
   subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "TrendSentry — Paper Trading Monitor",
-  description: "Monitoring paper trading bot trend-following (Donchian 20/10 + ATR, long-only, risk 1%)",
+  title: "TrendSentry — Discipline Execution for Systematic Crypto Trading",
+  description:
+    "TrendSentry is a discipline execution layer for systematic crypto trading. It runs your strategy, logs every decision, and holds you accountable — no emotion, no deviation, no FOMO.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="id"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-[#0a0a0b] text-neutral-200">{children}</body>
+    <html lang="en" className={`${display.variable} ${mono.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col bg-black font-display text-[#ebebeb]">{children}</body>
     </html>
   );
 }

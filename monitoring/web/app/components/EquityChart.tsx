@@ -1,53 +1,87 @@
 "use client";
 
+import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 type Point = { date: string; equity: number };
+type Range = "7D" | "30D" | "ALL";
 
 export default function EquityChart({
   data,
-  totalEquity,
   cash,
   positionsMTM,
   yieldTotal,
-}: { data: Point[]; totalEquity: number; cash: number; positionsMTM: number; yieldTotal: number }) {
-  const first = data[0]?.equity ?? 1000;
-  const last = data[data.length - 1]?.equity ?? 1000;
+  liveEquity = null,
+}: {
+  data: Point[];
+  cash: number;
+  positionsMTM: number;
+  yieldTotal: number;
+  liveEquity?: number | null;
+}) {
+  const [range, setRange] = useState<Range>("ALL");
+
+  const windowed = range === "ALL" ? data : data.slice(range === "30D" ? -30 : -7);
+  // The last (today) point moves with live MTM; history stays daily.
+  const shown =
+    liveEquity != null && windowed.length > 0
+      ? [...windowed.slice(0, -1), { ...windowed[windowed.length - 1], equity: liveEquity }]
+      : windowed;
+
+  const first = shown[0]?.equity ?? 1000;
+  const last = shown[shown.length - 1]?.equity ?? 1000;
   const up = last >= first;
-  const color = up ? "#34d399" : "#fb7185";
+  const color = up ? "#ccff00" : "#fb7185";
 
   return (
-    <div className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
-      <div className="mb-2 flex items-baseline justify-between">
-        <h2 className="text-sm font-medium text-neutral-300">Equity Curve (paper)</h2>
-        <span className="font-mono text-lg" style={{ color }}>
-          ${totalEquity.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+    <div className="glass noise-overlay rounded-[2rem] p-5 sm:p-6">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-white/40">Equity Curve (paper)</h2>
+        <div className="flex gap-1.5">
+          {(["7D", "30D", "ALL"] as Range[]).map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setRange(r)}
+              className={`rounded-full px-3 py-1 font-mono-tech text-[11px] transition ${
+                range === r
+                  ? "bg-[#ccff00]/15 text-[#ccff00]"
+                  : "bg-white/5 text-white/50 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+        {/* Last visible point — follows the 7D/30D/ALL window (incl. live tail) */}
+        <span className="font-mono-tech text-lg font-bold" style={{ color }}>
+          ${last.toLocaleString("en-US", { maximumFractionDigits: 2 })}
         </span>
       </div>
-      <div className="mb-2 text-[11px] text-neutral-500 flex gap-4 flex-wrap">
-        <span>Cash: <span className="font-mono text-neutral-300">${cash.toLocaleString("en-US", { maximumFractionDigits: 2 })}</span></span>
-        <span>Posisi: <span className="font-mono text-neutral-300">${positionsMTM.toLocaleString("en-US", { maximumFractionDigits: 2 })}</span></span>
-        <span>Yield: <span className="font-mono text-emerald-400">+${yieldTotal.toLocaleString("en-US", { maximumFractionDigits: 2 })}</span></span>
+      <div className="mb-2 flex flex-wrap gap-4 font-mono-tech text-[11px] text-white/40">
+        <span>Cash: <span className="text-white/70">${cash.toLocaleString("en-US", { maximumFractionDigits: 2 })}</span></span>
+        <span>Positions: <span className="text-white/70">${positionsMTM.toLocaleString("en-US", { maximumFractionDigits: 2 })}</span></span>
+        <span>Yield: <span className="text-[#ccff00]">+${yieldTotal.toLocaleString("en-US", { maximumFractionDigits: 2 })} (in cash)</span></span>
       </div>
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+          <AreaChart data={shown} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="eq" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={color} stopOpacity={0.35} />
                 <stop offset="100%" stopColor={color} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke="#262626" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fill: "#737373", fontSize: 11 }}
+              tick={{ fill: "#8f8f8f", fontSize: 11, fontFamily: "JetBrains Mono, monospace" }}
               tickLine={false}
-              axisLine={{ stroke: "#262626" }}
+              axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
               minTickGap={40}
             />
             <YAxis
-              tick={{ fill: "#737373", fontSize: 11 }}
+              tick={{ fill: "#8f8f8f", fontSize: 11, fontFamily: "JetBrains Mono, monospace" }}
               tickLine={false}
               axisLine={false}
               domain={["auto", "auto"]}
@@ -55,9 +89,9 @@ export default function EquityChart({
               width={70}
             />
             <Tooltip
-              contentStyle={{ background: "#171717", border: "1px solid #262626", borderRadius: 12, color: "#e5e5e5" }}
+              contentStyle={{ background: "#0c0c0c", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 16, color: "#ebebeb", fontFamily: "JetBrains Mono, monospace" }}
               formatter={(v) => [`$${Number(v).toLocaleString("en-US")}`, "Equity"]}
-              labelStyle={{ color: "#a3a3a3" }}
+              labelStyle={{ color: "#8f8f8f" }}
             />
             <Area type="monotone" dataKey="equity" stroke={color} strokeWidth={2} fill="url(#eq)" />
           </AreaChart>

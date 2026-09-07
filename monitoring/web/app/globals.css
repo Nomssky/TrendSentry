@@ -1,37 +1,129 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  --font-display: var(--font-display), "Space Grotesk", sans-serif;
+  --font-mono-tech: var(--font-mono-tech), "JetBrains Mono", monospace;
+  --color-obsidian: #0c0c0c;
+  --color-neon: #ccff00;
+  --color-glow: #10b981;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #000000;
+  color: #ebebeb;
+  font-family: var(--font-display), "Space Grotesk", sans-serif;
 }
 
+/* ---------- Obsidian & Lime primitives (see template spec) ---------- */
+
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.noise-overlay {
+  position: relative;
+}
+.noise-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0.15;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+.glow-sphere {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(120px);
+  pointer-events: none;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.float-anim {
+  animation: float 6s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(204, 255, 0, 0.9);
+  }
+  50% {
+    opacity: 0.4;
+    box-shadow: none;
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 2s infinite;
+}
+
+.neon-btn {
+  background-color: #ccff00;
+  color: #000000;
+  font-weight: 700;
+  border-radius: 9999px;
+  box-shadow: 0 0 30px rgba(204, 255, 0, 0.3);
+  transition:
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.neon-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 44px rgba(204, 255, 0, 0.45);
+}
+
+.tech-label {
+  font-family: var(--font-mono-tech), "JetBrains Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 10px;
+}
+
+/* dashboard live ticker flashes (kept from monitor) */
 @keyframes flash-up {
-  0% { color: #00ff88; text-shadow: 0 0 12px #00ff88, 0 0 24px rgba(0, 255, 136, 0.4); }
-  100% { color: inherit; text-shadow: none; }
+  0% {
+    color: #00ff88;
+    text-shadow: 0 0 12px #00ff88, 0 0 24px rgba(0, 255, 136, 0.4);
+  }
+  100% {
+    color: inherit;
+    text-shadow: none;
+  }
 }
 @keyframes flash-down {
-  0% { color: #ff4444; text-shadow: 0 0 12px #ff4444, 0 0 24px rgba(255, 68, 68, 0.4); }
-  100% { color: inherit; text-shadow: none; }
+  0% {
+    color: #ff4444;
+    text-shadow: 0 0 12px #ff4444, 0 0 24px rgba(255, 68, 68, 0.4);
+  }
+  100% {
+    color: inherit;
+    text-shadow: none;
+  }
 }
-.animate-flash-up { animation: flash-up 3s ease-out; }
-.animate-flash-down { animation: flash-down 3s ease-out; }
+.animate-flash-up {
+  animation: flash-up 3s ease-out;
+}
+.animate-flash-down {
+  animation: flash-down 3s ease-out;
+}

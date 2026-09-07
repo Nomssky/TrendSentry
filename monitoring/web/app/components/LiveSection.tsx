@@ -1,34 +1,45 @@
 "use client";
 
-// Harga realtime dari Bitget via Next.js API route proxy (browser -> Vercel -> Bitget).
-// Flash merah/hijau saat harga berubah dibanding poll sebelumnya.
+// Realtime prices from Bitget via Next.js API route proxy (browser -> Vercel -> Bitget).
+// Polls every 3s, flashes on change, and reports the fresh snapshot up via onTick
+// so hero + chart move off the SAME numbers (single poller, no drift).
 
 import { useEffect, useRef, useState } from "react";
 
-type OpenPos = { pair: string; units: number; entry_price: number; stop_price: number; entry_date?: string };
-type PriceMap = Record<string, { price: number; changePct: number | null }>;
-type Mode = "loading" | "live" | "delayed" | "offline";
+export type LivePriceMap = Record<string, { price: number; changePct: number | null }>;
+export type LiveMode = "loading" | "live" | "delayed" | "offline";
 type FlashDir = "up" | "down" | null;
+
+export type BoardPosition = {
+  pair: string;
+  units: number;
+  entry_price: number;
+  stop_price: number;
+  entry_date: string;
+};
 
 const PAIRS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "AVAX/USDT", "LINK/USDT", "DOGE/USDT", "ADA/USDT", "HYPE/USDT"];
 
+function fmt(n: number, digits = 2) {
+  return n.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
 export default function LiveSection({
   openPositions,
-  fallbackPrices,
-  cash = 0,
-  totalEquity = 0,
-  yieldTotal = 0,
+  liveTotal,
+  onTick,
 }: {
-  openPositions: OpenPos[];
-  fallbackPrices: PriceMap;
-  cash?: number;
-  totalEquity?: number;
-  yieldTotal?: number;
+  openPositions: BoardPosition[];
+  liveTotal: number;
+  onTick?: (prices: LivePriceMap, mode: LiveMode) => void;
 }) {
-  const [prices, setPrices] = useState<PriceMap>(fallbackPrices);
-  const [mode, setMode] = useState<Mode>("loading");
+  const [prices, setPrices] = useState<LivePriceMap>({});
+  const [mode, setMode] = useState<LiveMode>("loading");
   const [flashes, setFlashes] = useState<Record<string, FlashDir>>({});
-  const prevPrices = useRef<PriceMap>(fallbackPrices);
+  const [now, setNow] = useState<number | null>(null); // refreshed on each poll tick
+  const [detail, setDetail] = useState<BoardPosition | null>(null);
+  const prevPrices = useRef<LivePriceMap>({});
+  const modeRef = useRef<LiveMode>("loading");
 
   useEffect(() => {
     let closed = false;
@@ -39,7 +50,7 @@ export default function LiveSection({
       try {
         const res = await fetch("/api/prices", { cache: "no-store" });
         if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as PriceMap;
+        const data = (await res.json()) as LivePriceMap;
         if (!closed) {
           const newFlashes: Record<string, FlashDir> = {};
           for (const pair of PAIRS) {
@@ -51,7 +62,10 @@ export default function LiveSection({
           }
           prevPrices.current = data;
           setPrices(data);
+          setNow(Date.now());
+          modeRef.current = "live";
           setMode("live");
+          onTick?.(data, "live");
           if (Object.keys(newFlashes).length > 0) {
             setFlashes(newFlashes);
             if (flashTimer) clearTimeout(flashTimer);
@@ -61,7 +75,13 @@ export default function LiveSection({
           }
         }
       } catch {
-        if (!closed) setMode((prev) => (prev === "live" ? "delayed" : "offline"));
+        if (!closed) {
+          const next: LiveMode = modeRef.current === "live" ? "delayed" : "offline";
+          modeRef.current = next;
+          setNow(Date.now());
+          setMode(next);
+          onTick?.(prevPrices.current, next);
+        }
       }
     };
 
@@ -73,22 +93,47 @@ export default function LiveSection({
       if (timer) clearInterval(timer);
       if (flashTimer) clearTimeout(flashTimer);
     };
-  }, []);
+  }, [onTick]);
+
+  // Close detail popup on Escape
+  useEffect(() => {
+    if (!detail) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDetail(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [detail]);
 
   const badge =
     mode === "live"
-      ? { cls: "bg-emerald-500/10 text-emerald-400", dot: "animate-pulse bg-emerald-400", text: "LIVE" }
+      ? { cls: "bg-[#ccff00]/10 text-[#ccff00]", dot: "pulse-dot bg-[#ccff00]", text: "LIVE" }
       : mode === "delayed"
         ? { cls: "bg-amber-500/10 text-amber-400", dot: "bg-amber-400", text: "DELAYED" }
         : mode === "offline"
           ? { cls: "bg-rose-500/10 text-rose-400", dot: "bg-rose-400", text: "OFFLINE" }
-          : { cls: "bg-neutral-800 text-neutral-400", dot: "bg-neutral-500", text: "memuat..." };
+          : { cls: "bg-white/10 text-white/50", dot: "bg-white/40", text: "LOADING" };
+
+  const calc = (pos: BoardPosition) => {
+    const price = prices[pos.pair]?.price ?? pos.entry_price;
+    const invested = pos.units * pos.entry_price;
+    const marketValue = pos.units * price;
+    const unreal = marketValue - invested;
+    const up = unreal >= 0;
+    const pnlPct = invested > 0 ? (unreal / invested) * 100 : 0;
+    const portfolioPct = liveTotal > 0 ? (marketValue / liveTotal) * 100 : 0;
+    const daysOpen =
+      pos.entry_date && now !== null ? Math.floor((now - new Date(pos.entry_date).getTime()) / 86400000) : null;
+    return { price, invested, marketValue, unreal, up, pnlPct, portfolioPct, daysOpen };
+  };
+
+  const d = detail ? calc(detail) : null;
 
   return (
     <section className="space-y-4">
       {/* Live ticker */}
       <div className="space-y-3">
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${badge.cls}`}>
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono-tech text-[11px] font-medium ${badge.cls}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
           {badge.text}
         </span>
@@ -99,12 +144,12 @@ export default function LiveSection({
             const flashCls = flash === "up" ? "animate-flash-up" : flash === "down" ? "animate-flash-down" : "";
             const up = (p?.changePct ?? 0) >= 0;
             return (
-              <div key={pair} className="rounded-xl border border-neutral-800 bg-neutral-900/60 px-3 py-2 sm:px-4">
-                <div className="text-xs text-neutral-400">{pair}</div>
-                <div className="font-mono text-base sm:text-lg">
-                  <span className={flashCls}>{p ? `$${p.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</span>
+              <div key={pair} className="glass rounded-2xl px-3 py-2 sm:px-4">
+                <div className="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-white/40">{pair}</div>
+                <div className="font-mono-tech text-base sm:text-lg">
+                  <span className={flashCls}>{p ? `$${fmt(p.price)}` : "—"}</span>
                   {p?.changePct != null && (
-                    <span className={`ml-1.5 text-xs sm:ml-2 sm:text-sm ${up ? "text-emerald-400" : "text-rose-400"}`}>
+                    <span className={`ml-1.5 text-xs sm:ml-2 sm:text-sm ${up ? "text-[#ccff00]" : "text-rose-400"}`}>
                       {up ? "+" : ""}
                       {p.changePct.toFixed(2)}%
                     </span>
@@ -116,59 +161,108 @@ export default function LiveSection({
         </div>
       </div>
 
-      {/* Open positions + unrealized PnL realtime */}
+      {/* Open positions — compact cards + detail popup */}
       {openPositions.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-neutral-800 bg-neutral-900/40 p-6 text-sm text-neutral-400">
-          Tidak ada posisi open — bot menunggu breakout 20 hari. Normal untuk strategi ini
-          (ekspektasi ~1 sinyal per 15 hari lintas 5 pair), bukan sistem mati.
+        <div className="rounded-[2rem] border border-dashed border-white/15 bg-white/[0.02] p-6 text-sm text-white/50 backdrop-blur">
+          No open positions — the bot is waiting for a 20-day breakout. Normal for this strategy
+          (expected ~1 signal per 15 days across pairs), not a dead system.
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {openPositions.map((pos) => {
-            const p = prices[pos.pair];
-            const price = p?.price ?? pos.entry_price;
-            const invested = pos.units * pos.entry_price;
-            const marketValue = pos.units * price;
-            const unreal = marketValue - invested;
-            const up = unreal >= 0;
-            const pnlPct = invested > 0 ? (unreal / invested) * 100 : 0;
-            const portfolioPct = totalEquity > 0 ? (marketValue / totalEquity) * 100 : 0;
-            const daysOpen = pos.entry_date ? Math.floor((Date.now() - new Date(pos.entry_date).getTime()) / 86400000) : null;
+            const c = calc(pos);
+            const flash = flashes[pos.pair];
+            const flashCls = flash === "up" ? "animate-flash-up" : flash === "down" ? "animate-flash-down" : "";
             return (
-              <div key={pos.pair} className="rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4">
+              <div key={pos.pair} className="glass noise-overlay rounded-[2rem] p-5">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium">{pos.pair}</span>
-                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">OPEN</span>
+                  <span className="text-lg font-bold tracking-tight">{pos.pair}</span>
+                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-mono-tech text-[11px] text-amber-400">OPEN</span>
                 </div>
-                {daysOpen !== null && (
-                  <div className="mt-1 text-xs text-neutral-500">Hari ke-{daysOpen} sejak entry ({pos.entry_date})</div>
-                )}
-                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                  <span className="text-neutral-400">Entry</span>
-                  <span className="text-right font-mono">{pos.entry_price.toLocaleString("en-US")}</span>
-                  <span className="text-neutral-400">Stop (2xATR)</span>
-                  <span className="text-right font-mono text-rose-400">{pos.stop_price.toLocaleString("en-US")}</span>
-                  <span className="text-neutral-400">Units</span>
-                  <span className="text-right font-mono">{pos.units.toFixed(4)}</span>
-                  <span className="text-neutral-400">Invested</span>
-                  <span className="text-right font-mono">${invested.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  <span className="text-neutral-400">Market Value</span>
-                  <span className="text-right font-mono">${marketValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  <span className="text-neutral-400">Unrealized PnL</span>
-                  <span className={`text-right font-mono text-lg ${up ? "text-emerald-400" : "text-rose-400"}`}>
-                    {up ? "+" : ""}
-                    {unreal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                <p className="mt-1 font-mono-tech text-[11px] text-white/40">
+                  {c.daysOpen !== null ? `DAY ${c.daysOpen} SINCE ENTRY (${pos.entry_date})` : `SINCE ${pos.entry_date}`}
+                </p>
+                <p className="tech-label mt-4 text-white/40">UNREALIZED PNL</p>
+                <p className={`font-mono-tech text-3xl font-bold tracking-tight ${flashCls} ${c.up ? "text-[#ccff00]" : "text-rose-400"}`}>
+                  {c.up ? "+" : ""}{fmt(c.unreal)} <span className="text-base">USD</span>
+                </p>
+                <div className="mt-1.5 flex items-baseline justify-between font-mono-tech text-xs">
+                  <span className={c.up ? "text-[#ccff00]" : "text-rose-400"}>
+                    {c.pnlPct >= 0 ? "+" : ""}{c.pnlPct.toFixed(2)}%
                   </span>
-                  <span className="text-neutral-400">PnL %</span>
-                  <span className={`text-right font-mono ${up ? "text-emerald-400" : "text-rose-400"}`}>
-                    {pnlPct >= 0 ? "+" : ""}{pnlPct.toFixed(2)}%
-                  </span>
-                  <span className="text-neutral-400">% Portfolio</span>
-                  <span className="text-right font-mono">{portfolioPct.toFixed(1)}%</span>
+                  <span className="text-white/40">MKT ${fmt(c.marketValue)}</span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setDetail(pos)}
+                  className="mt-4 w-full rounded-full border border-white/15 bg-white/5 px-6 py-2.5 text-sm font-medium text-white/80 transition hover:border-[#ccff00]/50 hover:text-[#ccff00]"
+                >
+                  Details
+                </button>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Detail popup */}
+      {detail && d && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          onClick={() => setDetail(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${detail.pair} position details`}
+            className="glass noise-overlay w-full max-w-sm rounded-[2rem] p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xl font-bold tracking-tight">{detail.pair}</span>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-mono-tech text-[11px] text-amber-400">OPEN</span>
+                <button
+                  type="button"
+                  aria-label="Close details"
+                  onClick={() => setDetail(null)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-white/60 transition hover:border-[#ccff00]/50 hover:text-[#ccff00]"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            {d.daysOpen !== null && (
+              <p className="mt-1 font-mono-tech text-[11px] text-white/40">
+                DAY {d.daysOpen} SINCE ENTRY ({detail.entry_date})
+              </p>
+            )}
+            <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <span className="text-white/50">Entry</span>
+              <span className="text-right font-mono-tech">{fmt(detail.entry_price)}</span>
+              <span className="text-white/50">Stop (2×ATR)</span>
+              <span className="text-right font-mono-tech text-rose-400">{fmt(detail.stop_price)}</span>
+              <span className="text-white/50">Units</span>
+              <span className="text-right font-mono-tech">{detail.units.toFixed(4)}</span>
+              <span className="text-white/50">Invested</span>
+              <span className="text-right font-mono-tech">${fmt(d.invested)}</span>
+              <span className="text-white/50">Market Value</span>
+              <span className="text-right font-mono-tech">${fmt(d.marketValue)}</span>
+              <span className="text-white/50">Unrealized PnL</span>
+              <span className={`text-right font-mono-tech font-bold ${d.up ? "text-[#ccff00]" : "text-rose-400"}`}>
+                {d.up ? "+" : ""}${fmt(d.unreal)}
+              </span>
+              <span className="text-white/50">PnL %</span>
+              <span className={`text-right font-mono-tech ${d.up ? "text-[#ccff00]" : "text-rose-400"}`}>
+                {d.pnlPct >= 0 ? "+" : ""}{d.pnlPct.toFixed(2)}%
+              </span>
+              <span className="text-white/50">% Portfolio</span>
+              <span className="text-right font-mono-tech">{d.portfolioPct.toFixed(1)}%</span>
+            </div>
+            <p className="mt-4 font-mono-tech text-[10px] uppercase tracking-[0.2em] text-white/30">
+              PRICES TICK EVERY 3S // ESC TO CLOSE
+            </p>
+          </div>
         </div>
       )}
     </section>

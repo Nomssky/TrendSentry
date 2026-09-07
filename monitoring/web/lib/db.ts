@@ -1,5 +1,8 @@
 // Build-time data layer: baca db/paper_trading.db (SQLite, di-commit bot CI tiap hari)
-// dan hitung semua metrik dashboard. Jalan SAAT BUILD (static export), bukan runtime.
+// dan hitung semua metrik dashboard. Equity curve dibaca dari tabel equity_log
+// yang ditulis engine tiap run — TANPA fetch harga saat build (dulu via Binance
+// klines: rapuh + angkanya tidak persis harga eksekusi). Definisi tunggal:
+// total_equity = cash + positions_mtm (yield sudah termasuk di cash).
 import Database from "better-sqlite3";
 import { readFileSync } from "fs";
 import path from "path";
@@ -56,16 +59,12 @@ export type DashboardData = {
   yieldInfo: { total: number; days: number; apyAssumed: number };
   yieldDaily: { date: string; amount: number }[];
   equityCurve: EquityPoint[];
-  priceFetchOk: boolean;
+  hasSnapshots: boolean; // equity_log terisi (kurva MTM penuh) vs masih kosong
 };
 
 const DB_PATH = path.join(process.cwd(), "..", "..", "db", "paper_trading.db");
-const KLINE_URL = (pair: string, start: string) =>
-  `https://data-api.binance.vision/api/v3/klines?symbol=${pair.replace("/", "")}&interval=1d&startTime=${new Date(
-    start + "T00:00:00Z",
-  ).getTime()}&limit=1000`;
 
-function readDb(): Omit<DashboardData, "equityCurve" | "priceFetchOk" | "daysRunning"> {
+function readDb(): Omit<DashboardData, "equityCurve" | "hasSnapshots" | "daysRunning"> {
   const db = new Database(DB_PATH, { readonly: true });
   const cash = Number(
     (db.prepare("SELECT value FROM meta WHERE key='paper_cash'").get() as { value: string } | undefined)?.value ?? 1000,
@@ -145,69 +144,31 @@ function readDb(): Omit<DashboardData, "equityCurve" | "priceFetchOk" | "daysRun
   };
 }
 
-// Rekonstruksi equity curve harian: cash + MTM posisi open pakai close harian dari klines.
-// Kalau fetch harga gagal (mis. build environment dibatasi), fallback: realized cash step curve.
-async function buildEquityCurve(data: ReturnType<typeof readDb>): Promise<{ curve: EquityPoint[]; ok: boolean }> {
-  const closesByPair: Record<string, Map<string, number>> = {};
-  let ok = true;
-  try {
-    const pairs = [...new Set([...data.openPositions, ...data.closedTrades].map((p) => p.pair))];
-    await Promise.all(
-      pairs.map(async (pair) => {
-        const res = await fetch(KLINE_URL(pair, data.startDate), { cache: "no-store" });
-        if (!res.ok) throw new Error(`klines ${pair}: ${res.status}`);
-        const rows = (await res.json()) as [number, string, string, string, string][];
-        closesByPair[pair] = new Map(
-          rows.map((r) => [new Date(r[0]).toISOString().slice(0, 10), Number(r[4])]),
-        );
-      }),
-    );
-  } catch {
-    ok = false;
-  }
-
-  // Event kas: entry (keluar modal), exit (masuk hasil). Modal awal sudah di variabel cash.
-  type Ev = { date: string; cash: number };
-  const events: Ev[] = [];
-  for (const t of [...data.openPositions, ...data.closedTrades]) {
-    events.push({ date: t.entry_date, cash: -t.units * t.entry_price });
-    if (t.status === "closed" && t.exit_date)
-      events.push({ date: t.exit_date, cash: t.units * (t.exit_price ?? 0) });
-  }
-  events.sort((a, b) => a.date.localeCompare(b.date));
-
-  const curve: EquityPoint[] = [];
-  let cash = 1000;
-  let evIdx = 0;
-  let yieldCum = 0;
-  const yieldByDate = new Map(data.yieldDaily.map((y) => [y.date, y.amount]));
-  let cur = new Date(data.startDate + "T00:00:00Z");
-  const today = new Date();
-  while (cur <= today) {
-    const d = cur.toISOString().slice(0, 10);
-    while (evIdx < events.length && events[evIdx].date <= d) {
-      cash += events[evIdx].cash;
-      evIdx++;
-    }
-    // yield harian di cash idle masuk ke equity (konsisten dgn kartu Modal & yield)
-    const y = yieldByDate.get(d);
-    if (y) yieldCum += y;
-    let mtm = 0;
-    if (ok) {
-      for (const p of data.openPositions) {
-        if (p.entry_date <= d) mtm += p.units * (closesByPair[p.pair]?.get(d) ?? p.entry_price);
-      }
-    }
-    curve.push({ date: d, equity: Math.round((cash + mtm + yieldCum) * 100) / 100 });
-    cur = new Date(cur.getTime() + 86_400_000);
-  }
-  return { curve, ok };
+// Kurva equity langsung dari equity_log (ditulis engine tiap run harian).
+// Tidak ada fetch network, tidak ada rekonstruksi — angkanya persis definisi engine.
+function readEquityCurve(db: InstanceType<typeof Database>): { curve: EquityPoint[]; ok: boolean } {
+  const rows = db
+    .prepare("SELECT date, total_equity FROM equity_log ORDER BY date")
+    .all() as { date: string; total_equity: number }[];
+  return {
+    curve: rows.map((r) => ({ date: r.date, equity: Math.round(r.total_equity * 100) / 100 })),
+    ok: rows.length > 0,
+  };
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
   const data = readDb();
   const daysRunning =
     Math.floor((Date.now() - new Date(data.startDate + "T00:00:00Z").getTime()) / 86_400_000) + 1;
-  const { curve, ok } = await buildEquityCurve(data);
-  return { ...data, daysRunning, equityCurve: curve, priceFetchOk: ok };
+  const db = new Database(DB_PATH, { readonly: true });
+  let curve: EquityPoint[] = [];
+  let ok = false;
+  try {
+    ({ curve, ok } = readEquityCurve(db));
+  } catch {
+    ok = false; // tabel belum ada (DB lama sebelum equity_log) -> kurva kosong
+  } finally {
+    db.close();
+  }
+  return { ...data, daysRunning, equityCurve: curve, hasSnapshots: ok };
 }
