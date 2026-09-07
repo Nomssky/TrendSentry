@@ -36,6 +36,7 @@ export default async function PaperTrading() {
         <PaperLiveBoard
           cash={d.cash}
           yieldTotal={d.yieldInfo.total}
+          apyAssumed={d.yieldInfo.apyAssumed}
           startDate={d.startDate}
           daysRunning={d.daysRunning}
           openPositions={d.openPositions.map((p) => ({

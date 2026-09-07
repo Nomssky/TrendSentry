@@ -15,6 +15,7 @@ type EquityPoint = { date: string; equity: number };
 export default function PaperLiveBoard({
   cash,
   yieldTotal,
+  apyAssumed,
   startDate,
   daysRunning,
   openPositions,
@@ -23,6 +24,7 @@ export default function PaperLiveBoard({
 }: {
   cash: number;
   yieldTotal: number;
+  apyAssumed: number;
   startDate: string;
   daysRunning: number;
   openPositions: BoardPosition[];
@@ -89,7 +91,7 @@ export default function PaperLiveBoard({
               <div className="bg-[#ccff00]/70 transition-all duration-500" style={{ width: `${posPct}%` }} title="positions" />
             </div>
             <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 font-mono-tech text-[10px] uppercase tracking-[0.15em] text-white/40">
-              <span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white/40" />Cash ${fmtUsd(cash, 0)} (incl. +${fmtUsd(yieldTotal)} yield)</span>
+              <span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white/40" />Cash ${fmtUsd(cash, 0)} (incl. +${fmtUsd(yieldTotal)} yield @ {apyAssumed}% APY sim)</span>
               <span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-[#ccff00]/70" />Positions ${fmtUsd(positionsMTM, 0)}</span>
             </div>
           </div>
