@@ -100,18 +100,16 @@ def fetch_retry(fn, tries: int = 3, delay: float = 5.0):
 
 
 def make_exchange(cfg: dict) -> ccxt.Exchange:
-    """Bangun exchange client sesuai config paper_trading.data_source.
+    """Bangun exchange client — venue tunggal: Bitget (Fase 4).
 
-    - bitget: venue konsisten dengan rencana eksekusi Fase 4 (lolos tes dari CI runner 2026-08-25;
-      catatan: api.bitget.com keblokir ISP di jaringan lokal user — jalankan via CI, bukan lokal).
-    - binance_vision: mirror market-data-only (fallback).
+    Tidak ada fallback mirror: kalau Bitget unreachable setelah retry,
+    run gagal eksplisit + alert (lebih jujur daripada campur harga venue lain
+    ke dalam log yang dipakai evaluasi strategi).
     """
-    source = cfg.get("paper_trading", {}).get("data_source", "binance_vision")
-    if source == "bitget":
-        return ccxt.bitget({"enableRateLimit": True})
-    ex = ccxt.binance({"enableRateLimit": True, "options": {"fetchMarkets": ["spot"]}})
-    ex.urls["api"]["public"] = "https://data-api.binance.vision/api/v3"
-    return ex
+    source = cfg.get("paper_trading", {}).get("data_source", "bitget")
+    if source != "bitget":
+        raise ValueError(f"data_source tidak didukung: {source!r} (hanya 'bitget')")
+    return ccxt.bitget({"enableRateLimit": True})
 
 
 def credit_yield(conn: sqlite3.Connection, cfg: dict) -> None:
@@ -171,6 +169,130 @@ def credit_yield(conn: sqlite3.Connection, cfg: dict) -> None:
     log.info("yield %s: +%.6f USD (cash %.2f @ %.4f%%/hari)", today_str, amount, cash, apy)
 
 
+def snapshot_equity(conn: sqlite3.Connection, run_date: str, marks: dict) -> dict:
+    """Snapshot equity end-of-day ke `equity_log` (satu baris per tanggal UTC).
+
+    Definisi tunggal (dipakai web apa adanya, tanpa fetch harga saat build):
+        total_equity = cash + positions_mtm
+    Yield SUDAH termasuk di cash (credit_yield menambah paper_cash) — web
+    dilarang menambah yield_log lagi (dulu double-count, selisih = yield total).
+
+    marks = {pair: harga mark} dari candle close yang diproses run ini.
+    Pair open yang tidak ke-proses run ini (skip/error) fallback ke close
+    terakhir di tabel signals, lalu ke entry_price.
+
+    Upsert: run ulang di hari sama menimpa baris (posisi bisa berubah
+    via live_stop intraday) — idempotent, tidak dobel.
+    """
+    opens = conn.execute(
+        "SELECT pair, entry_price, units FROM positions WHERE status='open'"
+    ).fetchall()
+    missing = {p for p, _, _ in opens} - set(marks)
+    for pair in missing:
+        row = conn.execute(
+            "SELECT close_price FROM signals WHERE pair=? ORDER BY candle_date DESC LIMIT 1",
+            (pair,),
+        ).fetchone()
+        if row is not None:
+            marks[pair] = float(row[0])
+    mtm = round(sum(units * float(marks.get(pair, entry)) for pair, entry, units in opens), 2)
+    row = conn.execute("SELECT value FROM meta WHERE key='paper_cash'").fetchone()
+    cash = round(float(row[0]), 2) if row is not None else 0.0
+    total = round(cash + mtm, 2)
+    conn.execute(
+        "INSERT INTO equity_log (date, cash, positions_mtm, n_open, total_equity) VALUES (?,?,?,?,?) "
+        "ON CONFLICT(date) DO UPDATE SET cash=excluded.cash, positions_mtm=excluded.positions_mtm, "
+        "n_open=excluded.n_open, total_equity=excluded.total_equity",
+        (run_date, cash, mtm, len(opens), total),
+    )
+    conn.commit()
+    log.info("equity snapshot %s: cash=%.2f mtm=%.2f n_open=%d total=%.2f", run_date, cash, mtm, len(opens), total)
+    return {"date": run_date, "cash": cash, "positions_mtm": mtm, "n_open": len(opens), "total_equity": total}
+
+
+def backfill_equity(conn: sqlite3.Connection, cfg: dict, today_str: str) -> int:
+    """Isi tanggal yang bolong di `equity_log` (selain hari ini) dari data lokal.
+
+    Sumber rekonstruksi (tanpa network, tanpa tebak-tebakan):
+    - mark per pair per hari: close terakhir di `signals` (candle_date <= hari itu)
+    - kas end-of-day: baris `yield_log` (cash_before + amount, authoritative —
+      sekaligus me-resync drift replay), fallback replay event posisi dari
+      initial_capital (cost pakai fee config, proceeds eksak dari pnl+entry)
+    - posisi open di hari H: entry_date <= H < exit_date (atau masih open)
+
+    Hari tanpa run (gap) ikut terisi (MTM flat di mark terakhir) — kontinuitas
+    kurva terjaga, dan gap-nya tetap terlihat di tabel signals. Return jumlah
+    hari yang diisi. Idempotent: hari yang sudah ada dilewati.
+    """
+    have = {r[0] for r in conn.execute("SELECT date FROM equity_log").fetchall()}
+    closes: dict[str, list] = {}
+    for pair, cdate, close in conn.execute(
+        "SELECT pair, candle_date, close_price FROM signals ORDER BY candle_date"
+    ).fetchall():
+        closes.setdefault(pair, []).append((cdate, float(close)))
+    yields = {
+        r[0]: (float(r[1]), float(r[2]))
+        for r in conn.execute("SELECT date, cash_before, amount FROM yield_log").fetchall()
+    }
+    positions = conn.execute(
+        "SELECT pair, entry_date, entry_price, units, exit_date, exit_price, pnl FROM positions"
+    ).fetchall()
+    if not closes and not yields and not positions:
+        return 0
+
+    fee = float(cfg.get("backtest", {}).get("fee_pct", 0.0)) / 100.0
+    initial = float(cfg.get("backtest", {}).get("initial_capital_usd", 1000.0))
+    starts = [d for d, _ in [c for closes_list in closes.values() for c in closes_list]]
+    if yields:
+        starts.append(min(yields))
+    starts += [p[1] for p in positions]
+    start = min(s for s in starts if s)
+    if start >= today_str:
+        return 0
+
+    def mark_at(pair: str, day: str, fallback: float) -> float:
+        m = fallback
+        for cdate, close in closes.get(pair, []):
+            if cdate <= day:
+                m = close
+            else:
+                break
+        return m
+
+    filled = 0
+    replay_cash = initial
+    cur = start
+    while cur < today_str:
+        if cur not in have:
+            for pair, entry_date, entry_price, units, exit_date, exit_price, pnl in positions:
+                if entry_date == cur:
+                    replay_cash -= units * entry_price * (1 + fee)
+                if exit_date == cur:
+                    replay_cash += (pnl or 0.0) + units * entry_price  # proceeds eksak
+            if cur in yields:
+                eod_cash = round(yields[cur][0] + yields[cur][1], 2)
+                replay_cash = eod_cash  # anchor authoritative, buang drift replay
+            else:
+                eod_cash = round(replay_cash, 2)
+            mtm = 0.0
+            n_open = 0
+            for pair, entry_date, entry_price, units, exit_date, _, _ in positions:
+                if entry_date <= cur and (exit_date is None or exit_date > cur):
+                    mtm += units * mark_at(pair, cur, entry_price)
+                    n_open += 1
+            mtm = round(mtm, 2)
+            conn.execute(
+                "INSERT OR IGNORE INTO equity_log (date, cash, positions_mtm, n_open, total_equity) VALUES (?,?,?,?,?)",
+                (cur, eod_cash, mtm, n_open, round(eod_cash + mtm, 2)),
+            )
+            filled += 1
+        cur = (datetime.fromisoformat(cur) + timedelta(days=1)).date().isoformat()
+    if filled:
+        conn.commit()
+        log.info("equity backfill: %d hari terisi", filled)
+    return filled
+
+
 def main() -> int:
     cfg = load_config()
     strat, risk, bt = cfg["strategy"], cfg["risk"], cfg["backtest"]
@@ -215,6 +337,7 @@ def main() -> int:
             )
     conn.commit()
 
+    marks: dict[str, float] = {}  # close candle per pair run ini, untuk equity snapshot
     for pair in strat["pairs"]:
       try:
         ohlcv = fetch_retry(lambda: exchange.fetch_ohlcv(pair, strat["timeframe"], limit=LOOKBACK_CANDLES))
@@ -242,6 +365,7 @@ def main() -> int:
             donchian_low(df, strat["donchian_exit_period"]).iloc[i],
             atr(df, strat["atr_period"]).iloc[i],
         )
+        marks[pair] = float(close)
         log_slippage(conn, exchange, pair)
 
         pos = conn.execute(
@@ -374,6 +498,13 @@ def main() -> int:
         continue
 
     credit_yield(conn, cfg)
+
+    # Snapshot equity end-of-day + backfill hari yang bolong (untuk kurva web,
+    # tanpa fetch harga saat build). Dipanggil setelah credit_yield supaya cash
+    # sudah termasuk yield hari ini.
+    today_str = str(datetime.now(timezone.utc).date())
+    snapshot_equity(conn, today_str, marks)
+    backfill_equity(conn, cfg, today_str)
 
     # One-time patch notification: cluster limit aktif
     max_per_cluster = strat.get("max_positions_per_cluster", 0)

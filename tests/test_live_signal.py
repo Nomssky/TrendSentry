@@ -203,6 +203,111 @@ def test_yield_backfill_multiple_days(tmp_path):
     assert abs(cash - expected_cash) < 0.01, f"Expected cash ~{expected_cash}, got {cash}"
 
 
+def test_equity_snapshot_no_double_count_yield(tmp_path):
+    """Snapshot: total = cash + MTM. Yield sudah di dalam cash — dilarang nambah lagi."""
+    db = tmp_path / "e.db"
+    conn = sqlite3.connect(db)
+    conn.executescript((ROOT / "db" / "schema.sql").read_text())
+    conn.execute("INSERT INTO meta VALUES ('paper_cash', '1000.5')")  # sudah termasuk yield 0.5
+    conn.execute("INSERT INTO yield_log (date, cash_before, rate_daily, amount) VALUES ('2026-09-01', 1000.0, 0.0001, 0.5)")
+    conn.execute(
+        "INSERT INTO positions (pair, entry_date, entry_price, units, stop_price, risk_amount) VALUES (?,?,?,?,?,?)",
+        ("BTC/USDT", "2026-09-01", 100.0, 2.0, 90.0, 20.0),
+    )
+    conn.commit()
+    row = ls.snapshot_equity(conn, "2026-09-01", {"BTC/USDT": 110.0})
+    saved = conn.execute("SELECT cash, positions_mtm, n_open, total_equity FROM equity_log").fetchone()
+    conn.close()
+    assert saved == (1000.5, 220.0, 1, 1220.5), saved  # bukan 1221.0 (double-count)
+    assert row["total_equity"] == 1220.5
+
+
+def test_equity_snapshot_upsert_same_day(tmp_path):
+    """Run ulang di hari sama menimpa baris, tidak dobel."""
+    db = tmp_path / "e.db"
+    conn = sqlite3.connect(db)
+    conn.executescript((ROOT / "db" / "schema.sql").read_text())
+    conn.execute("INSERT INTO meta VALUES ('paper_cash', '1000')")
+    conn.execute(
+        "INSERT INTO positions (pair, entry_date, entry_price, units, stop_price, risk_amount) VALUES (?,?,?,?,?,?)",
+        ("BTC/USDT", "2026-09-01", 100.0, 1.0, 90.0, 10.0),
+    )
+    conn.commit()
+    ls.snapshot_equity(conn, "2026-09-01", {"BTC/USDT": 100.0})
+    ls.snapshot_equity(conn, "2026-09-01", {"BTC/USDT": 120.0})
+    rows = conn.execute("SELECT total_equity FROM equity_log").fetchall()
+    conn.close()
+    assert rows == [(1120.0,)]
+
+
+def test_equity_backfill_reconstructs_history(tmp_path):
+    """Backfill: tanggal bolong direkonstruksi dari signals + yield_log + positions."""
+    db = tmp_path / "e.db"
+    conn = sqlite3.connect(db)
+    conn.executescript((ROOT / "db" / "schema.sql").read_text())
+    conn.execute("INSERT INTO meta VALUES ('paper_cash', '1000')")
+    for pair, dates in {
+        "BTC/USDT": [("2026-01-01", 100.0), ("2026-01-02", 102.0), ("2026-01-03", 101.0), ("2026-01-04", 103.0)],
+        "ETH/USDT": [("2026-01-01", 48.0), ("2026-01-02", 50.0), ("2026-01-03", 52.0), ("2026-01-04", 55.0)],
+    }.items():
+        for d, c in dates:
+            conn.execute(
+                "INSERT INTO signals (candle_date, processed_at, pair, close_price, signal, decision) VALUES (?,?,?,?,?,?)",
+                (d, d, pair, c, "HOLD", "IGNORE"),
+            )
+    conn.executemany(
+        "INSERT INTO yield_log (date, cash_before, rate_daily, amount) VALUES (?,?,?,?)",
+        [("2026-01-01", 900.0, 0.0001, 0.1), ("2026-01-02", 850.0, 0.0001, 0.1), ("2026-01-03", 950.0, 0.0001, 0.1)],
+    )
+    conn.executemany(
+        "INSERT INTO positions (pair, entry_date, entry_price, units, stop_price, risk_amount, status, exit_date, exit_price, pnl) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?)",
+        [
+            ("BTC/USDT", "2026-01-01", 100.0, 1.0, 90.0, 10.0, "open", None, None, None),
+            ("ETH/USDT", "2026-01-02", 50.0, 2.0, 45.0, 10.0, "closed", "2026-01-04", 55.0, 9.89),
+        ],
+    )
+    conn.commit()
+    cfg = {"backtest": {"fee_pct": 0.1, "initial_capital_usd": 1000.0}}
+    filled = ls.backfill_equity(conn, cfg, "2026-01-05")
+    rows = conn.execute("SELECT date, cash, positions_mtm, n_open, total_equity FROM equity_log ORDER BY date").fetchall()
+    filled2 = ls.backfill_equity(conn, cfg, "2026-01-05")  # idempotent
+    conn.close()
+    assert filled == 4, rows
+    assert filled2 == 0
+    by_date = {r[0]: r[1:] for r in rows}
+    assert by_date["2026-01-01"] == (900.1, 100.0, 1, 1000.1), by_date["2026-01-01"]
+    assert by_date["2026-01-02"] == (850.1, 202.0, 2, 1052.1), by_date["2026-01-02"]
+    assert by_date["2026-01-03"] == (950.1, 205.0, 2, 1155.1), by_date["2026-01-03"]
+    # 01-04 tanpa yield row -> replay: 950.1 + proceeds ETH (9.89+100) = 1059.99; BTC open @103
+    assert by_date["2026-01-04"] == (1059.99, 103.0, 1, 1162.99), by_date["2026-01-04"]
+
+
+def test_main_writes_equity_snapshot(tmp_path):
+    """main() menulis baris equity hari ini (mark dari candle close yang diproses)."""
+    db = tmp_path / "t.db"
+    run_scenario(db, make_candles(spike=True))
+    conn = sqlite3.connect(db)
+    today = datetime.now(timezone.utc).date().isoformat()
+    row = conn.execute("SELECT cash, positions_mtm, n_open, total_equity FROM equity_log WHERE date=?", (today,)).fetchone()
+    cash = float(conn.execute("SELECT value FROM meta WHERE key='paper_cash'").fetchone()[0])
+    units = conn.execute("SELECT COALESCE(SUM(units), 0) FROM positions WHERE status='open'").fetchone()[0]
+    conn.close()
+    assert row is not None, "equity snapshot hari ini tidak tertulis"
+    assert row[2] == 3  # 2 cluster A + 1 HYPE, seperti test_enter
+    assert abs(row[3] - (cash + units * 114.0)) < 0.01, row  # mark = close spike 114
+
+
+def test_make_exchange_bitget_only():
+    """Venue tunggal Bitget — source lain fail fast, tidak ada fallback diam-diam."""
+    import ccxt
+
+    ex = ls.make_exchange({"paper_trading": {"data_source": "bitget"}})
+    assert isinstance(ex, ccxt.bitget)
+    with pytest.raises(ValueError):
+        ls.make_exchange({"paper_trading": {"data_source": "binance_vision"}})
+
+
 if __name__ == "__main__":
     if "--real" not in sys.argv:
         print("Regresi: pytest tests/test_live_signal.py")

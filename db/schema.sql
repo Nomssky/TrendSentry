@@ -59,3 +59,14 @@ CREATE TABLE IF NOT EXISTS yield_log (
     rate_daily  REAL NOT NULL,        -- apy / 100 / 365
     amount      REAL NOT NULL
 );
+
+-- Snapshot equity end-of-day (ditulis engine tiap run, dibaca dashboard).
+-- Definisi tunggal: total_equity = cash + positions_mtm. Yield SUDAH termasuk
+-- di cash (credit_yield menambah paper_cash) — jangan ditambah lagi di web.
+CREATE TABLE IF NOT EXISTS equity_log (
+    date          TEXT PRIMARY KEY,  -- tanggal run UTC, upsert per hari (idempotent)
+    cash          REAL NOT NULL,     -- paper_cash end-of-day (termasuk yield hari itu)
+    positions_mtm REAL NOT NULL,     -- SUM(units * mark), mark = candle close hari itu
+    n_open        INTEGER NOT NULL DEFAULT 0,
+    total_equity  REAL NOT NULL      -- cash + positions_mtm
+);

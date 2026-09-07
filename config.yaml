@@ -28,7 +28,7 @@ risk:
   max_drawdown_circuit_breaker_pct: 15.0   # auto-pause kalau drawdown modal awal tembus ini
 
 paper_trading:
-  data_source: "bitget"            # bitget | binance_vision — venue konsisten dgn rencana eksekusi Fase 4
+  data_source: "bitget"            # venue tunggal — konsisten dgn rencana eksekusi Fase 4 (mirror Binance dicabut 2026-09-08: satu venue, satu kebenaran harga)
   yield_apy_idle_cash: 5.0         # simulasi bunga harian di paper cash idle (DeFi/earn; risiko platform tidak dimodelkan)
 
 backtest:

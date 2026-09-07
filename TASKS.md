@@ -40,6 +40,7 @@
 - [x] Setup scheduler — **GitHub Actions** (`.github/workflows/paper-trading.yml`, cron `0 1 * * *` UTC native, trigger manual tersedia). Crontab lokal dibatalkan: laptop tidak always-on. State DB dipersistenkan via commit balik `db/paper_trading.db` ke repo tiap run = sekaligus backup off-disk harian
 - [x] Fix geo-block 451 (GitHub runner IP US diblokir api.binance.com): live signal pakai mirror `data-api.binance.vision` (data Binance sama persis, endpoint publik) + `fetchMarkets: ['spot']` (fapi futures keblokir terpisah)
 - [x] Buat schema log (`db/schema.sql`) — simpan setiap signal, harga, keputusan, timestamp
+- [x] Equity snapshot harian (`equity_log`, 2026-09-08): engine tulis total=cash+MTM tiap run + backfill dari data lokal — kurva web tanpa fetch harga saat build, venue tunggal Bitget, fix double-count yield di total web
 - [ ] Ukur slippage real: log bid-ask spread order book di tiap signal (bandingkan dengan asumsi 0.05%)
 - [ ] Jalankan minimal 8 minggu, kumpulkan data
 - [ ] Buat script perbandingan performa live vs backtest periode yang sama
