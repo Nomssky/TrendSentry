@@ -1,9 +1,9 @@
-// W2 — /pricing: Watcher tier free + open, Paper Beta waitlist, Live Assist TBD.
+"use client"
 
-import Link from "next/link";
-import { SiteShell } from "../components/marketing/SiteShell";
-import { GlassCard, NeonButton, TechLabel } from "../components/marketing/ui";
-import { SITE } from "@/lib/site";
+import Link from "next/link"
+import { SiteShell } from "../components/marketing/SiteShell"
+import { GlassCard, TechLabel } from "../components/marketing/ui"
+import { SITE } from "@/lib/site"
 
 const TIERS = [
   {
@@ -11,6 +11,7 @@ const TIERS = [
     price: "Free",
     state: "OPEN NOW",
     hot: false,
+    plan: null,
     features: [
       "Connect Bitget read-only API",
       "Strategy templates (Donchian, SMA, RSI)",
@@ -22,9 +23,10 @@ const TIERS = [
   },
   {
     name: "Paper Beta",
-    price: "Subscription",
-    state: "WAITLIST OPEN",
+    price: "$19/mo",
+    state: "SUBSCRIBE",
     hot: true,
+    plan: "paper_beta",
     features: [
       "Everything in Watcher, plus:",
       "Real-time deviation alerts (Telegram)",
@@ -34,20 +36,31 @@ const TIERS = [
   },
   {
     name: "Live Assist",
-    price: "TBD",
-    state: "FASE 4+",
+    price: "$49/mo",
+    state: "COMING SOON",
     hot: false,
+    plan: "live_assist",
     features: [
       "Everything in Paper Beta, plus:",
       "Risk manager + circuit breaker",
       "Exchange-side stop orders",
-      "Small-capital start ($50\u2013100)",
-      "No leverage, no martingale \u2014 ever",
+      "Small-capital start ($50–100)",
+      "No leverage, no martingale — ever",
     ],
   },
-] as const;
+] as const
 
 export default function Pricing() {
+  async function handleCheckout(plan: string) {
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ plan }),
+    })
+    const { url } = await res.json()
+    if (url) window.location.href = url
+  }
+
   return (
     <SiteShell>
       <main className="px-5 pb-20 pt-32 sm:px-10 sm:pt-40 lg:px-16">
@@ -84,6 +97,26 @@ export default function Pricing() {
                   </li>
                 ))}
               </ul>
+              {t.plan && (
+                <button
+                  onClick={() => handleCheckout(t.plan)}
+                  className={`mt-8 w-full rounded-full px-6 py-3 font-semibold transition ${
+                    t.hot
+                      ? "bg-black text-[#ccff00] hover:bg-black/80"
+                      : "bg-[#ccff00] text-black hover:bg-[#aadd00]"
+                  }`}
+                >
+                  {t.state === "COMING SOON" ? "Coming soon" : "Subscribe"}
+                </button>
+              )}
+              {!t.plan && (
+                <Link
+                  href="/auth/signup"
+                  className="mt-8 block w-full rounded-full bg-white/10 px-6 py-3 text-center font-semibold text-white transition hover:bg-white/20"
+                >
+                  Start free
+                </Link>
+              )}
             </div>
           ))}
         </div>
@@ -99,7 +132,9 @@ export default function Pricing() {
               in line when accounts open. In the meantime, start with Watcher.
             </p>
             <div className="mt-6 flex flex-wrap gap-4">
-              <NeonButton href={SITE.github}>Join waitlist on GitHub →</NeonButton>
+              <a href={SITE.github} target="_blank" rel="noopener noreferrer" className="inline-block rounded-full bg-[#ccff00] px-8 py-4 text-sm font-semibold text-black transition hover:bg-[#aadd00]">
+                Join waitlist on GitHub →
+              </a>
               <Link
                 href="/start"
                 className="inline-block rounded-full border border-white/15 bg-white/5 px-8 py-4 text-sm font-medium text-white/80 backdrop-blur transition hover:border-[#ccff00]/40 hover:text-white"
@@ -111,5 +146,5 @@ export default function Pricing() {
         </GlassCard>
       </main>
     </SiteShell>
-  );
+  )
 }

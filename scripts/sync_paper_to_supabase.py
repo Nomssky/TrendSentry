@@ -9,12 +9,16 @@ import urllib.request
 import urllib.error
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://ypkdnvwlekxmmotxsvrm.supabase.co")
+VERCEL_URL = os.environ.get("VERCEL_URL", "https://trendsentry.vercel.app")
 CRON_SECRET = os.environ.get("CRON_SECRET")
 DB_PATH = os.environ.get("DB_PATH", "db/paper_trading.db")
 
 def fetch_all(db, table):
     try:
-        return [dict(row) for row in db.execute(f"SELECT * FROM {table}").fetchall()]
+        rows = [dict(row) for row in db.execute(f"SELECT * FROM {table}").fetchall()]
+        for row in rows:
+            row.pop("id", None)
+        return rows
     except sqlite3.OperationalError:
         return []
 
@@ -42,7 +46,7 @@ def main():
     print(f"Syncing {total} records...")
 
     req = urllib.request.Request(
-        f"{SUPABASE_URL}/functions/v1/paper-sync",
+        f"{VERCEL_URL}/api/cron/paper-sync",
         data=json.dumps(data).encode(),
         headers={
             "Content-Type": "application/json",

@@ -3,18 +3,32 @@ import { createClient } from "@/lib/supabase/server"
 import { logDeviations, calculateDisciplineScore } from "@/lib/deviation"
 import { sendTelegramAlert, formatDeviationAlert } from "@/lib/telegram"
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-  const { data } = await supabase
+  const url = new URL(request.url)
+  const page = parseInt(url.searchParams.get("page") ?? "1")
+  const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50"), 100)
+  const offset = (page - 1) * limit
+
+  const { data, count } = await supabase
     .from("user_trades")
-    .select("id, pair, side, price, amount, fee, executed_at, strategy_id")
+    .select("id, pair, side, price, amount, fee, executed_at, strategy_id", { count: "exact" })
     .eq("user_id", user.id)
     .order("executed_at", { ascending: false })
-    .limit(100)
-  return NextResponse.json(data ?? [])
+    .range(offset, offset + limit - 1)
+
+  return NextResponse.json({
+    trades: data ?? [],
+    pagination: {
+      page,
+      limit,
+      total: count ?? 0,
+      pages: Math.ceil((count ?? 0) / limit),
+    },
+  })
 }
 
 export async function POST(request: Request) {
