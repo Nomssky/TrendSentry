@@ -16,14 +16,14 @@ export function Footer() {
 
       <div className="relative mx-auto -mt-6 max-w-3xl text-center sm:-mt-10">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Stop trading your emotions.
+          Stop deviating from your plan.
         </h2>
         <a
-          href="/pricing#waitlist"
+          href="/start"
           className="neon-btn group relative mt-8 inline-block overflow-hidden px-12 py-5 text-base"
         >
           <span className="absolute inset-0 translate-y-full bg-white transition-transform duration-300 group-hover:translate-y-0" />
-          <span className="relative">Get early access →</span>
+          <span className="relative">Start tracking →</span>
         </a>
       </div>
 
@@ -31,6 +31,7 @@ export function Footer() {
         <div>
           <p className="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-white/40">PRODUCT</p>
           <div className="mt-3 flex flex-col gap-2 text-white/70">
+            <Link href="/start" className="hover:text-[#ccff00]">Get started</Link>
             <Link href="/proof" className="hover:text-[#ccff00]">Proof</Link>
             <Link href="/live" className="hover:text-[#ccff00]">Live account</Link>
             <Link href="/papertrading" className="hover:text-[#ccff00]">Paper trading</Link>

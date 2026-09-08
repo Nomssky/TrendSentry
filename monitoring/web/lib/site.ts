@@ -4,25 +4,23 @@
 
 export const SITE = {
   name: "TrendSentry",
-  tagline: "Discipline execution for systematic crypto trading.",
+  tagline: "Your strategy, executed without deviation.",
   description:
-    "TrendSentry runs your strategy, logs every decision, and holds you accountable — no emotion, no deviation, no FOMO.",
+    "TrendSentry auto-logs your trades, detects when you deviate from your plan, and shows what discipline is worth — in your own data.",
   github: "https://github.com/Nomssky/TrendSentry",
   liveDashboard: "/papertrading",
   realAccount: "/live",
   dashboardExternal: "https://trendsentry.vercel.app/papertrading",
   decisionLog:
     "https://github.com/Nomssky/TrendSentry/blob/main/backtest/reports/decision_log.md",
-  // TODO: replace with real waitlist form URL (Tally/Typeform) when W3 starts.
-  // Until then every waitlist CTA scrolls to an on-page section / pricing anchor.
-  waitlistAnchor: "/pricing#waitlist",
-  contactAnchor: "/pricing#waitlist",
+  waitlistAnchor: "/start",
+  contactAnchor: "/start",
 } as const;
 
 export const NAV_LINKS = [
+  { href: "/start", label: "Start" },
   { href: "/proof", label: "Proof" },
   { href: "/live", label: "Live" },
   { href: "/papertrading", label: "Paper" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/disclaimer", label: "Risk" },
 ] as const;

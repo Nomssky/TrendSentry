@@ -68,29 +68,29 @@ export function Hero() {
       <div className="grid grid-cols-12 items-center gap-10">
         <div className="col-span-12 lg:col-span-7">
           <TechLabel className="mb-6 inline-block rounded-full border border-[#ccff00]/30 bg-[#ccff00]/5 px-4 py-1.5">
-            [ AI-AUGMENTED // TREND-FOLLOWING ]
+            [ AI-AUGMENTED // DISCIPLINE LAYER ]
           </TechLabel>
           <h1
             className="font-bold leading-[0.85] tracking-[-0.06em]"
             style={{ fontSize: "clamp(3.5rem, 8vw, 7.5rem)" }}
           >
-            TRADE WITH
+            YOUR STRATEGY,
             <br />
             <span className="bg-gradient-to-r from-[#ccff00] to-white bg-clip-text italic text-transparent">
-              DISCIPLINE.
+              NO DEVIATION.
             </span>
           </h1>
           <p className="mt-8 max-w-xl text-lg text-white/60">
-            Most traders fail not because their strategy is wrong, but because they can&apos;t execute it
-            consistently. {SITE.name} checks the signals, sizes the positions, and sends the alerts. You
-            just review the log.
+            Connect your Bitget exchange. TrendSentry logs every trade you take, flags when you step
+            outside your plan, and simulates what discipline would have earned you. No emotion, no FOMO,
+            no deviation.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
-            <NeonButton href={SITE.liveDashboard}>See live proof →</NeonButton>
-            <GhostButton href={SITE.waitlistAnchor}>Join waitlist</GhostButton>
+            <NeonButton href="/start">Track your discipline →</NeonButton>
+            <GhostButton href="/proof">See the proof</GhostButton>
           </div>
           <p className="tech-label mt-8 text-white/30">
-            LONG-ONLY // RISK 1% // STOP LOSS ALWAYS // NO MARTINGALE
+            BITGET // READ-ONLY API // FREE TIER OPEN // NO SIGNAL SELLING
           </p>
         </div>
         <div className="col-span-12 lg:col-span-5">

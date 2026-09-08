@@ -15,9 +15,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TrendSentry — Discipline Execution for Systematic Crypto Trading",
+  title: "TrendSentry — Your Strategy, No Deviation",
   description:
-    "TrendSentry is a discipline execution layer for systematic crypto trading. It runs your strategy, logs every decision, and holds you accountable — no emotion, no deviation, no FOMO.",
+    "TrendSentry auto-logs your trades, detects when you deviate from your plan, and shows what discipline is worth — in your own data.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

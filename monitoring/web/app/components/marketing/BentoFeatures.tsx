@@ -20,17 +20,18 @@ export function BentoFeatures() {
     <section className="px-5 py-16 sm:px-10 lg:px-16">
       <TechLabel className="mb-4">[ WHAT IT DOES ]</TechLabel>
       <h2 className="max-w-2xl text-4xl font-bold tracking-[-0.04em] sm:text-5xl">
-        Execution you don&apos;t have to babysit.
+        The discipline layer for your strategy.
       </h2>
 
       <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* large 2x2: paper engine + viz */}
+        {/* 01 large 2x2: deviation detection — inti value prop */}
         <Card className="sm:col-span-2 sm:row-span-2">
-          <TechLabel className="text-white/40">01 // PAPER ENGINE — LIVE NOW</TechLabel>
-          <h3 className="mt-3 text-2xl font-bold">Live market, zero capital risk.</h3>
+          <TechLabel className="text-white/40">01 // DEVIATION DETECTION — LIVE NOW</TechLabel>
+          <h3 className="mt-3 text-2xl font-bold">Did you stick to the plan today?</h3>
           <p className="mt-2 max-w-md text-sm text-white/60">
-            The signal engine runs daily on 10 pairs after candle close. Every check is logged — HOLD days
-            included — so silence is data, not downtime.
+            Connect your Bitget account with a read-only API key. TrendSentry logs every trade, 
+            compares it against your rules, and flags the moment you deviate — before a small 
+            mistake becomes a blown account.
           </p>
           <div className="mt-6 flex h-36 items-end gap-2">
             {[35, 55, 42, 70, 58, 82, 66, 90, 74, 100, 86, 95].map((h, i) => (
@@ -41,22 +42,22 @@ export function BentoFeatures() {
               />
             ))}
           </div>
-          <Link href="/papertrading" className="tech-label mt-6 inline-block text-[#ccff00]">
-            WATCH IT RUN → /PAPERTRADING
+          <Link href="/start" className="tech-label mt-6 inline-block text-[#ccff00]">
+            CONNECT YOUR EXCHANGE → /START
           </Link>
         </Card>
 
-        {/* tall 1x2: risk tokens */}
+        {/* 02 tall 1x2: auto-logging */}
         <Card className="sm:row-span-2">
-          <TechLabel className="text-white/40">02 // RISK TOKENS</TechLabel>
-          <h3 className="mt-3 text-2xl font-bold">Rules that can&apos;t be bent.</h3>
+          <TechLabel className="text-white/40">02 // AUTO-LOGGING</TechLabel>
+          <h3 className="mt-3 text-2xl font-bold">Every trade, on record.</h3>
           <div className="mt-6 space-y-3">
             {[
-              ["RISK", "1% / trade"],
-              ["STOP", "2×ATR always"],
-              ["CLUSTER", "max 2 / cluster"],
-              ["LEVERAGE", "none (spot)"],
-              ["MARTINGALE", "never"],
+              ["ENTRY", "logged with reason"],
+              ["EXIT", "PnL + R-multiple"],
+              ["DEVIATION", "flagged in real-time"],
+              ["HOLD", "silence = data"],
+              ["ACCOUNT", "read-only API"],
             ].map(([k, v]) => (
               <div
                 key={k}
@@ -69,35 +70,34 @@ export function BentoFeatures() {
           </div>
         </Card>
 
-        {/* accent lime card */}
+        {/* 03 accent lime card: alerts */}
         <div className="noise-overlay rounded-[2.5rem] bg-[#ccff00] p-7 text-black transition-colors duration-300 hover:border-[#ccff00]/40">
           <TechLabel className="text-black/60">03 // ALERTS</TechLabel>
-          <h3 className="mt-3 text-2xl font-bold tracking-tight">Telegram the second it matters.</h3>
+          <h3 className="mt-3 text-2xl font-bold tracking-tight">Real-time deviation alerts.</h3>
           <p className="mt-2 text-sm font-medium text-black/70">
-            Entry. Exit. Stop. Crash. HOLD days stay silent — no spam, only decisions.
+            Premium: Telegram the second you step outside your plan. HOLD days stay silent.
           </p>
         </div>
 
-        {/* dashboard card */}
+        {/* 04 discipline benchmark */}
         <Card>
-          <TechLabel className="text-white/40">04 // DASHBOARD</TechLabel>
-          <h3 className="mt-3 text-xl font-bold">Every decision, on record.</h3>
-          <p className="mt-2 text-sm text-white/60">
-            Equity curve, open positions with live PnL, trade history, slippage vs assumption.
-          </p>
-        </Card>
-
-        {/* discipline benchmark */}
-        <Card>
-          <TechLabel className="text-white/40">05 // COMING SOON</TechLabel>
+          <TechLabel className="text-white/40">04 // COMING SOON</TechLabel>
           <h3 className="mt-3 text-xl font-bold">Discipline Benchmark.</h3>
           <p className="mt-2 text-sm text-white/60">
-            Simulate your own strategy&apos;s execution fidelity vs actual results. The product we sell is
-            discipline — not signals.
+            Simulate what your portfolio would look like if you followed your own rules 100% of the time. The gap between actual and benchmark is the cost of deviation.
           </p>
         </Card>
 
-        {/* llm filter */}
+        {/* 05 strategy templates */}
+        <Card>
+          <TechLabel className="text-white/40">05 // TEMPLATES</TechLabel>
+          <h3 className="mt-3 text-xl font-bold">Start from a template.</h3>
+          <p className="mt-2 text-sm text-white/60">
+            Donchian breakout, SMA crossover, RSI mean-reversion — or define your own. Fill in your parameters, TrendSentry handles the rest.
+          </p>
+        </Card>
+
+        {/* 06 LLM filter */}
         <Card>
           <TechLabel className="text-white/40">06 // FASE 3</TechLabel>
           <h3 className="mt-3 text-xl font-bold">LLM risk filter.</h3>

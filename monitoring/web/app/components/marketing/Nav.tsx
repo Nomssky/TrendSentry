@@ -28,13 +28,13 @@ export function Nav() {
 
       <div className="flex items-center gap-3">
         <span className="hidden lg:inline">
-          <StatusTag text="PAPER // LIVE" />
+          <StatusTag text="WATCHER // FREE" />
         </span>
         <Link
-          href={SITE.waitlistAnchor}
+          href="/start"
           className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#ccff00]"
         >
-          Get access
+          Start free
         </Link>
       </div>
     </header>

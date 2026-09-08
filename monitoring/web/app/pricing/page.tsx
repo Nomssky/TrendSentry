@@ -1,4 +1,4 @@
-// W2 — /pricing: private beta, no fake prices. Waitlist anchor section.
+// W2 — /pricing: Watcher tier free + open, Paper Beta waitlist, Live Assist TBD.
 
 import Link from "next/link";
 import { SiteShell } from "../components/marketing/SiteShell";
@@ -11,17 +11,24 @@ const TIERS = [
     price: "Free",
     state: "OPEN NOW",
     hot: false,
-    features: ["Paper dashboard (/papertrading)", "Open-source code (AGPL-3.0)", "Decision log & backtest reports"],
+    features: [
+      "Connect Bitget read-only API",
+      "Strategy templates (Donchian, SMA, RSI)",
+      "Custom rule builder",
+      "Auto-logging of every trade",
+      "Deviation history dashboard",
+      "No time limit",
+    ],
   },
   {
     name: "Paper Beta",
-    price: "Invite only",
-    state: "AFTER FASE 2",
+    price: "Subscription",
+    state: "WAITLIST OPEN",
     hot: true,
     features: [
-      "Your own paper account",
-      "Telegram entry/exit/stop alerts",
-      "Discipline Benchmark (coming soon)",
+      "Everything in Watcher, plus:",
+      "Real-time deviation alerts (Telegram)",
+      "Discipline Benchmark simulator",
       "Weekly review summaries",
     ],
   },
@@ -31,10 +38,11 @@ const TIERS = [
     state: "FASE 4+",
     hot: false,
     features: [
+      "Everything in Paper Beta, plus:",
       "Risk manager + circuit breaker",
       "Exchange-side stop orders",
-      "Small-capital start ($50–100)",
-      "No leverage, no martingale — ever",
+      "Small-capital start ($50\u2013100)",
+      "No leverage, no martingale \u2014 ever",
     ],
   },
 ] as const;
@@ -45,11 +53,14 @@ export default function Pricing() {
       <main className="px-5 pb-20 pt-32 sm:px-10 sm:pt-40 lg:px-16">
         <TechLabel>[ PRICING // PRIVATE BETA ]</TechLabel>
         <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-[-0.04em] sm:text-6xl">
-          Free to watch. <span className="bg-gradient-to-r from-[#ccff00] to-white bg-clip-text italic text-transparent">Invite to trade.</span>
+          Free to log.{" "}
+          <span className="bg-gradient-to-r from-[#ccff00] to-white bg-clip-text italic text-transparent">
+            Subscribe to stay honest.
+          </span>
         </h1>
         <p className="mt-6 max-w-2xl text-white/60">
-          No price games before the proof is in. User accounts open after Fase 2 validation — 8 weeks of
-          paper trading plus ≥10 closed trades. Until then: watch, read, verify.
+          The Watcher tier is open now — connect your exchange and start logging your discipline for
+          free. Premium tiers unlock real-time alerts and the Discipline Benchmark.
         </p>
 
         <div className="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -68,7 +79,7 @@ export default function Pricing() {
               <ul className={`mt-6 space-y-2.5 text-sm ${t.hot ? "text-black/75" : "text-white/65"}`}>
                 {t.features.map((f) => (
                   <li key={f} className="flex gap-2.5">
-                    <span>✓</span>
+                    <span>{t.hot ? "→" : "✓"}</span>
                     {f}
                   </li>
                 ))}
@@ -77,23 +88,23 @@ export default function Pricing() {
           ))}
         </div>
 
-        <GlassCard className="mt-8 p-8 sm:p-10" >
+        <GlassCard className="mt-8 p-8 sm:p-10">
           <div id="waitlist" className="scroll-mt-32">
             <TechLabel>[ WAITLIST ]</TechLabel>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight">Get notified when Paper Beta opens.</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight">Paper Beta is invite-only for now.</h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/60">
-              No forms that go nowhere yet — while we finish validation, the waitlist runs through GitHub.
-              Open an issue or start a discussion with subject <span className="font-mono-tech text-[#ccff00]">[WAITLIST]</span>,
-              tell us what you trade and what breaks your discipline, and you&apos;ll be first in line when
-              accounts open. (A proper signup form ships with W3.)
+              While we finish validation, the waitlist runs through GitHub. Open an issue or start a
+              discussion with subject{" "}
+              <span className="font-mono-tech text-[#ccff00]">[WAITLIST]</span> — you&apos;ll be first
+              in line when accounts open. In the meantime, start with Watcher.
             </p>
             <div className="mt-6 flex flex-wrap gap-4">
-              <NeonButton href={SITE.github}>Join via GitHub →</NeonButton>
+              <NeonButton href={SITE.github}>Join waitlist on GitHub →</NeonButton>
               <Link
-                href="/disclaimer"
+                href="/start"
                 className="inline-block rounded-full border border-white/15 bg-white/5 px-8 py-4 text-sm font-medium text-white/80 backdrop-blur transition hover:border-[#ccff00]/40 hover:text-white"
               >
-                Read the risks first
+                Start Watcher for free
               </Link>
             </div>
           </div>

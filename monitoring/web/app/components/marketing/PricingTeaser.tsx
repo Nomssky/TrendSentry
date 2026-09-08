@@ -1,4 +1,4 @@
-// Pricing teaser + FAQ. No fake prices: private beta, waitlist only.
+// Pricing teaser + FAQ. No fake prices: Watcher tier is live, Paper Beta waitlist.
 
 import Link from "next/link";
 import { SITE } from "@/lib/site";
@@ -11,7 +11,7 @@ const FAQS = [
   },
   {
     q: "Can I open an account today?",
-    a: "Not yet. Main is in private beta powering our own paper trading while we validate the discipline model (8 weeks + ≥10 closed trades). Join the waitlist and you'll hear when user accounts open.",
+    a: "Yes — the Watcher tier is open now. Connect your Bitget read-only API key, set your strategy rules (or start from a template), and TrendSentry starts logging. Free, no time limit.",
   },
   {
     q: "What does the live dashboard prove?",
@@ -35,21 +35,20 @@ export function PricingTeaser() {
           <div>
             <TechLabel>[ PRICING // PRIVATE BETA ]</TechLabel>
             <h2 className="mt-4 max-w-xl text-4xl font-bold tracking-[-0.04em] sm:text-5xl">
-              Free to watch. Invite to trade.
+              Start free. Upgrade when you need alerts.
             </h2>
             <p className="mt-4 max-w-xl text-white/60">
-              The live dashboard and the source code are open. User accounts — paper first, with Telegram
-              alerts and the Discipline Benchmark — open after Fase 2 validation. No price games until the
-              proof is in.
+              Watcher tier is open now — connect your exchange, set your rules, and TrendSentry logs
+              your discipline. Premium unlocks real-time deviation alerts and the Discipline Benchmark.
             </p>
           </div>
           <div className="flex flex-col gap-3">
-            <NeonButton href="/pricing#waitlist">Join the waitlist</NeonButton>
+            <NeonButton href="/start">Start tracking →</NeonButton>
             <Link
               href="/pricing"
               className="text-center font-mono-tech text-[10px] uppercase tracking-[0.2em] text-white/50 hover:text-[#ccff00]"
             >
-              What beta includes →
+              See full pricing →
             </Link>
           </div>
         </div>
@@ -70,9 +69,9 @@ export function PricingTeaser() {
           <Link href="/proof" className="underline">
             proof
           </Link>
-          , then read the{" "}
-          <Link href={SITE.liveDashboard} className="underline">
-            live record
+          , then{" "}
+          <Link href="/start" className="underline">
+            connect your exchange
           </Link>
           .
         </p>

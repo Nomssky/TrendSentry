@@ -9,7 +9,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     title: "Not financial advice",
     body: [
       "Everything on this site — backtest figures, paper-trading logs, alerts — is engineering output for education and validation. It is not a recommendation to buy, sell, or hold any asset.",
-      "TrendSentry sells discipline of execution, not signals. Cluster-A2 is our own system shown as proof of process, not a product.",
+      "TrendSentry sells discipline of execution, not signals. Cluster-A2 is our own system shown as proof of process, not a product. Watcher tier users define their own strategies; TrendSentry only logs and detects deviation.",
     ],
   },
   {
@@ -32,6 +32,13 @@ const SECTIONS: { title: string; body: string[] }[] = [
       "Every signal — including HOLD days — is logged with timestamp and reasoning, committed daily, and rendered on /papertrading. Downtime is shown as gaps, never backfilled.",
       "Live performance is only evaluated after ≥10 closed trades. If live trails the backtest 2–3 weeks running, the system pauses for review.",
       "Strategy parameters change only on backtested evidence, recorded with reasons — never on feeling after a few wins or losses.",
+    ],
+  },
+  {
+    title: "Data privacy",
+    body: [
+      "Watcher tier connects to your Bitget account via a read-only API key. TrendSentry never stores, transmits, or requests withdrawal or trading permissions.",
+      "Your trade data is yours. It is not used to train models, sold to third parties, or shared beyond your own account dashboard.",
     ],
   },
   {
@@ -68,12 +75,12 @@ export default function Disclaimer() {
 
         <p className="mt-10 text-center text-sm text-white/40">
           Understood?{" "}
-          <Link href="/proof" className="text-[#ccff00] underline">
-            See the proof
+          <Link href="/start" className="text-[#ccff00] underline">
+            Start free
           </Link>{" "}
           or{" "}
-          <Link href="/papertrading" className="text-[#ccff00] underline">
-            watch it live
+          <Link href="/proof" className="text-[#ccff00] underline">
+            see the proof
           </Link>
           .
         </p>
