@@ -90,8 +90,8 @@ export default function Start() {
 
         {/* CTA */}
         <div className="mt-10 flex flex-wrap gap-4">
-          <NeonButton href={SITE.github}>
-            Open an issue to get started →
+          <NeonButton href="/auth/signup">
+            Create free account →
           </NeonButton>
           <Link
             href="/pricing"
@@ -102,8 +102,8 @@ export default function Start() {
         </div>
 
         <p className="mt-8 max-w-2xl text-xs leading-relaxed text-white/40">
-          While the Watcher onboarding is manual during private beta (GitHub issue → we set up your
-          account), the actual logging is automated. A self-serve signup form ships when Paper Beta opens.
+          Sign up in 30 seconds. Connect your Bitget API key, pick a strategy template, and TrendSentry starts
+          logging your trades and tracking discipline — automatically.
         </p>
       </main>
     </SiteShell>

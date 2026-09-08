@@ -35,7 +35,7 @@ export function Footer() {
             <Link href="/proof" className="hover:text-[#ccff00]">Proof</Link>
             <Link href="/live" className="hover:text-[#ccff00]">Live account</Link>
             <Link href="/papertrading" className="hover:text-[#ccff00]">Paper trading</Link>
-            <Link href="/pricing" className="hover:text-[#ccff00]">Pricing</Link>
+            <Link href="/app/dashboard" className="hover:text-[#ccff00]">Dashboard</Link>
             <Link href="/disclaimer" className="hover:text-[#ccff00]">Risk disclaimer</Link>
           </div>
         </div>

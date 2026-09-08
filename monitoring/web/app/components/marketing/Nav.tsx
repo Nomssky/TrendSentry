@@ -31,6 +31,12 @@ export function Nav() {
           <StatusTag text="WATCHER // FREE" />
         </span>
         <Link
+          href="/auth/login"
+          className="rounded-full border border-white/20 px-5 py-2.5 text-sm text-white/80 transition hover:border-[#ccff00]/50 hover:text-[#ccff00]"
+        >
+          Sign in
+        </Link>
+        <Link
           href="/start"
           className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#ccff00]"
         >
