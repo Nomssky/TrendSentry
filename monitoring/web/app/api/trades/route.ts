@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { logDeviations, calculateDisciplineScore } from "@/lib/deviation"
+import { sendTelegramAlert, formatDeviationAlert } from "@/lib/telegram"
 
 export async function GET() {
   const supabase = await createClient()
@@ -36,19 +37,27 @@ export async function POST(request: Request) {
 
       const { data: strategy } = await supabase
         .from("user_strategies")
-        .select("params, rules_json")
+        .select("name, params, rules_json")
         .eq("id", trade.strategy_id)
         .single()
 
       if (strategy) {
         try {
-          await logDeviations(user.id, trade.strategy_id, trade.id, {
+          const deviations = await logDeviations(user.id, trade.strategy_id, trade.id, {
             pair: trade.pair,
             side: trade.side as "buy" | "sell",
             price: trade.price,
             amount: trade.amount,
             executed_at: trade.executed_at,
           }, strategy)
+
+          if (deviations && deviations.length > 0) {
+            for (const dev of deviations) {
+              await sendTelegramAlert(
+                formatDeviationAlert(dev.rule_key, dev.expected, dev.actual, dev.severity, strategy.name)
+              )
+            }
+          }
         } catch (err) {
           console.error("Deviation check failed:", err)
         }

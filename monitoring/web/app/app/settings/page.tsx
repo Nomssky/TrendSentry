@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 type ApiKeyInfo = {
   id: number
@@ -11,6 +12,7 @@ type ApiKeyInfo = {
 }
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [existingKey, setExistingKey] = useState<ApiKeyInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [apiKey, setApiKey] = useState("")
@@ -18,6 +20,14 @@ export default function SettingsPage() {
   const [passphrase, setPassphrase] = useState("")
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
+
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [passwordMsg, setPasswordMsg] = useState<string | null>(null)
+
+  const [deleting, setDeleting] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState("")
 
   useEffect(() => {
     fetch("/api/api-keys")
@@ -46,6 +56,38 @@ export default function SettingsPage() {
     fetch("/api/api-keys").then((r) => r.json()).then((data) => setExistingKey(data.id ? data : null))
   }
 
+  async function changePassword(e: React.FormEvent) {
+    e.preventDefault()
+    setChangingPassword(true)
+    setPasswordMsg(null)
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setChangingPassword(false)
+    if (error) return setPasswordMsg(error.message)
+    setPasswordMsg("Password updated")
+    setCurrentPassword(""); setNewPassword("")
+  }
+
+  async function deleteAccount() {
+    if (deleteConfirm !== "DELETE") return
+    setDeleting(true)
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      setDeleting(false)
+      setPasswordMsg("Not authenticated")
+      return
+    }
+    const { error } = await supabase.auth.admin.deleteUser(user.id)
+    setDeleting(false)
+    if (error) {
+      setPasswordMsg(error.message)
+      return
+    }
+    await supabase.auth.signOut()
+    router.push("/auth/login")
+  }
+
   return (
     <div className="mx-auto max-w-lg space-y-8">
       <h1 className="text-3xl font-bold text-white">Settings</h1>
@@ -72,6 +114,24 @@ export default function SettingsPage() {
           <input value={passphrase} onChange={(e) => setPassphrase(e.target.value)} placeholder="Passphrase (optional)" type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
           <button disabled={saving} className="w-full rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00] disabled:opacity-40">{saving ? "Saving..." : existingKey ? "Update keys" : "Save keys"}</button>
         </form>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-white">Change Password</h2>
+        {passwordMsg && <p className={`text-sm ${passwordMsg === "Password updated" ? "text-emerald-400" : "text-rose-400"}`}>{passwordMsg}</p>}
+        <form onSubmit={changePassword} className="space-y-3">
+          <input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password (min 6 chars)" required minLength={6} type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
+          <button disabled={changingPassword} className="w-full rounded-full bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20 disabled:opacity-40">{changingPassword ? "Updating..." : "Update password"}</button>
+        </form>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-rose-400">Danger Zone</h2>
+        <p className="text-sm text-white/40">Delete your account and all associated data. This cannot be undone.</p>
+        <div className="space-y-3">
+          <input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder='Type "DELETE" to confirm' className="w-full rounded-lg border border-rose-400/30 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-rose-400/50" />
+          <button disabled={deleting || deleteConfirm !== "DELETE"} onClick={deleteAccount} className="w-full rounded-full bg-rose-500/20 px-6 py-3 font-semibold text-rose-400 transition hover:bg-rose-500/30 disabled:opacity-40">{deleting ? "Deleting..." : "Delete account"}</button>
+        </div>
       </section>
     </div>
   )
