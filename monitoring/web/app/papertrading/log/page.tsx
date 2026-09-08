@@ -7,10 +7,15 @@ import { TechLabel } from "../../components/marketing/ui";
 import { getDashboardData } from "@/lib/db";
 import { Badge, Card, fmtUsd } from "../ui";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export default async function PaperLog() {
-  const d = await getDashboardData();
+  let d;
+  try {
+    d = await getDashboardData();
+  } catch {
+    return <SiteShell><main className="mx-auto max-w-6xl px-5 pb-16 pt-28 sm:px-10 sm:pt-32 lg:px-16"><p className="text-sm text-white/40">Paper trading data not available (local DB only).</p></main></SiteShell>;
+  }
 
   return (
     <SiteShell>

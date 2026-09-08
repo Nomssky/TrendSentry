@@ -12,10 +12,22 @@ import {
 } from "@/lib/reference";
 import { Badge, Card, Meter, SectionHead } from "./ui";
 
-export const dynamic = "force-static";
+import { Suspense } from "react";
+import { SiteShell } from "../components/marketing/SiteShell";
+
+export const dynamic = "force-dynamic";
+
+async function getData() {
+  try {
+    return await getDashboardData();
+  } catch {
+    return null;
+  }
+}
 
 export default async function PaperTrading() {
-  const d = await getDashboardData();
+  const d = await getData();
+  if (!d) return <SiteShell><main className="mx-auto max-w-6xl px-5 pb-16 pt-28 sm:px-10 sm:pt-32"><p className="text-sm text-white/40">Paper trading data not available (local DB only).</p></main></SiteShell>;
   const evaluated = d.realized.nClosed >= EVAL_MIN_TRADES;
   const wrOk =
     d.realized.winRatePct != null &&
