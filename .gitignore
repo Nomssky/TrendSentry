@@ -6,6 +6,7 @@ __pycache__/
 
 # Secrets
 .env
+!monitoring/web/.env
 
 # Data & reports output
 backtest/reports/*.csv
@@ -23,3 +24,5 @@ node_modules/
 # Backup lokal (off-disk backup lewat CI commit db/paper_trading.db)
 db/backups/
 .dump
+.vercel
+.env*

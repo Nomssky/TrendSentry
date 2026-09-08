@@ -12,8 +12,7 @@ import {
 } from "@/lib/reference";
 import { Badge, Card, Meter, SectionHead } from "./ui";
 
-import { Suspense } from "react";
-import { SiteShell } from "../components/marketing/SiteShell";
+
 
 export const dynamic = "force-dynamic";
 
