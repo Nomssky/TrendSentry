@@ -38,6 +38,12 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python paper_trading/live_signal.py
 
+      - name: Sync paper trading data to Supabase
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          DB_PATH: db/paper_trading.db
+        run: python scripts/sync_paper_to_supabase.py
+
       - name: Commit DB state (persistensi antar-run + backup harian)
         run: |
           # Identitas HARUS milik user (terhubung ke akun GitHub/Vercel) — kalau pakai

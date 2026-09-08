@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { SiteShell } from "../../components/marketing/SiteShell";
 import { TechLabel } from "../../components/marketing/ui";
-import { getDashboardData } from "@/lib/db";
+import { getDashboardData } from "@/lib/db-supabase";
 import { Badge, Card, fmtUsd } from "../ui";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +63,7 @@ export default async function PaperLog() {
                           {t.entry_date} @ {fmtUsd(t.entry_price)}
                         </td>
                         <td className="py-2.5 pr-4 text-white/50">
-                          {t.exit_date} @ {fmtUsd(t.exit_price ?? 0)}
+                          {t.exit_date} @ {fmtUsd(Number(t.exit_price ?? 0))}
                         </td>
                         <td className="py-2.5 pr-4 text-xs text-white/40">{t.exit_reason}</td>
                         <td className={`py-2.5 pr-4 text-right ${up ? "text-[#ccff00]" : "text-rose-400"}`}>

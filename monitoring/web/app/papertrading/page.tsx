@@ -1,7 +1,7 @@
 import Link from "next/link";
 import PaperLiveBoard from "./PaperLiveBoard";
 import { SiteShell } from "../components/marketing/SiteShell";
-import { getDashboardData } from "@/lib/db";
+import { getDashboardData } from "@/lib/db-supabase";
 import {
   AVG_R_FLOOR,
   BACKTEST_REFERENCE,
