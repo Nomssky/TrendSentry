@@ -105,6 +105,7 @@ export default function NewStrategyPage() {
     if (!selected || !name) return
     const res = await fetch("/api/strategies", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, template_id: selected, params }),
     })
     if (!res.ok) {

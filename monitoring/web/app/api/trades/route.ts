@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { logDeviations, checkDeviation, calculateDisciplineScore } from "@/lib/deviation"
+import { checkDeviation, calculateDisciplineScore } from "@/lib/deviation"
 import { sendTelegramAlert, formatDeviationAlert } from "@/lib/telegram"
-import { TradeBodySchema, TradeBatchSchema } from "@/lib/validations"
+import { TradeBatchSchema } from "@/lib/validations"
 import { validateOrigin } from "@/lib/csrf"
 
 export async function GET(request: Request) {

@@ -41,11 +41,11 @@ function parseRules(
 
   if (rules_json) {
     if (rules_json.max_daily_trades != null) rules.max_daily_trades = Number(rules_json.max_daily_trades)
-    if (rules_json.allowed_pairs != null) rules.allowed_pairs = rules_json.allowed_pairs as string[]
+    if (Array.isArray(rules_json.allowed_pairs)) rules.allowed_pairs = rules_json.allowed_pairs as string[]
     if (rules_json.min_holding_days != null) rules.min_holding_days = Number(rules_json.min_holding_days)
-    if (rules_json.no_trade_hours != null) rules.no_trade_hours = rules_json.no_trade_hours as number[]
+    if (Array.isArray(rules_json.no_trade_hours)) rules.no_trade_hours = rules_json.no_trade_hours as number[]
     if (rules_json.max_position_size_pct != null) rules.max_position_size_pct = Number(rules_json.max_position_size_pct)
-    if (rules_json.custom != null) rules.custom = rules_json.custom as Record<string, unknown>
+    if (rules_json.custom != null && typeof rules_json.custom === "object") rules.custom = rules_json.custom as Record<string, unknown>
   }
 
   return rules

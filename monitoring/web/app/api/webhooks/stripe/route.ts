@@ -12,9 +12,12 @@ export async function POST(request: Request) {
   }
 
   const stripe = getStripe()
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+  if (!webhookSecret) return NextResponse.json({ error: "server misconfigured" }, { status: 500 })
+
   let event: Stripe.Event
   try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!)
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret)
   } catch (err) {
     console.error("Webhook signature verification failed:", err)
     return NextResponse.json({ error: "invalid signature" }, { status: 400 })

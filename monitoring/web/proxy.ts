@@ -1,13 +1,16 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
-import { getEnv } from "./lib/env"
 
 const protectedPrefixes = ["/app"]
 const authPages = ["/auth/login", "/auth/signup"]
 
 export default async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
-  const { supabaseUrl, supabaseKey } = getEnv()
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json({ error: "server misconfigured" }, { status: 500 })
+  }
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {

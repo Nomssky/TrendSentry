@@ -29,6 +29,7 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState("")
   const [deletePassword, setDeletePassword] = useState("")
+  const [deleteMsg, setDeleteMsg] = useState<string | null>(null)
 
   useEffect(() => {
     fetch("/api/api-keys")
@@ -45,6 +46,7 @@ export default function SettingsPage() {
     setSaving(true)
     const res = await fetch("/api/api-keys", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ api_key: apiKey, api_secret: apiSecret, passphrase: passphrase || undefined }),
     })
     setSaving(false)
@@ -64,6 +66,7 @@ export default function SettingsPage() {
     setPasswordMsg(null)
     const res = await fetch("/api/account/password", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
     })
     setChangingPassword(false)
@@ -80,12 +83,13 @@ export default function SettingsPage() {
     setDeleting(true)
     const res = await fetch("/api/account/delete", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password: deletePassword }),
     })
     setDeleting(false)
     if (!res.ok) {
       const { error } = await res.json()
-      setPasswordMsg(error)
+      setDeleteMsg(error)
       return
     }
     const supabase = createClient()
@@ -134,6 +138,7 @@ export default function SettingsPage() {
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-rose-400">Danger Zone</h2>
         <p className="text-sm text-white/40">Delete your account and all associated data. This cannot be undone.</p>
+        {deleteMsg && <p className="text-sm text-rose-400">{deleteMsg}</p>}
         <div className="space-y-3">
           <input value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} placeholder="Enter your password to confirm" type="password" className="w-full rounded-lg border border-rose-400/30 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-rose-400/50" />
           <input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder='Type "DELETE" to confirm' className="w-full rounded-lg border border-rose-400/30 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-rose-400/50" />
