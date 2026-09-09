@@ -205,21 +205,22 @@ export async function calculateDisciplineScore(
 ) {
   const supabase = await createClient()
 
-  const { data: trades } = await supabase
-    .from("user_trades")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("strategy_id", strategyId)
-    .gte("executed_at", `${date}T00:00:00Z`)
-    .lte("executed_at", `${date}T23:59:59Z`)
-
-  const { data: deviations } = await supabase
-    .from("deviation_log")
-    .select("id, severity")
-    .eq("user_id", userId)
-    .eq("strategy_id", strategyId)
-    .gte("detected_at", `${date}T00:00:00Z`)
-    .lte("detected_at", `${date}T23:59:59Z`)
+  const [{ data: trades }, { data: deviations }] = await Promise.all([
+    supabase
+      .from("user_trades")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("strategy_id", strategyId)
+      .gte("executed_at", `${date}T00:00:00Z`)
+      .lte("executed_at", `${date}T23:59:59Z`),
+    supabase
+      .from("deviation_log")
+      .select("id, severity")
+      .eq("user_id", userId)
+      .eq("strategy_id", strategyId)
+      .gte("detected_at", `${date}T00:00:00Z`)
+      .lte("detected_at", `${date}T23:59:59Z`),
+  ])
 
   const totalTrades = trades?.length ?? 0
   const totalDeviations = deviations?.length ?? 0

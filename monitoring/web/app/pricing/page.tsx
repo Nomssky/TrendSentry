@@ -52,13 +52,21 @@ const TIERS = [
 
 export default function Pricing() {
   async function handleCheckout(plan: string) {
-    const res = await fetch("/api/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan }),
-    })
-    const { url } = await res.json()
-    if (url) window.location.href = url
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.url) {
+        alert(data.error ?? "Checkout failed. Please try again.")
+        return
+      }
+      window.location.href = data.url
+    } catch {
+      alert("Network error. Please try again.")
+    }
   }
 
   return (

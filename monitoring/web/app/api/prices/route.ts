@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
+import { PAIRS } from "@/lib/constants"
 
-const PAIRS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "AVAXUSDT", "LINKUSDT", "DOGEUSDT", "ADAUSDT", "HYPEUSDT"]
+const BITGET_PAIRS = PAIRS.map((p) => p.replace("/", ""))
 const BITGET_URL = "https://api.bitget.com/api/v2/spot/market/tickers"
 
 let cache: { data: Record<string, { price: number; changePct: number | null }>; timestamp: number } | null = null
@@ -51,7 +52,7 @@ export async function GET(request: Request) {
     const json = await res.json()
     const prices: Record<string, { price: number; changePct: number | null }> = {}
     for (const r of json.data ?? []) {
-      if (!PAIRS.includes(r.symbol)) continue
+      if (!BITGET_PAIRS.includes(r.symbol)) continue
       const pair = r.symbol.replace("USDT", "/USDT")
       const last = Number(r.lastPr)
       const open24 = Number(r.open)

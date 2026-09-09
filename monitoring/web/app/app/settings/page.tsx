@@ -62,23 +62,15 @@ export default function SettingsPage() {
     if (!currentPassword) return setPasswordMsg("Current password is required")
     setChangingPassword(true)
     setPasswordMsg(null)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user?.email) {
-      setChangingPassword(false)
-      return setPasswordMsg("Not logged in")
-    }
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: user.email,
-      password: currentPassword,
+    const res = await fetch("/api/account/password", {
+      method: "POST",
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
     })
-    if (signInError) {
-      setChangingPassword(false)
-      return setPasswordMsg("Current password is incorrect")
-    }
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
     setChangingPassword(false)
-    if (error) return setPasswordMsg(error.message)
+    if (!res.ok) {
+      const { error } = await res.json()
+      return setPasswordMsg(error)
+    }
     setPasswordMsg("Password updated")
     setCurrentPassword(""); setNewPassword("")
   }

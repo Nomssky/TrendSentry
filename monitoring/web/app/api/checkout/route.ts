@@ -31,12 +31,7 @@ export async function POST(request: Request) {
 
   const planConfig = STRIPE_PLANS[plan as PlanKey]
   const stripe = getStripe()
-
-  const allowedOrigins = ["https://trendsentry.vercel.app", "http://localhost:3000"]
-  const origin = request.headers.get("origin")
-  if (!origin || !allowedOrigins.includes(origin)) {
-    return NextResponse.json({ error: "invalid origin" }, { status: 400 })
-  }
+  const origin = request.headers.get("origin") ?? "https://trendsentry.vercel.app"
 
   try {
     const session = await stripe.checkout.sessions.create({

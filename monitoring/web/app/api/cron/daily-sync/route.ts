@@ -42,6 +42,7 @@ export async function GET(request: Request) {
   }
 
   const supabase = createAdminClient()
+  const { decrypt } = await import("@/lib/encryption")
   const { data: users, error: usersError } = await supabase.auth.admin.listUsers()
   if (usersError) {
     console.error("List users error:", usersError)
@@ -59,7 +60,6 @@ export async function GET(request: Request) {
       .single()
     if (!apiKey) continue
 
-    const { decrypt } = await import("@/lib/encryption")
     const key = await decrypt(apiKey.api_key_enc)
     const secret = await decrypt(apiKey.api_secret_enc)
     const passphrase = apiKey.passphrase_enc ? await decrypt(apiKey.passphrase_enc) : ""
@@ -72,7 +72,28 @@ export async function GET(request: Request) {
         .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof fetchBitgetTrades>>> => r.status === "fulfilled")
         .flatMap((r) => r.value)
 
-      const enriched = allTrades.map((t) => ({ ...t, user_id: user.id, exchange: "bitget" }))
+      if (allTrades.length === 0) {
+        results.push({ userId: user.id, trades: 0 })
+        continue
+      }
+
+      // Dedup: fetch existing trades in the same time window and filter
+      const timestamps = allTrades.map((t) => t.executed_at)
+      const earliest = timestamps.reduce((a, b) => a < b ? a : b)
+      const { data: existing } = await supabase
+        .from("user_trades")
+        .select("pair, executed_at, price, amount")
+        .eq("user_id", user.id)
+        .gte("executed_at", earliest)
+
+      const existingKeys = new Set(
+        (existing ?? []).map((t) => `${t.pair}|${t.executed_at}|${t.price}|${t.amount}`)
+      )
+      const newTrades = allTrades.filter(
+        (t) => !existingKeys.has(`${t.pair}|${t.executed_at}|${t.price}|${t.amount}`)
+      )
+
+      const enriched = newTrades.map((t) => ({ ...t, user_id: user.id, exchange: "bitget" }))
 
       if (enriched.length > 0) {
         const { error: insertError } = await supabase.from("user_trades").insert(enriched)
