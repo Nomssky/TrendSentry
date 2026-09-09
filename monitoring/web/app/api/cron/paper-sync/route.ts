@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { PaperSyncSchema } from "@/lib/validations"
 
 const SIGNAL_FIELDS = ["candle_date", "processed_at", "pair", "close_price", "donchian_hi", "donchian_lo", "atr", "signal", "decision", "reason"]
-const POSITION_FIELDS = ["pair", "entry_date", "entry_price", "units", "stop_price", "risk_amount", "status", "exit_date", "exit_price", "exit_reason", "pnl", "r_multiple"]
+const POSITION_FIELDS = ["id", "pair", "entry_date", "entry_price", "units", "stop_price", "risk_amount", "status", "exit_date", "exit_price", "exit_reason", "pnl", "r_multiple"]
 const EQUITY_FIELDS = ["date", "cash", "positions_mtm", "n_open", "total_equity"]
 
 function pick(obj: Record<string, unknown>, fields: string[]) {
