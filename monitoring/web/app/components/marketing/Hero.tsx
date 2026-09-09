@@ -44,18 +44,18 @@ function Mockup() {
         </div>
       </div>
 
-      <div className="float-anim absolute -left-4 top-8 rounded-2xl border border-white/10 bg-[#0c0c0c]/90 px-4 py-3 backdrop-blur-xl sm:-left-8">
+      <div className="float-anim absolute left-0 top-8 rounded-2xl border border-white/10 bg-[#0c0c0c]/90 px-3 py-2 backdrop-blur-xl sm:-left-8 sm:px-4 sm:py-3">
         <p className="tech-label text-white/40">SIGNAL</p>
-        <p className="font-mono-tech text-sm font-bold text-[#ccff00]">LONG_ENTRY // BTC</p>
+        <p className="font-mono-tech text-xs font-bold text-[#ccff00] sm:text-sm">LONG_ENTRY // BTC</p>
       </div>
       <div
-        className="float-anim absolute -right-3 bottom-16 rounded-2xl border border-white/10 bg-[#0c0c0c]/90 px-4 py-3 backdrop-blur-xl sm:-right-6"
+        className="float-anim absolute bottom-16 right-0 rounded-2xl border border-white/10 bg-[#0c0c0c]/90 px-3 py-2 backdrop-blur-xl sm:-right-6 sm:px-4 sm:py-3"
         style={{ animationDelay: "-3s" }}
       >
         <p className="tech-label text-white/40">STOP LOSS</p>
-        <p className="font-mono-tech text-sm font-bold">ENTRY − 2×ATR</p>
+        <p className="font-mono-tech text-xs font-bold sm:text-sm">ENTRY − 2×ATR</p>
       </div>
-      <div className="absolute -top-4 right-10 rounded-full bg-[#ccff00] px-3 py-1 font-mono-tech text-[10px] font-bold uppercase tracking-[0.2em] text-black">
+      <div className="absolute -top-4 right-4 rounded-full bg-[#ccff00] px-2 py-1 font-mono-tech text-[8px] font-bold uppercase tracking-[0.2em] text-black sm:right-10 sm:px-3 sm:text-[10px]">
         ✦ AI CURSOR
       </div>
     </div>

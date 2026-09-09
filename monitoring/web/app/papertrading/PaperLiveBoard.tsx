@@ -75,7 +75,7 @@ export default function PaperLiveBoard({
                 <span className={`inline-block h-[6px] w-[6px] rounded-full ${fresh ? "pulse-dot bg-[#ccff00]" : "bg-amber-400"}`} />
                 TOTAL EQUITY // {fresh ? "LIVE" : mode.toUpperCase()}
               </p>
-              <p className="font-mono-tech text-5xl font-bold tracking-tight sm:text-6xl">
+              <p className="font-mono-tech text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
                 ${fmtUsd(liveTotal, 0)}
               </p>
               <p className={`mt-1 font-mono-tech text-sm font-bold ${up ? "text-[#ccff00]" : "text-rose-400"}`}>
