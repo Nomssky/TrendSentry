@@ -1,4 +1,4 @@
-import { createClient } from "./supabase/server"
+import { SupabaseClient } from "@supabase/supabase-js"
 
 type Trade = {
   pair: string
@@ -161,59 +161,23 @@ export function checkDeviation(
   return results
 }
 
-export async function logDeviations(
-  userId: string,
-  strategyId: number,
-  tradeId: number,
-  trade: Trade,
-  strategy: { params: Record<string, unknown>; rules_json?: Record<string, unknown> | null },
-  context?: {
-    openPositions?: number
-    dailyTrades?: number
-    accountEquity?: number
-    positionEntryDate?: string
-  }
-) {
-  const supabase = await createClient()
-  const deviations = checkDeviation(trade, strategy, context)
-
-  if (deviations.length === 0) return []
-
-  const { data, error } = await supabase
-    .from("deviation_log")
-    .insert(
-      deviations.map((d) => ({
-        user_id: userId,
-        strategy_id: strategyId,
-        trade_id: tradeId,
-        rule_key: d.rule_key,
-        expected: d.expected,
-        actual: d.actual,
-        severity: d.severity,
-      })),
-    )
-    .select()
-
-  if (error) throw error
-  return data
-}
-
 export async function calculateDisciplineScore(
   userId: string,
   strategyId: number,
-  date: string
+  date: string,
+  supabase?: SupabaseClient
 ) {
-  const supabase = await createClient()
+  const client = supabase ?? await (await import("./supabase/server")).createClient()
 
   const [{ data: trades }, { data: deviations }] = await Promise.all([
-    supabase
+    client
       .from("user_trades")
       .select("id")
       .eq("user_id", userId)
       .eq("strategy_id", strategyId)
       .gte("executed_at", `${date}T00:00:00Z`)
       .lte("executed_at", `${date}T23:59:59Z`),
-    supabase
+    client
       .from("deviation_log")
       .select("id, severity")
       .eq("user_id", userId)
@@ -231,7 +195,7 @@ export async function calculateDisciplineScore(
   score -= (totalDeviations - criticalDeviations) * 10
   score = Math.max(0, Math.min(100, score))
 
-  const { error } = await supabase.from("discipline_scores").upsert(
+  const { error } = await client.from("discipline_scores").upsert(
     {
       user_id: userId,
       strategy_id: strategyId,

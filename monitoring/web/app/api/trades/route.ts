@@ -135,7 +135,7 @@ export async function POST(request: Request) {
       const dateStrategyIds = [...new Set(data.filter((t) => t.executed_at?.startsWith(date)).map((t) => t.strategy_id).filter(Boolean))]
       for (const strategyId of dateStrategyIds) {
         scoreJobs.push(
-          calculateDisciplineScore(user.id, strategyId, date).then(() => {}).catch((err) =>
+          calculateDisciplineScore(user.id, strategyId, date, supabase).then(() => {}).catch((err) =>
             console.error("Discipline score calculation failed:", err)
           )
         )
