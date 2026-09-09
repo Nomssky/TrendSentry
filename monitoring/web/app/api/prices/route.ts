@@ -6,14 +6,30 @@ const BITGET_URL = "https://api.bitget.com/api/v2/spot/market/tickers"
 let cache: { data: Record<string, { price: number; changePct: number | null }>; timestamp: number } | null = null
 const CACHE_TTL = 30_000
 
+const rateLimit = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT = 30
+const RATE_WINDOW = 60_000
+
 export async function GET() {
+  const ip = "global"
+  const now = Date.now()
+  const entry = rateLimit.get(ip)
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= RATE_LIMIT) {
+      return NextResponse.json({ error: "rate limited" }, { status: 429 })
+    }
+    entry.count++
+  } else {
+    rateLimit.set(ip, { count: 1, resetAt: now + RATE_WINDOW })
+  }
+
   try {
     if (cache && Date.now() - cache.timestamp < CACHE_TTL) {
       return NextResponse.json(cache.data)
     }
 
     const res = await fetch(BITGET_URL, { cache: "no-store" })
-    if (!res.ok) return NextResponse.json({ error: res.status }, { status: 502 })
+    if (!res.ok) return NextResponse.json({ error: "upstream error" }, { status: 502 })
     const json = await res.json()
     const prices: Record<string, { price: number; changePct: number | null }> = {}
     for (const r of json.data ?? []) {
@@ -28,6 +44,6 @@ export async function GET() {
     cache = { data: prices, timestamp: Date.now() }
     return NextResponse.json(prices)
   } catch {
-    return NextResponse.json({ error: "fetch failed" }, { status: 502 })
+    return NextResponse.json({ error: "upstream error" }, { status: 502 })
   }
 }

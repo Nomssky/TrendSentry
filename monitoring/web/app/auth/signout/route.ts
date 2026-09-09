@@ -15,7 +15,9 @@ export async function POST() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {}
+          } catch (e) {
+            console.error("signout cookie error:", e)
+          }
         },
       },
     }

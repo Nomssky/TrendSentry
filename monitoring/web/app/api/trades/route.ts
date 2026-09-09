@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { logDeviations, calculateDisciplineScore } from "@/lib/deviation"
 import { sendTelegramAlert, formatDeviationAlert } from "@/lib/telegram"
+import { TradeBodySchema, TradeBatchSchema } from "@/lib/validations"
+import { validateOrigin } from "@/lib/csrf"
 
 export async function GET(request: Request) {
   const supabase = await createClient()
@@ -32,22 +34,26 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const csrf = validateOrigin(request)
+  if (csrf) return csrf
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-type TradeBody = {
-  pair: string
-  side: string
-  price: number
-  amount: number
-  fee?: number
-  executed_at: string
-  strategy_id?: number
-}
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: "invalid JSON" }, { status: 400 })
+  }
 
-  const body = (await request.json()) as TradeBody | TradeBody[]
-  const allowed = (Array.isArray(body) ? body : [body]).map((t) => ({
+  const parsed = TradeBatchSchema.safeParse(Array.isArray(body) ? body : [body])
+  if (!parsed.success) {
+    return NextResponse.json({ error: "validation failed", details: parsed.error.flatten() }, { status: 400 })
+  }
+
+  const allowed = parsed.data.map((t) => ({
     user_id: user.id,
     pair: t.pair,
     side: t.side,
@@ -59,11 +65,15 @@ type TradeBody = {
   }))
 
   const { data, error } = await supabase.from("user_trades").insert(allowed).select()
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) {
+    console.error("Trade insert error:", error)
+    return NextResponse.json({ error: "insert failed" }, { status: 400 })
+  }
+  if (!data) return NextResponse.json({ trades: [] })
 
-  if (data && data.length > 0) {
+  if (data.length > 0) {
     const strategyIds = [...new Set(data.map((t) => t.strategy_id).filter(Boolean))]
-    const strategyMap = new Map<string, { name: string; params: Record<string, unknown>; rules_json?: Record<string, unknown> | null }>()
+    const strategyMap = new Map<number, { name: string; params: Record<string, unknown>; rules_json?: Record<string, unknown> | null }>()
 
     if (strategyIds.length > 0) {
       const { data: strategies } = await supabase
@@ -102,9 +112,9 @@ type TradeBody = {
       }
     }
 
-    const dates = [...new Set(data.map((t) => t.executed_at.split("T")[0]))]
+    const dates = [...new Set(data.map((t) => t.executed_at?.split("T")[0]).filter(Boolean))]
     for (const date of dates) {
-      const dateStrategyIds = [...new Set(data.filter((t) => t.executed_at.startsWith(date)).map((t) => t.strategy_id).filter(Boolean))]
+      const dateStrategyIds = [...new Set(data.filter((t) => t.executed_at?.startsWith(date)).map((t) => t.strategy_id).filter(Boolean))]
       for (const strategyId of dateStrategyIds) {
         try {
           await calculateDisciplineScore(user.id, strategyId, date)
@@ -115,5 +125,5 @@ type TradeBody = {
     }
   }
 
-  return NextResponse.json(data)
+  return NextResponse.json({ trades: data })
 }

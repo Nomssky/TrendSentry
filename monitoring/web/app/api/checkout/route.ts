@@ -1,18 +1,31 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getStripe, STRIPE_PLANS, PlanKey } from "@/lib/stripe"
-
-type CheckoutPostBody = {
-  plan: string
-}
+import { CheckoutPostSchema } from "@/lib/validations"
+import { validateOrigin } from "@/lib/csrf"
 
 export async function POST(request: Request) {
+  const csrf = validateOrigin(request)
+  if (csrf) return csrf
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-  const { plan } = await request.json() as CheckoutPostBody
-  if (!plan || !(plan in STRIPE_PLANS)) {
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: "invalid JSON" }, { status: 400 })
+  }
+
+  const parsed = CheckoutPostSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: "validation failed" }, { status: 400 })
+  }
+
+  const { plan } = parsed.data
+  if (!(plan in STRIPE_PLANS)) {
     return NextResponse.json({ error: "invalid plan" }, { status: 400 })
   }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { PAIRS } from "@/lib/constants"
 import crypto from "crypto"
 
 function sign(timestamp: string, method: string, path: string, body: string, secret: string) {
@@ -23,14 +24,14 @@ async function fetchBitgetTrades(apiKey: string, apiSecret: string, passphrase: 
     },
   })
   const data = await res.json()
-  return (data.data ?? []).map((t: any) => ({
+  return (data.data ?? []).map((t: Record<string, string>) => ({
     pair: symbol,
     side: t.side === "buy" ? "buy" : "sell",
     price: parseFloat(t.price),
     amount: parseFloat(t.size),
     fee: parseFloat(t.fee) || null,
     fee_currency: t.feeCoin || null,
-    executed_at: new Date(parseInt(t.timestamp)).toISOString(),
+    executed_at: new Date(Number(t.timestamp)).toISOString(),
   }))
 }
 
@@ -43,7 +44,8 @@ export async function GET(request: Request) {
   const supabase = createAdminClient()
   const { data: users, error: usersError } = await supabase.auth.admin.listUsers()
   if (usersError) {
-    return NextResponse.json({ error: usersError.message }, { status: 500 })
+    console.error("List users error:", usersError)
+    return NextResponse.json({ error: "failed to list users" }, { status: 500 })
   }
 
   const results: { userId: string; trades: number }[] = []
@@ -51,7 +53,7 @@ export async function GET(request: Request) {
   for (const user of users.users) {
     const { data: apiKey } = await supabase
       .from("user_api_keys")
-      .select("*")
+      .select("id, user_id, api_key_enc, api_secret_enc, passphrase_enc, is_active")
       .eq("user_id", user.id)
       .eq("is_active", true)
       .single()
@@ -63,8 +65,14 @@ export async function GET(request: Request) {
     const passphrase = apiKey.passphrase_enc ? await decrypt(apiKey.passphrase_enc) : ""
 
     try {
-      const trades = await fetchBitgetTrades(key, secret, passphrase, "BTC/USDT")
-      const enriched = trades.map((t: { pair: string; side: string; price: number; amount: number; fee: number | null; fee_currency: string | null; executed_at: string }) => ({ ...t, user_id: user.id, exchange: "bitget" }))
+      const allTrades: { pair: string; side: string; price: number; amount: number; fee: number | null; fee_currency: string | null; executed_at: string }[] = []
+
+      for (const pair of PAIRS) {
+        const trades = await fetchBitgetTrades(key, secret, passphrase, pair)
+        allTrades.push(...trades)
+      }
+
+      const enriched = allTrades.map((t) => ({ ...t, user_id: user.id, exchange: "bitget" }))
 
       if (enriched.length > 0) {
         const { error: insertError } = await supabase.from("user_trades").insert(enriched)

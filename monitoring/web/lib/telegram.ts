@@ -22,6 +22,10 @@ export async function sendTelegramAlert(message: string): Promise<boolean> {
   }
 }
 
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+}
+
 export function formatDeviationAlert(
   ruleKey: string,
   expected: string,
@@ -33,11 +37,11 @@ export function formatDeviationAlert(
   return [
     `${icon} <b>Deviation Detected</b>`,
     "",
-    `<b>Strategy:</b> ${strategyName}`,
-    `<b>Rule:</b> ${ruleKey}`,
-    `<b>Expected:</b> ${expected}`,
-    `<b>Actual:</b> ${actual}`,
-    `<b>Severity:</b> ${severity}`,
+    `<b>Strategy:</b> ${escapeHtml(strategyName)}`,
+    `<b>Rule:</b> ${escapeHtml(ruleKey)}`,
+    `<b>Expected:</b> ${escapeHtml(expected)}`,
+    `<b>Actual:</b> ${escapeHtml(actual)}`,
+    `<b>Severity:</b> ${escapeHtml(severity)}`,
     "",
     `<i>${new Date().toISOString()}</i>`,
   ].join("\n")

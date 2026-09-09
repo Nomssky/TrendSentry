@@ -1,24 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-
-type StrategyPostBody = {
-  name: string
-  template_id?: number
-  params: Record<string, unknown>
-  rules_json?: Record<string, unknown>
-}
-
-type StrategyPutBody = {
-  id: number
-  name?: string
-  params?: Record<string, unknown>
-  rules_json?: Record<string, unknown>
-  is_active?: boolean
-}
-
-type StrategyDeleteBody = {
-  id: number
-}
+import { StrategyPostSchema, StrategyPutSchema, StrategyDeleteSchema } from "@/lib/validations"
+import { validateOrigin } from "@/lib/csrf"
 
 export async function GET() {
   const supabase = await createClient()
@@ -34,26 +17,59 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const csrf = validateOrigin(request)
+  if (csrf) return csrf
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-  const { name, template_id, params, rules_json } = await request.json() as StrategyPostBody
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: "invalid JSON" }, { status: 400 })
+  }
+
+  const parsed = StrategyPostSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: "validation failed", details: parsed.error.flatten() }, { status: 400 })
+  }
+
+  const { name, template_id, params, rules_json } = parsed.data
   const { data, error } = await supabase
     .from("user_strategies")
     .insert({ user_id: user.id, name, template_id, params, rules_json })
     .select()
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) {
+    console.error("Strategy insert error:", error)
+    return NextResponse.json({ error: "insert failed" }, { status: 400 })
+  }
   return NextResponse.json(data)
 }
 
 export async function PUT(request: Request) {
+  const csrf = validateOrigin(request)
+  if (csrf) return csrf
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-  const { id, name, params, rules_json, is_active } = await request.json() as StrategyPutBody
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: "invalid JSON" }, { status: 400 })
+  }
+
+  const parsed = StrategyPutSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: "validation failed", details: parsed.error.flatten() }, { status: 400 })
+  }
+
+  const { id, name, params, rules_json, is_active } = parsed.data
   const { data, error } = await supabase
     .from("user_strategies")
     .update({ name, params, rules_json, is_active, updated_at: new Date().toISOString() })
@@ -61,21 +77,41 @@ export async function PUT(request: Request) {
     .eq("user_id", user.id)
     .select()
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) {
+    console.error("Strategy update error:", error)
+    return NextResponse.json({ error: "update failed" }, { status: 400 })
+  }
   return NextResponse.json(data)
 }
 
 export async function DELETE(request: Request) {
+  const csrf = validateOrigin(request)
+  if (csrf) return csrf
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-  const { id } = await request.json() as StrategyDeleteBody
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: "invalid JSON" }, { status: 400 })
+  }
+
+  const parsed = StrategyDeleteSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: "validation failed", details: parsed.error.flatten() }, { status: 400 })
+  }
+
   const { error } = await supabase
     .from("user_strategies")
     .delete()
-    .eq("id", id)
+    .eq("id", parsed.data.id)
     .eq("user_id", user.id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) {
+    console.error("Strategy delete error:", error)
+    return NextResponse.json({ error: "delete failed" }, { status: 400 })
+  }
   return NextResponse.json({ ok: true })
 }

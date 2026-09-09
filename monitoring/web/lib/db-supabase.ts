@@ -66,6 +66,11 @@ export async function getDashboardData(): Promise<DashboardData> {
     supabase.from("paper_meta").select("*"),
   ])
 
+  if (signalsRes.error) console.error("paper_signals query error:", signalsRes.error)
+  if (positionsRes.error) console.error("paper_positions query error:", positionsRes.error)
+  if (equityRes.error) console.error("paper_equity_log query error:", equityRes.error)
+  if (metaRes.error) console.error("paper_meta query error:", metaRes.error)
+
   const signals = (signalsRes.data ?? []) as Signal[]
   const positions = (positionsRes.data ?? []) as Position[]
   const equityLog = (equityRes.data ?? []) as { date: string; total_equity: number }[]

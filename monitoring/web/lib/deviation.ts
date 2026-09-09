@@ -34,18 +34,18 @@ function parseRules(
 ): StrategyRules {
   const rules: StrategyRules = {}
 
-  if (params.direction) rules.direction = params.direction as "long_only" | "long_short"
-  if (params.risk_per_trade_pct) rules.risk_per_trade_pct = Number(params.risk_per_trade_pct)
-  if (params.max_concurrent) rules.max_concurrent = Number(params.max_concurrent)
-  if (params.atr_stop_multiplier) rules.atr_stop_multiplier = Number(params.atr_stop_multiplier)
+  if (params.direction != null) rules.direction = params.direction as "long_only" | "long_short"
+  if (params.risk_per_trade_pct != null) rules.risk_per_trade_pct = Number(params.risk_per_trade_pct)
+  if (params.max_concurrent != null) rules.max_concurrent = Number(params.max_concurrent)
+  if (params.atr_stop_multiplier != null) rules.atr_stop_multiplier = Number(params.atr_stop_multiplier)
 
   if (rules_json) {
-    if (rules_json.max_daily_trades) rules.max_daily_trades = Number(rules_json.max_daily_trades)
-    if (rules_json.allowed_pairs) rules.allowed_pairs = rules_json.allowed_pairs as string[]
-    if (rules_json.min_holding_days) rules.min_holding_days = Number(rules_json.min_holding_days)
-    if (rules_json.no_trade_hours) rules.no_trade_hours = rules_json.no_trade_hours as number[]
-    if (rules_json.max_position_size_pct) rules.max_position_size_pct = Number(rules_json.max_position_size_pct)
-    if (rules_json.custom) rules.custom = rules_json.custom as Record<string, unknown>
+    if (rules_json.max_daily_trades != null) rules.max_daily_trades = Number(rules_json.max_daily_trades)
+    if (rules_json.allowed_pairs != null) rules.allowed_pairs = rules_json.allowed_pairs as string[]
+    if (rules_json.min_holding_days != null) rules.min_holding_days = Number(rules_json.min_holding_days)
+    if (rules_json.no_trade_hours != null) rules.no_trade_hours = rules_json.no_trade_hours as number[]
+    if (rules_json.max_position_size_pct != null) rules.max_position_size_pct = Number(rules_json.max_position_size_pct)
+    if (rules_json.custom != null) rules.custom = rules_json.custom as Record<string, unknown>
   }
 
   return rules
@@ -106,7 +106,7 @@ function checkDeviation(
     }
   }
 
-  if (context?.accountEquity && rules.risk_per_trade_pct && trade.side === "buy") {
+  if (context?.accountEquity != null && context.accountEquity > 0 && rules.risk_per_trade_pct != null && trade.side === "buy") {
     const riskAmount = context.accountEquity * (rules.risk_per_trade_pct / 100)
     const tradeValue = trade.price * trade.amount
     if (tradeValue > riskAmount * 10) {

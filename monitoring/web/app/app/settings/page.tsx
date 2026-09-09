@@ -28,6 +28,7 @@ export default function SettingsPage() {
 
   const [deleting, setDeleting] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState("")
+  const [deletePassword, setDeletePassword] = useState("")
 
   useEffect(() => {
     fetch("/api/api-keys")
@@ -58,9 +59,23 @@ export default function SettingsPage() {
 
   async function changePassword(e: React.FormEvent) {
     e.preventDefault()
+    if (!currentPassword) return setPasswordMsg("Current password is required")
     setChangingPassword(true)
     setPasswordMsg(null)
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.email) {
+      setChangingPassword(false)
+      return setPasswordMsg("Not logged in")
+    }
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    })
+    if (signInError) {
+      setChangingPassword(false)
+      return setPasswordMsg("Current password is incorrect")
+    }
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     setChangingPassword(false)
     if (error) return setPasswordMsg(error.message)
@@ -69,9 +84,12 @@ export default function SettingsPage() {
   }
 
   async function deleteAccount() {
-    if (deleteConfirm !== "DELETE") return
+    if (deleteConfirm !== "DELETE" || !deletePassword) return
     setDeleting(true)
-    const res = await fetch("/api/account/delete", { method: "POST" })
+    const res = await fetch("/api/account/delete", {
+      method: "POST",
+      body: JSON.stringify({ password: deletePassword }),
+    })
     setDeleting(false)
     if (!res.ok) {
       const { error } = await res.json()
@@ -115,6 +133,7 @@ export default function SettingsPage() {
         <h2 className="text-lg font-semibold text-white">Change Password</h2>
         {passwordMsg && <p className={`text-sm ${passwordMsg === "Password updated" ? "text-emerald-400" : "text-rose-400"}`}>{passwordMsg}</p>}
         <form onSubmit={changePassword} className="space-y-3">
+          <input value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Current password" required type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
           <input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password (min 6 chars)" required minLength={6} type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
           <button disabled={changingPassword} className="w-full rounded-full bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20 disabled:opacity-40">{changingPassword ? "Updating..." : "Update password"}</button>
         </form>
@@ -124,8 +143,9 @@ export default function SettingsPage() {
         <h2 className="text-lg font-semibold text-rose-400">Danger Zone</h2>
         <p className="text-sm text-white/40">Delete your account and all associated data. This cannot be undone.</p>
         <div className="space-y-3">
+          <input value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} placeholder="Enter your password to confirm" type="password" className="w-full rounded-lg border border-rose-400/30 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-rose-400/50" />
           <input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder='Type "DELETE" to confirm' className="w-full rounded-lg border border-rose-400/30 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-rose-400/50" />
-          <button disabled={deleting || deleteConfirm !== "DELETE"} onClick={deleteAccount} className="w-full rounded-full bg-rose-500/20 px-6 py-3 font-semibold text-rose-400 transition hover:bg-rose-500/30 disabled:opacity-40">{deleting ? "Deleting..." : "Delete account"}</button>
+          <button disabled={deleting || deleteConfirm !== "DELETE" || !deletePassword} onClick={deleteAccount} className="w-full rounded-full bg-rose-500/20 px-6 py-3 font-semibold text-rose-400 transition hover:bg-rose-500/30 disabled:opacity-40">{deleting ? "Deleting..." : "Delete account"}</button>
         </div>
       </section>
     </div>

@@ -35,6 +35,7 @@ export default function LiveSection({
   const [detail, setDetail] = useState<BoardPosition | null>(null);
   const prevPrices = useRef<LivePriceMap>({});
   const modeRef = useRef<LiveMode>("loading");
+  const polling = useRef(false);
 
   useEffect(() => {
     let closed = false;
@@ -42,6 +43,8 @@ export default function LiveSection({
     let flashTimer: ReturnType<typeof setTimeout> | null = null;
 
     const poll = async () => {
+      if (polling.current) return;
+      polling.current = true;
       try {
         const res = await fetch("/api/prices", { cache: "no-store" });
         if (!res.ok) throw new Error(String(res.status));
@@ -77,6 +80,8 @@ export default function LiveSection({
           setMode(next);
           onTick?.(prevPrices.current, next);
         }
+      } finally {
+        polling.current = false;
       }
     };
 

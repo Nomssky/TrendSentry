@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-
-type ApiKeyPostBody = {
-  api_key: string
-  api_secret: string
-  passphrase?: string
-}
+import { ApiKeyPostSchema } from "@/lib/validations"
+import { validateOrigin } from "@/lib/csrf"
 
 export async function GET() {
   const supabase = await createClient()
@@ -21,11 +17,26 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const csrf = validateOrigin(request)
+  if (csrf) return csrf
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-  const { api_key, api_secret, passphrase } = await request.json() as ApiKeyPostBody
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: "invalid JSON" }, { status: 400 })
+  }
+
+  const parsed = ApiKeyPostSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: "validation failed", details: parsed.error.flatten() }, { status: 400 })
+  }
+
+  const { api_key, api_secret, passphrase } = parsed.data
   const { encrypt } = await import("@/lib/encryption")
   const [api_key_enc, api_secret_enc, passphrase_enc] = await Promise.all([
     encrypt(api_key),
@@ -42,8 +53,11 @@ export async function POST(request: Request) {
       api_secret_enc,
       passphrase_enc,
     })
-    .select()
+    .select("id, exchange, is_active, created_at")
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (error) {
+    console.error("API key upsert error:", error)
+    return NextResponse.json({ error: "save failed" }, { status: 400 })
+  }
   return NextResponse.json(data)
 }
