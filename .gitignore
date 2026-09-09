@@ -4,9 +4,11 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-# Secrets
+# Secrets — never commit
 .env
-!monitoring/web/.env
+.env.*
+!.env.example
+!monitoring/web/.env.example
 
 # Data & reports output
 backtest/reports/*.csv

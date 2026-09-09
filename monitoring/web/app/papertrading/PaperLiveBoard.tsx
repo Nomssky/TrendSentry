@@ -9,6 +9,7 @@ import LiveSection from "../components/LiveSection";
 import type { BoardPosition, LiveMode, LivePriceMap } from "../components/LiveSection";
 import { StatusTag, TechLabel } from "../components/marketing/ui";
 import { SectionHead, fmtUsd } from "./ui";
+import { STARTING_CASH } from "@/lib/constants";
 
 type EquityPoint = { date: string; equity: number };
 
@@ -44,7 +45,7 @@ export default function PaperLiveBoard({
   // Definisi tunggal (sama dengan engine): total = cash + MTM. Yield sudah di
   // dalam cash — jangan ditambah lagi (dulu double-count sebesar yield total).
   const liveTotal = cash + positionsMTM;
-  const chg = liveTotal - 1000;
+  const chg = liveTotal - STARTING_CASH;
   const up = chg >= 0;
   const fresh = mode === "live";
 
@@ -80,7 +81,7 @@ export default function PaperLiveBoard({
               </p>
               <p className={`mt-1 font-mono-tech text-sm font-bold ${up ? "text-[#ccff00]" : "text-rose-400"}`}>
                 {up ? "+" : ""}${fmtUsd(chg)} ({up ? "+" : ""}
-                {((chg / 1000) * 100).toFixed(1)}% vs $1,000 start)
+                {((chg / STARTING_CASH) * 100).toFixed(1)}% vs $1,000 start)
               </p>
             </div>
           </div>

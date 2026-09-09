@@ -42,25 +42,3 @@ export function formatDeviationAlert(
     `<i>${new Date().toISOString()}</i>`,
   ].join("\n")
 }
-
-export function formatTradeAlert(
-  side: string,
-  pair: string,
-  price: number,
-  amount: number,
-  strategyName: string
-): string {
-  const icon = side === "buy" ? "🟢" : "🔴"
-  return [
-    `${icon} <b>Trade Executed</b>`,
-    "",
-    `<b>Strategy:</b> ${strategyName}`,
-    `<b>Pair:</b> ${pair}`,
-    `<b>Side:</b> ${side.toUpperCase()}`,
-    `<b>Price:</b> $${price.toLocaleString()}`,
-    `<b>Amount:</b> ${amount}`,
-    `<b>Value:</b> $${(price * amount).toLocaleString()}`,
-    "",
-    `<i>${new Date().toISOString()}</i>`,
-  ].join("\n")
-}

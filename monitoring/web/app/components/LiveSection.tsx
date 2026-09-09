@@ -5,6 +5,7 @@
 // so hero + chart move off the SAME numbers (single poller, no drift).
 
 import { useEffect, useRef, useState } from "react";
+import { PAIRS, fmt, MS_PER_DAY } from "@/lib/constants";
 
 export type LivePriceMap = Record<string, { price: number; changePct: number | null }>;
 export type LiveMode = "loading" | "live" | "delayed" | "offline";
@@ -17,12 +18,6 @@ export type BoardPosition = {
   stop_price: number;
   entry_date: string;
 };
-
-const PAIRS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "AVAX/USDT", "LINK/USDT", "DOGE/USDT", "ADA/USDT", "HYPE/USDT"];
-
-function fmt(n: number, digits = 2) {
-  return n.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-}
 
 export default function LiveSection({
   openPositions,
@@ -123,7 +118,7 @@ export default function LiveSection({
     const pnlPct = invested > 0 ? (unreal / invested) * 100 : 0;
     const portfolioPct = liveTotal > 0 ? (marketValue / liveTotal) * 100 : 0;
     const daysOpen =
-      pos.entry_date && now !== null ? Math.floor((now - new Date(pos.entry_date).getTime()) / 86400000) : null;
+      pos.entry_date && now !== null ? Math.floor((now - new Date(pos.entry_date).getTime()) / MS_PER_DAY) : null;
     return { price, invested, marketValue, unreal, up, pnlPct, portfolioPct, daysOpen };
   };
 
@@ -183,7 +178,7 @@ export default function LiveSection({
                   {c.daysOpen !== null ? `DAY ${c.daysOpen} SINCE ENTRY (${pos.entry_date})` : `SINCE ${pos.entry_date}`}
                 </p>
                 <p className="tech-label mt-4 text-white/40">UNREALIZED PNL</p>
-                <p className={`font-mono-tech text-3xl font-bold tracking-tight ${flashCls} ${c.up ? "text-[#ccff00]" : "text-rose-400"}`}>
+                <p className={`font-mono-tech text-2xl font-bold tracking-tight sm:text-3xl ${flashCls} ${c.up ? "text-[#ccff00]" : "text-rose-400"}`}>
                   {c.up ? "+" : ""}{fmt(c.unreal)} <span className="text-base">USD</span>
                 </p>
                 <div className="mt-1.5 flex items-baseline justify-between font-mono-tech text-xs">

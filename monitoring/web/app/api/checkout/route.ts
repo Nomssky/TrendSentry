@@ -15,6 +15,12 @@ export async function POST(request: Request) {
   const planConfig = STRIPE_PLANS[plan as PlanKey]
   const stripe = getStripe()
 
+  const allowedOrigins = ["https://trendsentry.vercel.app", "http://localhost:3000"]
+  const origin = request.headers.get("origin")
+  if (!origin || !allowedOrigins.includes(origin)) {
+    return NextResponse.json({ error: "invalid origin" }, { status: 400 })
+  }
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -33,8 +39,8 @@ export async function POST(request: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${request.headers.get("origin")}/app/dashboard?upgraded=1`,
-      cancel_url: `${request.headers.get("origin")}/pricing`,
+      success_url: `${origin}/app/dashboard?upgraded=1`,
+      cancel_url: `${origin}/pricing`,
       client_reference_id: user.id,
       customer_email: user.email,
       metadata: { user_id: user.id, plan },

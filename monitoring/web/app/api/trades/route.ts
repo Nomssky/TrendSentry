@@ -9,8 +9,8 @@ export async function GET(request: Request) {
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
   const url = new URL(request.url)
-  const page = parseInt(url.searchParams.get("page") ?? "1")
-  const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "50"), 100)
+  const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1") || 1)
+  const limit = Math.min(Math.max(1, parseInt(url.searchParams.get("limit") ?? "50") || 50), 100)
   const offset = (page - 1) * limit
 
   const { data, count } = await supabase
@@ -37,51 +37,65 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
   const trades = await request.json()
-  const enriched = (Array.isArray(trades) ? trades : [trades]).map((t: Record<string, unknown>) => ({
+  const allowed = (Array.isArray(trades) ? trades : [trades]).map((t: Record<string, unknown>) => ({
     user_id: user.id,
-    ...t,
+    pair: t.pair,
+    side: t.side,
+    price: t.price,
+    amount: t.amount,
+    fee: t.fee ?? null,
+    executed_at: t.executed_at,
+    strategy_id: t.strategy_id ?? null,
   }))
 
-  const { data, error } = await supabase.from("user_trades").insert(enriched).select()
+  const { data, error } = await supabase.from("user_trades").insert(allowed).select()
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
   if (data && data.length > 0) {
+    const strategyIds = [...new Set(data.map((t) => t.strategy_id).filter(Boolean))]
+    const strategyMap = new Map<string, { name: string; params: Record<string, unknown>; rules_json?: Record<string, unknown> | null }>()
+
+    if (strategyIds.length > 0) {
+      const { data: strategies } = await supabase
+        .from("user_strategies")
+        .select("id, name, params, rules_json")
+        .in("id", strategyIds)
+
+      for (const s of strategies ?? []) {
+        strategyMap.set(s.id, s)
+      }
+    }
+
     for (const trade of data) {
       if (!trade.strategy_id) continue
+      const strategy = strategyMap.get(trade.strategy_id)
+      if (!strategy) continue
 
-      const { data: strategy } = await supabase
-        .from("user_strategies")
-        .select("name, params, rules_json")
-        .eq("id", trade.strategy_id)
-        .single()
+      try {
+        const deviations = await logDeviations(user.id, trade.strategy_id, trade.id, {
+          pair: trade.pair,
+          side: trade.side as "buy" | "sell",
+          price: trade.price,
+          amount: trade.amount,
+          executed_at: trade.executed_at,
+        }, strategy)
 
-      if (strategy) {
-        try {
-          const deviations = await logDeviations(user.id, trade.strategy_id, trade.id, {
-            pair: trade.pair,
-            side: trade.side as "buy" | "sell",
-            price: trade.price,
-            amount: trade.amount,
-            executed_at: trade.executed_at,
-          }, strategy)
-
-          if (deviations && deviations.length > 0) {
-            for (const dev of deviations) {
-              await sendTelegramAlert(
-                formatDeviationAlert(dev.rule_key, dev.expected, dev.actual, dev.severity, strategy.name)
-              )
-            }
+        if (deviations && deviations.length > 0) {
+          for (const dev of deviations) {
+            await sendTelegramAlert(
+              formatDeviationAlert(dev.rule_key, dev.expected, dev.actual, dev.severity, strategy.name)
+            )
           }
-        } catch (err) {
-          console.error("Deviation check failed:", err)
         }
+      } catch (err) {
+        console.error("Deviation check failed:", err)
       }
     }
 
     const dates = [...new Set(data.map((t) => t.executed_at.split("T")[0]))]
     for (const date of dates) {
-      const strategyIds = [...new Set(data.filter((t) => t.executed_at.startsWith(date)).map((t) => t.strategy_id).filter(Boolean))]
-      for (const strategyId of strategyIds) {
+      const dateStrategyIds = [...new Set(data.filter((t) => t.executed_at.startsWith(date)).map((t) => t.strategy_id).filter(Boolean))]
+      for (const strategyId of dateStrategyIds) {
         try {
           await calculateDisciplineScore(user.id, strategyId, date)
         } catch (err) {

@@ -74,7 +74,7 @@ export default async function PaperTrading() {
           />
           <div className="grid gap-4 md:grid-cols-3">
             <Card title="Win rate vs backtest">
-              <div className="flex items-baseline gap-2">
+              <div className="flex flex-wrap items-baseline gap-2">
                 <span className="font-mono-tech text-4xl font-bold tracking-tight">
                   {d.realized.winRatePct != null ? `${d.realized.winRatePct.toFixed(1)}%` : "—"}
                 </span>
@@ -101,7 +101,7 @@ export default async function PaperTrading() {
             </Card>
 
             <Card title="Avg R vs backtest">
-              <div className="flex items-baseline gap-2">
+              <div className="flex flex-wrap items-baseline gap-2">
                 <span className="font-mono-tech text-4xl font-bold tracking-tight">
                   {d.realized.avgR != null ? `${d.realized.avgR >= 0 ? "+" : ""}${d.realized.avgR.toFixed(2)}R` : "—"}
                 </span>
@@ -132,7 +132,7 @@ export default async function PaperTrading() {
             </Card>
 
             <Card title="Real slippage vs assumption">
-              <div className="flex items-baseline gap-2">
+              <div className="flex flex-wrap items-baseline gap-2">
                 <span className="font-mono-tech text-4xl font-bold tracking-tight">
                   {d.slippage.avgPct != null ? `${d.slippage.avgPct.toFixed(4)}%` : "—"}
                 </span>

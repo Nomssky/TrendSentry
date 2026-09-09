@@ -67,6 +67,7 @@ export function Nav() {
               <Link
                 key={l.href}
                 href={l.href}
+                onClick={() => setMobileOpen(false)}
                 className="rounded-lg px-4 py-3 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
               >
                 {l.label}
@@ -76,12 +77,14 @@ export function Nav() {
           <div className="mt-3 flex gap-3 border-t border-white/10 pt-3">
             <Link
               href="/auth/login"
+              onClick={() => setMobileOpen(false)}
               className="flex-1 rounded-full border border-white/20 px-5 py-2.5 text-center text-sm text-white/80 transition hover:border-[#ccff00]/50 hover:text-[#ccff00]"
             >
               Sign in
             </Link>
             <Link
               href="/start"
+              onClick={() => setMobileOpen(false)}
               className="flex-1 rounded-full bg-white px-5 py-2.5 text-center text-sm font-semibold text-black transition hover:bg-[#ccff00]"
             >
               Start free

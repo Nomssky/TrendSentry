@@ -71,19 +71,14 @@ export default function SettingsPage() {
   async function deleteAccount() {
     if (deleteConfirm !== "DELETE") return
     setDeleting(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      setDeleting(false)
-      setPasswordMsg("Not authenticated")
-      return
-    }
-    const { error } = await supabase.auth.admin.deleteUser(user.id)
+    const res = await fetch("/api/account/delete", { method: "POST" })
     setDeleting(false)
-    if (error) {
-      setPasswordMsg(error.message)
+    if (!res.ok) {
+      const { error } = await res.json()
+      setPasswordMsg(error)
       return
     }
+    const supabase = createClient()
     await supabase.auth.signOut()
     router.push("/auth/login")
   }

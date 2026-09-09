@@ -5,7 +5,7 @@ import { getEnv } from "./lib/env"
 const protectedPrefixes = ["/app"]
 const authPages = ["/auth/login", "/auth/signup"]
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
   const { supabaseUrl, supabaseKey } = getEnv()
 
@@ -21,20 +21,20 @@ export async function proxy(request: NextRequest) {
     },
   })
 
-  const { data } = await supabase.auth.getClaims()
-  const claims = data?.claims
+  const { data } = await supabase.auth.getUser()
+  const userId = data?.user?.id
 
   const { pathname } = request.nextUrl
   const isProtected = protectedPrefixes.some((p) => pathname.startsWith(p))
   const isAuthPage = authPages.some((p) => pathname.startsWith(p))
 
-  if (isProtected && !claims?.sub) {
+  if (isProtected && !userId) {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)
   }
 
-  if (isAuthPage && claims?.sub) {
+  if (isAuthPage && userId) {
     const url = request.nextUrl.clone()
     url.pathname = "/app/dashboard"
     return NextResponse.redirect(url)
