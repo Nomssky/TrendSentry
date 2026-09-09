@@ -36,8 +36,18 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-  const trades = await request.json()
-  const allowed = (Array.isArray(trades) ? trades : [trades]).map((t: Record<string, unknown>) => ({
+type TradeBody = {
+  pair: string
+  side: string
+  price: number
+  amount: number
+  fee?: number
+  executed_at: string
+  strategy_id?: number
+}
+
+  const body = (await request.json()) as TradeBody | TradeBody[]
+  const allowed = (Array.isArray(body) ? body : [body]).map((t) => ({
     user_id: user.id,
     pair: t.pair,
     side: t.side,

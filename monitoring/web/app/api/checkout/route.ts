@@ -2,12 +2,16 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { getStripe, STRIPE_PLANS, PlanKey } from "@/lib/stripe"
 
+type CheckoutPostBody = {
+  plan: string
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-  const { plan } = await request.json()
+  const { plan } = await request.json() as CheckoutPostBody
   if (!plan || !(plan in STRIPE_PLANS)) {
     return NextResponse.json({ error: "invalid plan" }, { status: 400 })
   }

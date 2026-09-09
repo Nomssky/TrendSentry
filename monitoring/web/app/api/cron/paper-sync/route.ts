@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 
+type PaperSyncBody = {
+  signals?: Record<string, unknown>[]
+  positions?: Record<string, unknown>[]
+  equity_log?: Record<string, unknown>[]
+  meta?: Record<string, string>
+}
+
 export async function POST(request: Request) {
   const authHeader = request.headers.get("authorization")
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
-  const body = await request.json()
+  const body = (await request.json()) as PaperSyncBody
   const { signals, positions, equity_log, meta } = body
 
   const supabase = createAdminClient()

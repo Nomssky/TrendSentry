@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
+type ApiKeyPostBody = {
+  api_key: string
+  api_secret: string
+  passphrase?: string
+}
+
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -19,7 +25,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 })
 
-  const { api_key, api_secret, passphrase } = await request.json()
+  const { api_key, api_secret, passphrase } = await request.json() as ApiKeyPostBody
   const { encrypt } = await import("@/lib/encryption")
   const [api_key_enc, api_secret_enc, passphrase_enc] = await Promise.all([
     encrypt(api_key),
