@@ -4,13 +4,13 @@
 import Link from "next/link";
 import { SiteShell } from "../../components/marketing/SiteShell";
 import { TechLabel } from "../../components/marketing/ui";
-import { getDashboardData } from "@/lib/db-supabase";
+import { getDashboardData, DashboardData } from "@/lib/db-supabase";
 import { Badge, Card, fmtUsd } from "../ui";
 
 export const dynamic = "force-dynamic";
 
 export default async function PaperLog() {
-  let d;
+  let d: DashboardData;
   try {
     d = await getDashboardData();
   } catch {

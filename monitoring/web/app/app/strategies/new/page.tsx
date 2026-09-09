@@ -85,7 +85,10 @@ export default function NewStrategyPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch("/api/templates").then((r) => r.json()).then(setTemplates)
+    fetch("/api/templates")
+      .then((r) => r.json())
+      .then(setTemplates)
+      .catch(() => setTemplates([]))
   }, [])
 
   const selectedTemplate = templates.find((t) => t.id === selected)
