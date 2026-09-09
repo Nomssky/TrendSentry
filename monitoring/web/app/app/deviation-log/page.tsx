@@ -1,10 +1,15 @@
 import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 
 export default async function DeviationLogPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect("/auth/login")
+
   const { data: deviations } = await supabase
     .from("deviation_log")
     .select("id, rule_key, expected, actual, severity, detected_at")
+    .eq("user_id", user.id)
     .order("detected_at", { ascending: false })
     .limit(200)
 

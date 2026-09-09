@@ -51,7 +51,7 @@ function parseRules(
   return rules
 }
 
-function checkDeviation(
+export function checkDeviation(
   trade: Trade,
   strategy: { params: Record<string, unknown>; rules_json?: Record<string, unknown> | null },
   context?: {

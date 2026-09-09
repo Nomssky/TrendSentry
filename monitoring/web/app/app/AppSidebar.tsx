@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 const links = [
@@ -45,13 +46,13 @@ export function AppSidebar() {
         className={`fixed inset-y-0 left-0 z-40 flex w-56 flex-col gap-1 border-r border-white/10 bg-black p-5 pt-20 text-sm transition-transform duration-200 md:static md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         {links.map((l) => (
-          <a
+          <Link
             key={l.href}
             href={l.href}
             className={`rounded-lg px-3 py-2 transition-colors ${pathname === l.href ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"}`}
           >
             {l.label}
-          </a>
+          </Link>
         ))}
         <div className="mt-6 border-t border-white/10 pt-4">
           <form action="/auth/signout" method="post">

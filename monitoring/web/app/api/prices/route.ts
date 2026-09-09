@@ -7,20 +7,38 @@ let cache: { data: Record<string, { price: number; changePct: number | null }>; 
 const CACHE_TTL = 30_000
 
 const rateLimit = new Map<string, { count: number; resetAt: number }>()
-const RATE_LIMIT = 30
+const RATE_LIMIT = 60
 const RATE_WINDOW = 60_000
 
-export async function GET() {
-  const ip = "global"
+function getClientIp(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for")
+  if (forwarded) return forwarded.split(",")[0].trim()
+  return "unknown"
+}
+
+function isRateLimited(ip: string): boolean {
   const now = Date.now()
   const entry = rateLimit.get(ip)
   if (entry && now < entry.resetAt) {
-    if (entry.count >= RATE_LIMIT) {
-      return NextResponse.json({ error: "rate limited" }, { status: 429 })
-    }
+    if (entry.count >= RATE_LIMIT) return true
     entry.count++
   } else {
     rateLimit.set(ip, { count: 1, resetAt: now + RATE_WINDOW })
+  }
+  return false
+}
+
+// Periodically prune stale entries to prevent unbounded memory growth
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, entry] of rateLimit) {
+    if (now > entry.resetAt) rateLimit.delete(key)
+  }
+}, 120_000)
+
+export async function GET(request: Request) {
+  if (isRateLimited(getClientIp(request))) {
+    return NextResponse.json({ error: "rate limited" }, { status: 429 })
   }
 
   try {

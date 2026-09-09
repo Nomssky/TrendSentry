@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { logDeviations, calculateDisciplineScore } from "@/lib/deviation"
+import { logDeviations, checkDeviation, calculateDisciplineScore } from "@/lib/deviation"
 import { sendTelegramAlert, formatDeviationAlert } from "@/lib/telegram"
 import { TradeBodySchema, TradeBatchSchema } from "@/lib/validations"
 import { validateOrigin } from "@/lib/csrf"
@@ -86,30 +86,47 @@ export async function POST(request: Request) {
       }
     }
 
+    // Collect all deviations in parallel (pure computation)
+    const allDeviations: { trade: typeof data[0]; strategy: typeof strategyMap extends Map<infer K, infer V> ? V : never; dev: { rule_key: string; expected: string; actual: string; severity: "info" | "warning" | "critical" } }[] = []
     for (const trade of data) {
       if (!trade.strategy_id) continue
       const strategy = strategyMap.get(trade.strategy_id)
       if (!strategy) continue
-
       try {
-        const deviations = await logDeviations(user.id, trade.strategy_id, trade.id, {
+        const devs = checkDeviation({
           pair: trade.pair,
           side: trade.side as "buy" | "sell",
           price: trade.price,
           amount: trade.amount,
           executed_at: trade.executed_at,
         }, strategy)
-
-        if (deviations && deviations.length > 0) {
-          for (const dev of deviations) {
-            await sendTelegramAlert(
-              formatDeviationAlert(dev.rule_key, dev.expected, dev.actual, dev.severity, strategy.name)
-            )
-          }
+        for (const dev of devs) {
+          allDeviations.push({ trade, strategy, dev })
         }
       } catch (err) {
         console.error("Deviation check failed:", err)
       }
+    }
+
+    // Batch insert all deviations
+    if (allDeviations.length > 0) {
+      const { error: devInsertError } = await supabase.from("deviation_log").insert(
+        allDeviations.map(({ trade, dev }) => ({
+          user_id: user.id,
+          strategy_id: trade.strategy_id,
+          trade_id: trade.id,
+          rule_key: dev.rule_key,
+          expected: dev.expected,
+          actual: dev.actual,
+          severity: dev.severity,
+        }))
+      )
+      if (devInsertError) console.error("Batch deviation insert error:", devInsertError)
+
+      // Send all alerts in parallel (fire-and-forget)
+      Promise.all(allDeviations.map(({ strategy, dev }) =>
+        sendTelegramAlert(formatDeviationAlert(dev.rule_key, dev.expected, dev.actual, dev.severity, strategy.name))
+      )).catch((err) => console.error("Telegram alert batch failed:", err))
     }
 
     const dates = [...new Set(data.map((t) => t.executed_at?.split("T")[0]).filter(Boolean))]

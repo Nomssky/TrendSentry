@@ -65,12 +65,12 @@ export async function GET(request: Request) {
     const passphrase = apiKey.passphrase_enc ? await decrypt(apiKey.passphrase_enc) : ""
 
     try {
-      const allTrades: { pair: string; side: string; price: number; amount: number; fee: number | null; fee_currency: string | null; executed_at: string }[] = []
-
-      for (const pair of PAIRS) {
-        const trades = await fetchBitgetTrades(key, secret, passphrase, pair)
-        allTrades.push(...trades)
-      }
+      const pairResults = await Promise.allSettled(
+        PAIRS.map((pair) => fetchBitgetTrades(key, secret, passphrase, pair))
+      )
+      const allTrades = pairResults
+        .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof fetchBitgetTrades>>> => r.status === "fulfilled")
+        .flatMap((r) => r.value)
 
       const enriched = allTrades.map((t) => ({ ...t, user_id: user.id, exchange: "bitget" }))
 

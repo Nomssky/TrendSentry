@@ -4,7 +4,7 @@ const ALGO = "AES-GCM"
 
 function getKey(encryptionKey: string): Promise<CryptoKey> {
   if (encryptionKey.length < 32) {
-    throw new Error("ENCRYPTION_KEY must be at least 32 characters")
+    throw new Error("ENCRYPTION_KEY must be at least 32 characters (first 32 chars used as raw key bytes)")
   }
   const raw = new TextEncoder().encode(encryptionKey.slice(0, 32))
   return crypto.subtle.importKey("raw", raw, ALGO, false, ["encrypt", "decrypt"])

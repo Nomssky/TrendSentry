@@ -28,6 +28,17 @@ export async function POST(request: Request) {
     const plan = session.metadata?.plan
 
     if (userId && plan) {
+      let planExpiresAt: string | null = null
+      if (session.subscription) {
+        try {
+          const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+          const periodEnd = subscription.items.data[0]?.current_period_end
+          if (periodEnd) planExpiresAt = new Date(periodEnd * 1000).toISOString()
+        } catch (err) {
+          console.error("Failed to fetch subscription period:", err)
+        }
+      }
+
       const { error } = await supabase
         .from("profiles")
         .upsert(
@@ -35,7 +46,7 @@ export async function POST(request: Request) {
             id: userId,
             plan,
             stripe_customer_id: session.customer as string,
-            plan_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            plan_expires_at: planExpiresAt,
           },
           { onConflict: "id" }
         )

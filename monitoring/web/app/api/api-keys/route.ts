@@ -12,7 +12,7 @@ export async function GET() {
     .from("user_api_keys")
     .select("id, exchange, is_active, created_at")
     .eq("user_id", user.id)
-    .single()
+    .maybeSingle()
   return NextResponse.json(data ?? null)
 }
 
