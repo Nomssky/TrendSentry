@@ -1,5 +1,5 @@
 // /papertrading/log — full trade history + daily signal log.
-// Static server page (build-time DB read), same design system.
+// Server page (live Supabase read per request), same design system.
 
 import Link from "next/link";
 import { SiteShell } from "../../components/marketing/SiteShell";
@@ -87,7 +87,7 @@ export default async function PaperLog() {
           <p className="mb-4 text-xs leading-relaxed text-white/40">
             Every day the bot checks {new Set(d.recentSignals.map((s) => s.pair)).size || 10} pairs after candle
             close. <b className="text-white/60">HOLD</b> = no breakout that day → no trade → no PnL yet (this is
-            normal, expected ~1 signal per 15 days across pairs). Trades and PnL only appear when close breaks
+            normal, expected ~1 signal per 23 days across pairs). Trades and PnL only appear when close breaks
             the 20-day high (ENTRY) or hits the stop / 10-day low (EXIT).
           </p>
           <div className="overflow-x-auto">
@@ -122,7 +122,7 @@ export default async function PaperLog() {
 
         <div className="pb-2 text-center">
           <TechLabel className="text-white/30">
-            SNAPSHOT BAKED AT BUILD FROM DAILY DB COMMIT (08:00 WIB, BITGET)
+            DATA LIVE DARI SUPABASE PER REQUEST (SYNC HARIAN 08:00 WIB, BITGET)
           </TechLabel>
         </div>
       </main>

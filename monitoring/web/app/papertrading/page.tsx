@@ -187,7 +187,7 @@ export default async function PaperTrading() {
         </section>
 
         <p className="pb-2 text-center font-mono-tech text-[11px] uppercase tracking-[0.2em] text-white/30">
-          SNAPSHOT BAKED AT BUILD FROM DAILY DB COMMIT (08:00 WIB, BITGET) · TICKER POLLS /API/PRICES EVERY 3S
+          DATA LIVE DARI SUPABASE PER REQUEST (SYNC HARIAN 08:00 WIB, BITGET) · TICKER POLLS /API/PRICES EVERY 3S
         </p>
       </main>
     </SiteShell>
