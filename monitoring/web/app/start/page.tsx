@@ -25,7 +25,7 @@ const STEPS = [
   {
     n: "04",
     title: "Upgrade for real-time alerts",
-    body: "Watcher is free forever. Paper Beta adds Telegram deviation alerts and the Discipline Benchmark — a simulation of what your portfolio would look like at 100% plan adherence.",
+    body: "Watcher is free forever. Paper Beta adds Telegram deviation alerts the moment you break a rule.",
   },
 ] as const;
 

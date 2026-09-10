@@ -29,6 +29,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid plan" }, { status: 400 })
   }
 
+  // ponytail: payments terkunci sampai ada keputusan eksplisit owner.
+  // - live_assist tidak pernah dibuka dari sini (tier belum ada — tombolnya
+  //   COMING SOON; tanpa gate ini 1 baris config Stripe bisa menagih $49
+  //   untuk barang yang tidak ada).
+  // - paper_beta dibuka hanya via PAYMENTS_ENABLED=true (Vercel env), setelah
+  //   gate dogfooding Fase 2 lolos. Default: 403 + arahkan ke waitlist.
+  if (plan !== "paper_beta" || process.env.PAYMENTS_ENABLED !== "true") {
+    return NextResponse.json({ error: "payments not yet open — join the waitlist" }, { status: 403 })
+  }
+
   const planConfig = STRIPE_PLANS[plan as PlanKey]
   const stripe = getStripe()
   const origin = request.headers.get("origin") ?? "https://trendsentry.vercel.app"

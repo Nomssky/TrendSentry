@@ -30,8 +30,6 @@ const TIERS = [
     features: [
       "Everything in Watcher, plus:",
       "Real-time deviation alerts (Telegram)",
-      "Discipline Benchmark simulator",
-      "Weekly review summaries",
     ],
   },
   {
@@ -39,7 +37,8 @@ const TIERS = [
     price: "$49/mo",
     state: "COMING SOON",
     hot: false,
-    plan: "live_assist",
+    plan: null, // ponytail: tier belum ada — plan null = tidak ada tombol checkout.
+    comingSoon: true,
     features: [
       "Everything in Paper Beta, plus:",
       "Risk manager + circuit breaker",
@@ -105,7 +104,11 @@ export default function Pricing() {
                   </li>
                 ))}
               </ul>
-              {t.plan && (
+              {"comingSoon" in t && t.comingSoon ? (
+                <span className="mt-8 block w-full cursor-not-allowed rounded-full bg-white/5 px-6 py-3 text-center font-semibold text-white/40">
+                  Coming soon
+                </span>
+              ) : t.plan ? (
                 <button
                   onClick={() => handleCheckout(t.plan)}
                   className={`mt-8 w-full rounded-full px-6 py-3 font-semibold transition ${
@@ -114,10 +117,9 @@ export default function Pricing() {
                       : "bg-[#ccff00] text-black hover:bg-[#aadd00]"
                   }`}
                 >
-                  {t.state === "COMING SOON" ? "Coming soon" : "Subscribe"}
+                  Subscribe
                 </button>
-              )}
-              {!t.plan && (
+              ) : (
                 <Link
                   href="/auth/signup"
                   className="mt-8 block w-full rounded-full bg-white/10 px-6 py-3 text-center font-semibold text-white transition hover:bg-white/20"

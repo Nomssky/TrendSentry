@@ -39,7 +39,7 @@ export function PricingTeaser() {
             </h2>
             <p className="mt-4 max-w-xl text-white/60">
               Watcher tier is open now — connect your exchange, set your rules, and TrendSentry logs
-              your discipline. Premium unlocks real-time deviation alerts and the Discipline Benchmark.
+              your discipline. Premium unlocks real-time deviation alerts.
             </p>
           </div>
           <div className="flex flex-col gap-3">
