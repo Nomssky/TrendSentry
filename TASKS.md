@@ -41,9 +41,9 @@
 - [x] Fix geo-block 451 (GitHub runner IP US diblokir api.binance.com): live signal pakai mirror `data-api.binance.vision` (data Binance sama persis, endpoint publik) + `fetchMarkets: ['spot']` (fapi futures keblokir terpisah)
 - [x] Buat schema log (`db/schema.sql`) — simpan setiap signal, harga, keputusan, timestamp
 - [x] Equity snapshot harian (`equity_log`, 2026-09-08): engine tulis total=cash+MTM tiap run + backfill dari data lokal — kurva web tanpa fetch harga saat build, venue tunggal Bitget, fix double-count yield di total web
-- [ ] Ukur slippage real: log bid-ask spread order book di tiap signal (bandingkan dengan asumsi 0.05%)
+- [x] Ukur slippage real: log bid-ask spread order book di tiap signal (bandingkan dengan asumsi 0.05%) — **pipeline live 2026-09-10**: 125 sampel tersync ke Supabase, avg 0.011% (dalam batas), tampil di dashboard. Evaluasi final tetap di checkpoint minggu ke-8.
 - [ ] Jalankan minimal 8 minggu, kumpulkan data
-- [ ] Buat script perbandingan performa live vs backtest periode yang sama
+- [x] Buat script perbandingan performa live vs backtest periode yang sama (`scripts/compare_live_vs_backtest.py`, 2026-09-10 + unit test) — **evaluasi dikunci sampai ≥10 trade tertutup** (sekarang 1/10); script hanya cetak snapshot sebelum itu.
 - [ ] Rangkum hasil ke user, tunggu review sebelum lanjut Fase 3
 
 ## Fase 3 — LLM Filter Layer
