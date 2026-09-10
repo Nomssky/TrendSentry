@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { PaperSyncSchema } from "@/lib/validations"
+import crypto from "crypto"
 
 const SIGNAL_FIELDS = ["candle_date", "processed_at", "pair", "close_price", "donchian_hi", "donchian_lo", "atr", "signal", "decision", "reason"]
 const POSITION_FIELDS = ["id", "pair", "entry_date", "entry_price", "units", "stop_price", "risk_amount", "status", "exit_date", "exit_price", "exit_reason", "pnl", "r_multiple"]
@@ -16,7 +17,8 @@ function pick(obj: Record<string, unknown>, fields: string[]) {
 
 export async function POST(request: Request) {
   const authHeader = request.headers.get("authorization")
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const expected = `Bearer ${process.env.CRON_SECRET}`
+  if (!authHeader || authHeader.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
