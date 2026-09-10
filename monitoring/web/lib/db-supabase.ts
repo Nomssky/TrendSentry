@@ -59,17 +59,21 @@ export type DashboardData = {
 export async function getDashboardData(): Promise<DashboardData> {
   const supabase = createAdminClient()
 
-  const [signalsRes, positionsRes, equityRes, metaRes] = await Promise.all([
+  const [signalsRes, positionsRes, equityRes, metaRes, slippageRes, yieldRes] = await Promise.all([
     supabase.from("paper_signals").select("*").order("candle_date", { ascending: false }),
     supabase.from("paper_positions").select("*").order("id", { ascending: false }),
     supabase.from("paper_equity_log").select("*").order("date"),
     supabase.from("paper_meta").select("*"),
+    supabase.from("paper_slippage_log").select("spread_pct"),
+    supabase.from("paper_yield_log").select("*").order("date"),
   ])
 
   if (signalsRes.error) console.error("paper_signals query error:", signalsRes.error)
   if (positionsRes.error) console.error("paper_positions query error:", positionsRes.error)
   if (equityRes.error) console.error("paper_equity_log query error:", equityRes.error)
   if (metaRes.error) console.error("paper_meta query error:", metaRes.error)
+  if (slippageRes.error) console.error("paper_slippage_log query error:", slippageRes.error)
+  if (yieldRes.error) console.error("paper_yield_log query error:", yieldRes.error)
 
   const signals = (signalsRes.data ?? []) as Signal[]
   const positions = (positionsRes.data ?? []) as Position[]
@@ -105,6 +109,13 @@ export async function getDashboardData(): Promise<DashboardData> {
   const daysRunning =
     Math.floor((Date.now() - new Date(startDate + "T00:00:00Z").getTime()) / 86_400_000) + 1
 
+  const spreads = ((slippageRes.data ?? []) as { spread_pct: number }[]).map((r) => r.spread_pct)
+  const yields = ((yieldRes.data ?? []) as { date: string; amount: number }[]).map((r) => ({
+    date: r.date,
+    amount: r.amount,
+  }))
+  const yieldTotal = yields.reduce((s, y) => s + y.amount, 0)
+
   return {
     cash,
     startDate,
@@ -125,9 +136,13 @@ export async function getDashboardData(): Promise<DashboardData> {
       avgWinR: avg(winRs),
       avgLossR: avg(lossRs),
     },
-    slippage: { avgPct: null, maxPct: null, n: 0 },
-    yieldInfo: { total: 0, days: 0, apyAssumed: 5 },
-    yieldDaily: [],
+    slippage: {
+      avgPct: avg(spreads),
+      maxPct: spreads.length ? Math.max(...spreads) : null,
+      n: spreads.length,
+    },
+    yieldInfo: { total: yieldTotal, days: yields.length, apyAssumed: 5 },
+    yieldDaily: yields,
     equityCurve: equityLog.map((r) => ({ date: r.date, equity: Math.round(r.total_equity * 100) / 100 })),
     hasSnapshots: equityLog.length > 0,
   }

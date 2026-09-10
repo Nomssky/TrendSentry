@@ -42,8 +42,12 @@ export const CheckoutPostSchema = z.object({
 })
 
 export const PaperSyncSchema = z.object({
-  signals: z.array(z.record(z.string(), z.unknown(), {}), {}).max(500).optional(),
+  // ponytail: cap 2000 — sync kirim full-table tiap hari (~10 baris/hari/tabel
+  // tumbuh; 500 jebol sebelum Fase 2 selesai 8 minggu). Payload tetap KB.
+  signals: z.array(z.record(z.string(), z.unknown(), {}), {}).max(2000).optional(),
   positions: z.array(z.record(z.string(), z.unknown(), {}), {}).max(100).optional(),
   equity_log: z.array(z.record(z.string(), z.unknown(), {}), {}).max(365).optional(),
+  slippage_log: z.array(z.record(z.string(), z.unknown(), {}), {}).max(2000).optional(),
+  yield_log: z.array(z.record(z.string(), z.unknown(), {}), {}).max(365).optional(),
   meta: z.record(z.string(), z.string(), {}).optional(),
 })

@@ -41,6 +41,8 @@ def main():
         # Tanpa id, Postgres generate identity baru tiap sync = duplikat open
         # positions berlipat (root cause board 3 posisi tampil 6).
         "positions": fetch_all(db, "positions", keep_id=True),
+        "slippage_log": fetch_all(db, "slippage_log"),
+        "yield_log": fetch_all(db, "yield_log"),
         "equity_log": fetch_all(db, "equity_log"),
         "meta": {row["key"]: row["value"] for row in db.execute("SELECT * FROM meta").fetchall()},
     }

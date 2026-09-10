@@ -6,6 +6,8 @@ import crypto from "crypto"
 const SIGNAL_FIELDS = ["candle_date", "processed_at", "pair", "close_price", "donchian_hi", "donchian_lo", "atr", "signal", "decision", "reason"]
 const POSITION_FIELDS = ["id", "pair", "entry_date", "entry_price", "units", "stop_price", "risk_amount", "status", "exit_date", "exit_price", "exit_reason", "pnl", "r_multiple"]
 const EQUITY_FIELDS = ["date", "cash", "positions_mtm", "n_open", "total_equity"]
+const SLIPPAGE_FIELDS = ["timestamp", "pair", "bid", "ask", "mid", "spread_pct"]
+const YIELD_FIELDS = ["date", "cash_before", "rate_daily", "amount"]
 
 function pick(obj: Record<string, unknown>, fields: string[]) {
   const result: Record<string, unknown> = {}
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "validation failed", details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { signals, positions, equity_log, meta } = parsed.data
+  const { signals, positions, equity_log, slippage_log, yield_log, meta } = parsed.data
   const supabase = createAdminClient()
   const results: { table: string; count: number; error?: string }[] = []
 
@@ -60,6 +62,22 @@ export async function POST(request: Request) {
       .from("paper_equity_log")
       .upsert(cleaned, { onConflict: "date", ignoreDuplicates: false })
     results.push({ table: "paper_equity_log", count: cleaned.length, error: error?.message })
+  }
+
+  if (slippage_log && slippage_log.length > 0) {
+    const cleaned = slippage_log.map((s) => pick(s, SLIPPAGE_FIELDS))
+    const { error } = await supabase
+      .from("paper_slippage_log")
+      .upsert(cleaned, { onConflict: "timestamp,pair", ignoreDuplicates: false })
+    results.push({ table: "paper_slippage_log", count: cleaned.length, error: error?.message })
+  }
+
+  if (yield_log && yield_log.length > 0) {
+    const cleaned = yield_log.map((e) => pick(e, YIELD_FIELDS))
+    const { error } = await supabase
+      .from("paper_yield_log")
+      .upsert(cleaned, { onConflict: "date", ignoreDuplicates: false })
+    results.push({ table: "paper_yield_log", count: cleaned.length, error: error?.message })
   }
 
   if (meta && Object.keys(meta).length > 0) {

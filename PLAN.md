@@ -178,6 +178,7 @@ crypto-trend-bot/
 - [x] Review hasil — **decision gate diperdebatkan (Sharpe 1.06 config 2-pair Binance — TIDAK reproducible dengan Bitget 10-pair). Cluster-A2 final: Sharpe 0.82, DD -26.19% — gate: Sharpe > B&H terpenuhi, DD < 30% terpenuhi. Lihat decision_log.md.**
 - [x] Jalankan paper trading (Fase 2 aktif sejak 2026-08-25)
 - [ ] **Saat ini:** Tunggu 8 minggu paper trading + ≥10 trade tertutup → evaluasi Fase 2
+- [x] **Keputusan 2026-09-10 (dicatat atas persetujuan owner):** Fase 2 tetap evaluasi **harian** — tidak ada cek stop intraday/per-jam di paper. Window ~24 jam tanpa proteksi diterima sadar (modal riil Rp 0; exit telat = data slippage, bukan kerugian). Proteksi realtime (**exchange-side stop order** + circuit breaker) disyaratkan sebagai **syarat masuk Fase 4**, bukan dibangun di paper. Sizing (risk 1%, maks 5 posisi, cluster limit) adalah satu-satunya pelindung dari gap risk.
 
 ---
 
