@@ -1,0 +1,26 @@
+# TEMPORARY diagnostic — dihapus setelah verifikasi (lihat commit revert).
+# Mengirim 1 pesan test via secrets CI untuk membuktikan end-to-end delivery.
+name: test-telegram-temp
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Send test alert using CI secrets
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python monitoring/telegram_alert.py
