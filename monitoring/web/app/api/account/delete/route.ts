@@ -36,6 +36,14 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient()
+
+  // Clean up related data before deleting user
+  const tables = ["user_api_keys", "user_trades", "user_strategies", "deviation_log", "discipline_scores", "profiles"]
+  for (const table of tables) {
+    const { error: delErr } = await admin.from(table).delete().eq("user_id", user.id)
+    if (delErr) console.error(`Cleanup ${table} error:`, delErr)
+  }
+
   const { error } = await admin.auth.admin.deleteUser(user.id)
   if (error) return NextResponse.json({ error: "delete failed" }, { status: 500 })
 

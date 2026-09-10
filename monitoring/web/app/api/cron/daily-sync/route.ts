@@ -3,6 +3,11 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { PAIRS } from "@/lib/constants"
 import crypto from "crypto"
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b))
+}
+
 function sign(timestamp: string, method: string, path: string, body: string, secret: string) {
   const prehash = timestamp + method.toUpperCase() + path + body
   return crypto.createHmac("sha256", secret).update(prehash).digest("base64")
@@ -37,7 +42,8 @@ async function fetchBitgetTrades(apiKey: string, apiSecret: string, passphrase: 
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization")
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const expected = `Bearer ${process.env.CRON_SECRET}`
+  if (!authHeader || !timingSafeEqual(authHeader, expected)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }
 
@@ -60,9 +66,15 @@ export async function GET(request: Request) {
       .single()
     if (!apiKey) continue
 
-    const key = await decrypt(apiKey.api_key_enc)
-    const secret = await decrypt(apiKey.api_secret_enc)
-    const passphrase = apiKey.passphrase_enc ? await decrypt(apiKey.passphrase_enc) : ""
+    let key: string, secret: string, passphrase: string
+    try {
+      key = await decrypt(apiKey.api_key_enc)
+      secret = await decrypt(apiKey.api_secret_enc)
+      passphrase = apiKey.passphrase_enc ? await decrypt(apiKey.passphrase_enc) : ""
+    } catch (err) {
+      console.error(`Decrypt failed for user ${user.id}:`, err)
+      continue
+    }
 
     try {
       const pairResults = await Promise.allSettled(

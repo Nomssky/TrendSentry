@@ -88,10 +88,24 @@ export async function POST(request: Request) {
 
     // Collect all deviations in parallel (pure computation)
     const allDeviations: { trade: typeof data[0]; strategy: typeof strategyMap extends Map<infer K, infer V> ? V : never; dev: { rule_key: string; expected: string; actual: string; severity: "info" | "warning" | "critical" } }[] = []
+
+    // Fetch context for deviation checks (open positions, today's trades, equity)
+    const [{ count: openCount }, equityRes] = await Promise.all([
+      supabase.from("user_trades").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("exit_price", null),
+      supabase.from("profiles").select("equity").eq("id", user.id).single(),
+    ])
+    const openPositions = openCount ?? 0
+    const accountEquity = equityRes.data?.equity ?? 1000
+
     for (const trade of data) {
       if (!trade.strategy_id) continue
       const strategy = strategyMap.get(trade.strategy_id)
       if (!strategy) continue
+
+      // Count today's trades for this strategy
+      const tradeDate = trade.executed_at?.split("T")[0]
+      const dailyTrades = tradeDate ? data.filter((t) => t.executed_at?.startsWith(tradeDate) && t.strategy_id === trade.strategy_id).length : 0
+
       try {
         const devs = checkDeviation({
           pair: trade.pair,
@@ -99,7 +113,7 @@ export async function POST(request: Request) {
           price: trade.price,
           amount: trade.amount,
           executed_at: trade.executed_at,
-        }, strategy)
+        }, strategy, { openPositions, dailyTrades, accountEquity })
         for (const dev of devs) {
           allDeviations.push({ trade, strategy, dev })
         }

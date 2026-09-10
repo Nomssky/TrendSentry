@@ -52,7 +52,11 @@ function SchemaField({ name, schema, value, onChange }: {
           min={schema.minimum}
           max={schema.maximum}
           value={String(value ?? "")}
-          onChange={(e) => onChange(schema.type === "integer" ? parseInt(e.target.value) : parseFloat(e.target.value))}
+          onChange={(e) => {
+            const v = e.target.value
+            if (v === "") { onChange(undefined); return }
+            onChange(schema.type === "integer" ? parseInt(v) : parseFloat(v))
+          }}
           className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-[#ccff00]/50"
         />
       </div>

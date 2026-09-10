@@ -63,7 +63,7 @@ export default async function PaperLog() {
                           {t.entry_date} @ {fmtUsd(t.entry_price)}
                         </td>
                         <td className="py-2.5 pr-4 text-white/50">
-                          {t.exit_date} @ {fmtUsd(Number(t.exit_price ?? 0))}
+                          {t.exit_date} @ {fmtUsd(t.exit_price ?? 0)}
                         </td>
                         <td className="py-2.5 pr-4 text-xs text-white/40">{t.exit_reason}</td>
                         <td className={`py-2.5 pr-4 text-right ${up ? "text-[#ccff00]" : "text-rose-400"}`}>
@@ -85,7 +85,7 @@ export default async function PaperLog() {
 
         <Card title={`Daily check history (${d.nSignals} records)`}>
           <p className="mb-4 text-xs leading-relaxed text-white/40">
-            Every day the bot checks {new Set(d.recentSignals.map((s) => s.pair)).size || 5} pairs after candle
+            Every day the bot checks {new Set(d.recentSignals.map((s) => s.pair)).size || 10} pairs after candle
             close. <b className="text-white/60">HOLD</b> = no breakout that day → no trade → no PnL yet (this is
             normal, expected ~1 signal per 15 days across pairs). Trades and PnL only appear when close breaks
             the 20-day high (ENTRY) or hits the stop / 10-day low (EXIT).

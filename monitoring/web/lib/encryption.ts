@@ -1,13 +1,29 @@
 import { getEnv } from "./env"
 
 const ALGO = "AES-GCM"
+const PBKDF2_ITERATIONS = 100_000
+const SALT = "trendsentry-v1" // static salt — each encrypted value has its own random IV
 
-function getKey(encryptionKey: string): Promise<CryptoKey> {
-  if (encryptionKey.length < 32) {
-    throw new Error("ENCRYPTION_KEY must be at least 32 characters (first 32 chars used as raw key bytes)")
-  }
-  const raw = new TextEncoder().encode(encryptionKey.slice(0, 32))
-  return crypto.subtle.importKey("raw", raw, ALGO, false, ["encrypt", "decrypt"])
+async function getKey(encryptionKey: string): Promise<CryptoKey> {
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(encryptionKey),
+    "PBKDF2",
+    false,
+    ["deriveKey"]
+  )
+  return crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: new TextEncoder().encode(SALT),
+      iterations: PBKDF2_ITERATIONS,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: ALGO, length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  )
 }
 
 export async function encrypt(plaintext: string): Promise<string> {
@@ -26,6 +42,7 @@ export async function decrypt(encoded: string): Promise<string> {
   const { encryptionKey } = getEnv()
   const key = await getKey(encryptionKey)
   const combined = Buffer.from(encoded, "base64")
+  if (combined.length < 13) throw new Error("ciphertext too short")
   const iv = combined.subarray(0, 12)
   const ciphertext = combined.subarray(12)
   const decrypted = await crypto.subtle.decrypt({ name: ALGO, iv }, key, ciphertext)

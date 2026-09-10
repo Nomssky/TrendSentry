@@ -15,7 +15,12 @@ export async function sendTelegramAlert(message: string): Promise<boolean> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "HTML" }),
     })
-    return res.ok
+    const body = await res.json().catch(() => null)
+    if (!res.ok || body?.ok === false) {
+      console.error("Telegram API error:", body?.description ?? res.status)
+      return false
+    }
+    return true
   } catch (err) {
     console.error("Failed to send Telegram alert:", err)
     return false

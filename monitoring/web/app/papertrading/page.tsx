@@ -87,7 +87,7 @@ export default async function PaperTrading() {
                 )}
               </div>
               <div className="mt-4">
-                <Meter pct={d.realized.winRatePct ?? 0} markerPct={BACKTEST_REFERENCE.winRatePct} tone={evaluated && !wrOk ? "rose" : "lime"} />
+                <Meter pct={evaluated ? (d.realized.winRatePct ?? 0) : 0} markerPct={BACKTEST_REFERENCE.winRatePct} tone={evaluated && !wrOk ? "rose" : "lime"} />
                 <div className="mt-1.5 flex justify-between font-mono-tech text-[10px] text-white/40">
                   <span>0%</span>
                   <span>REF {BACKTEST_REFERENCE.winRatePct}%</span>
@@ -115,7 +115,7 @@ export default async function PaperTrading() {
               </div>
               <div className="mt-4">
                 <Meter
-                  pct={((d.realized.avgR ?? 0) + 1) * 20}
+                  pct={evaluated ? (((d.realized.avgR ?? 0) + 1) * 20) : 0}
                   markerPct={(AVG_R_FLOOR + 1) * 20}
                   tone={evaluated && (d.realized.avgR ?? 0) < AVG_R_FLOOR ? "rose" : "lime"}
                 />

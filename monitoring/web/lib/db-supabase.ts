@@ -11,7 +11,7 @@ export type Position = {
   risk_amount: number
   status: string
   exit_date: string | null
-  exit_price: string | null
+  exit_price: number | null
   exit_reason: string | null
   pnl: number | null
   r_multiple: number | null
