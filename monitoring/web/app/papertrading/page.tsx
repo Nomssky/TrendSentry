@@ -51,6 +51,7 @@ export default async function PaperTrading() {
           startDate={d.startDate}
           daysRunning={d.daysRunning}
           openPositions={d.openPositions.map((p) => ({
+            id: p.id,
             pair: p.pair,
             units: p.units,
             entry_price: p.entry_price,

@@ -39,7 +39,12 @@ def send_alert(message: str) -> bool:
     req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
-            return resp.status == 200
+            ok = resp.status == 200
+            # ponytail: success WAJIB ke-log — tanpa ini pengiriman ke chat_id
+            # yang salah (HTTP 200 ke chat lain) tidak bisa dibedakan dari
+            # "notif tidak dikirim", persis kasus Sep 2026.
+            log.info("telegram alert terkirim (%d chars): %s", len(message), message.splitlines()[0][:80] if message else "")
+            return ok
     except Exception:
         log.exception("gagal kirim alert telegram")
         return False

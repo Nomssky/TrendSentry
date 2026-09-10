@@ -13,11 +13,12 @@ VERCEL_URL = os.environ.get("VERCEL_URL", "https://trendsentry.vercel.app")
 CRON_SECRET = os.environ.get("CRON_SECRET")
 DB_PATH = os.environ.get("DB_PATH", "db/paper_trading.db")
 
-def fetch_all(db, table):
+def fetch_all(db, table, keep_id=False):
     try:
         rows = [dict(row) for row in db.execute(f"SELECT * FROM {table}").fetchall()]
-        for row in rows:
-            row.pop("id", None)
+        if not keep_id:
+            for row in rows:
+                row.pop("id", None)
         return rows
     except sqlite3.OperationalError:
         return []
@@ -36,7 +37,10 @@ def main():
 
     data = {
         "signals": fetch_all(db, "signals"),
-        "positions": fetch_all(db, "positions"),
+        # ponytail: positions WAJIB bawa id SQLite — route upsert onConflict=id.
+        # Tanpa id, Postgres generate identity baru tiap sync = duplikat open
+        # positions berlipat (root cause board 3 posisi tampil 6).
+        "positions": fetch_all(db, "positions", keep_id=True),
         "equity_log": fetch_all(db, "equity_log"),
         "meta": {row["key"]: row["value"] for row in db.execute("SELECT * FROM meta").fetchall()},
     }

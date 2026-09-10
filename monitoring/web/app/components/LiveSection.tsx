@@ -12,6 +12,7 @@ export type LiveMode = "loading" | "live" | "delayed" | "offline";
 type FlashDir = "up" | "down" | null;
 
 export type BoardPosition = {
+  id: number;
   pair: string;
   units: number;
   entry_price: number;
@@ -174,7 +175,7 @@ export default function LiveSection({
             const flash = flashes[pos.pair];
             const flashCls = flash === "up" ? "animate-flash-up" : flash === "down" ? "animate-flash-down" : "";
             return (
-              <div key={pos.pair} className="glass noise-overlay rounded-[2rem] p-5">
+              <div key={pos.id} className="glass noise-overlay rounded-[2rem] p-5">
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-bold tracking-tight">{pos.pair}</span>
                   <span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-mono-tech text-[11px] text-amber-400">OPEN</span>

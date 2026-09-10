@@ -15,6 +15,7 @@ Sinyal identik dengan backtest (reuse backtest/strategy.py — satu source of tr
 """
 
 import logging
+import os
 import sqlite3
 import sys
 import time
@@ -295,6 +296,14 @@ def backfill_equity(conn: sqlite3.Connection, cfg: dict, today_str: str) -> int:
 
 def main() -> int:
     cfg = load_config()
+    # ponytail: config check di awal — misconfig telegram (mis. CHAT_ID salah
+    # di GitHub Secrets) harus terlihat di log TIAP run, bukan cuma di hari
+    # ada ENTER/EXIT. Tanpa ini kegagalan notif silent berhari-hari.
+    from telegram_alert import load_env as _load_env
+
+    _load_env()
+    if not (os.environ.get("TELEGRAM_BOT_TOKEN") and os.environ.get("TELEGRAM_CHAT_ID")):
+        log.warning("TELEGRAM_BOT_TOKEN/CHAT_ID kosong — notif ENTER/EXIT akan di-skip")
     strat, risk, bt = cfg["strategy"], cfg["risk"], cfg["backtest"]
     fee, slip = bt["fee_pct"] / 100.0, bt["slippage_pct"] / 100.0
     conn = connect()
