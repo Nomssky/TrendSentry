@@ -13,6 +13,11 @@ test("callback code basi redirect ke login dengan pesan", async ({ page }) => {
   await expect(page).toHaveURL(/\/auth\/login\?error=/)
 })
 
+test("callback token_hash basi redirect ke login dengan pesan", async ({ page }) => {
+  await page.goto("/auth/callback?token_hash=bogus&type=signup")
+  await expect(page).toHaveURL(/\/auth\/login\?error=/)
+})
+
 test("halaman proteksi tanpa login redirect ke login", async ({ page }) => {
   await page.goto("/app/dashboard")
   await expect(page).toHaveURL(/\/auth\/login/)
