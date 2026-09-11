@@ -82,4 +82,6 @@
 - [ ] Preset 2: SMA crossover (indikator + logic + test anti-look-ahead + backtest + laporan)
 - [ ] Preset 3: RSI mean-reversion long-only (indikator + logic + test anti-look-ahead + backtest + laporan)
 - [x] Kontrak filter API + eval harness dengan/tanpa filter → dogfood gratis → publikasi perbandingan (`llm_filter/filter.py` skeleton veto+reasoning, 2026-09-11)
+- [x] Audit loop watcher web selesai 2026-09-11: daily-sync pakai fills user (bukan market trades) + kabel deviasi + skor; verifikasi read-only saat submit key; guardrail 8 template dikunci; metrik M4 (beacon + referral) terpasang
+- [x] Verifikasi kontaminasi data 2026-09-11: tabel user kosong (0 profiles/key/strategy/trade) — bug market-trades tidak pernah menyentuh data user nyata, tidak ada yang perlu dihapus
 - [ ] Nyalakan API key berbayar verdict-live HANYA setelah Fase 3 terbukti (trial 5 verdict, harga = median 1R dihindari ÷ 10)
