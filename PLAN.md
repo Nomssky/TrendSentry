@@ -198,3 +198,21 @@ crypto-trend-bot/
 - **Stack:** Next.js 16 static export + Tailwind + Recharts, di `monitoring/web/`, deploy ke Vercel Hobby (gratis).
 - **Data flow:** bot CI commit `db/paper_trading.db` harian → Vercel auto-redeploy → DB dibaca saat build (bukan runtime). Equity curve dari tabel `equity_log` (ditulis engine tiap run, definisi tunggal total=cash+MTM, venue tunggal Bitget — tanpa fetch harga saat build sejak 2026-09-08). Harga realtime & unrealized PnL via Bitget proxy `/api/prices` (polling 3s) dari browser.
 - **Isi:** health/gap detection (kriteria checkpoint), open positions + live PnL, equity curve, trade history, slippage real vs asumsi, win rate/avg R vs referensi backtest (dengan gate "evaluasi setelah ≥10 trade").
+
+---
+
+## 9. Model Bisnis & Produk (dikunci 2026-09-11, persetujuan owner)
+
+Tiga batas keras (non-negotiable, sejajar Section 5):
+
+1. **Tidak jual sinyal** — tidak ada sinyal keluar dari server TrendSentry. Semua dihitung lokal di mesin user dari config yang dia pilih sendiri. (Alasan: risiko kasus hukum.)
+2. **Tidak pegang dana/key user** — API key exchange hanya hidup di `.env` mesin user, tidak pernah transit ke server kita. Dana tidak transit, withdrawal tidak pernah diminta.
+3. **User memakai sistem dengan membayar** — yang dijual = penggunaan sistem, bukan sinyal, bukan pengelolaan dana.
+
+Bentuk produk (gaya OpenCode: inti gratis, uang dari layanan terukur):
+
+- **CLI gratis penuh** (`trendsentry backtest | paper | live --dry-run | live | watcher | doctor`), UI Rich bertahap → TUI penuh menyusul. Engine headless-testable. Watcher-lokal ikut v1. Tidak ada license-lock.
+- **Satu-satunya yang berbayar: LLM filter API** (Fase 3) — proprietary server-side (prompt/model/threshold berversi, tanpa endpoint custom). Kontrak sempit: terima konteks sinyal non-rahasia → kembalikan veto/flag + faktor risiko + reasoning, tidak pernah "buy/sell". Opt-in, bypassable — live-runner tetap jalan penuh tanpanya.
+- **Preset pack gratis** (config contoh + artefak backtest publik, label edukasi/bukan rekomendasi): ① Donchian/Cluster-A2 (ada) ② SMA crossover ③ RSI mean-reversion (adaptasi long-only). Semua preset: long-only spot 1D + SL wajib. Syarat tayang per preset = backtest 6 thn Bitget 10 pair + metrik penuh + ≥30 trade + gate (Sharpe > B&H, DD < 30%); preset gagal dipublikasikan sebagai "tidak lolos".
+- **Harga filter:** langganan akses + fair use (bukan per-call — sinyal ≈1/23 hari lintas pair). Patokan dari data dogfood: median 1R yang dihindari ÷ 10. Trial 5 verdict live gratis; paper + filter-di-paper gratis selamanya. Bayar dinyalakan HANYA setelah Fase 3 membuktikan value (dengan vs tanpa filter, dipublikasikan); netral/negatif = hipotesis gugur.
+- Dibuang eksplisit: data API, alert relay, cloud sync, preset berbayar, eksekusi cloud kustodian (trade-key di server kita = dicoret).
