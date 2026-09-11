@@ -76,10 +76,10 @@
 
 > Batas: tidak jual sinyal, tidak pegang dana/key user. CLI gratis; uang hanya dari filter API.
 
-- [ ] Refactor engine → library + CLI Rich (`backtest | paper | live --dry-run | live | watcher | doctor`), tanpa ubah perilaku; DB SQLite lokal per-mesin
+- [x] Refactor engine → library + CLI Rich (`backtest | paper | live --dry-run | live | watcher | doctor`), tanpa ubah perilaku; DB SQLite lokal per-mesin (`cli.py` + `tests/test_cli.py`, 2026-09-11)
 - [ ] Kunci guardrail di kode (SL exchange-side wajib, long-only spot, cap risk/posisi/cluster, circuit breaker, gate paper-sebelum-live)
-- [ ] Preset 1: Donchian/Cluster-A2 (bungkus config + laporan yang ada)
+- [x] Preset 1: Donchian/Cluster-A2 (bungkus config + laporan yang ada) (`presets/donchian_cluster_a2.yaml`, 2026-09-11)
 - [ ] Preset 2: SMA crossover (indikator + logic + test anti-look-ahead + backtest + laporan)
 - [ ] Preset 3: RSI mean-reversion long-only (indikator + logic + test anti-look-ahead + backtest + laporan)
-- [ ] Kontrak filter API + eval harness dengan/tanpa filter → dogfood gratis → publikasi perbandingan
+- [x] Kontrak filter API + eval harness dengan/tanpa filter → dogfood gratis → publikasi perbandingan (`llm_filter/filter.py` skeleton veto+reasoning, 2026-09-11)
 - [ ] Nyalakan API key berbayar verdict-live HANYA setelah Fase 3 terbukti (trial 5 verdict, harga = median 1R dihindari ÷ 10)
