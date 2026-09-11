@@ -216,3 +216,8 @@ Bentuk produk (gaya OpenCode: inti gratis, uang dari layanan terukur):
 - **Preset pack gratis** (config contoh + artefak backtest publik, label edukasi/bukan rekomendasi): ① Donchian/Cluster-A2 (ada) ② SMA crossover ③ RSI mean-reversion (adaptasi long-only). Semua preset: long-only spot 1D + SL wajib. Syarat tayang per preset = backtest 6 thn Bitget 10 pair + metrik penuh + ≥30 trade + gate (Sharpe > B&H, DD < 30%); preset gagal dipublikasikan sebagai "tidak lolos".
 - **Harga filter:** langganan akses + fair use (bukan per-call — sinyal ≈1/23 hari lintas pair). Patokan dari data dogfood: median 1R yang dihindari ÷ 10. Trial 5 verdict live gratis; paper + filter-di-paper gratis selamanya. Bayar dinyalakan HANYA setelah Fase 3 membuktikan value (dengan vs tanpa filter, dipublikasikan); netral/negatif = hipotesis gugur.
 - Dibuang eksplisit: data API, alert relay, cloud sync, preset berbayar, eksekusi cloud kustodian (trade-key di server kita = dicoret).
+
+**Amendemen 2026-09-11 (dual-path web/CLI, persetujuan owner):**
+- **Web = logging + deviasi saja.** Server boleh menyimpan API key **read-only** user (terenkripsi) untuk fetch fills + deteksi deviasi + dashboard. Web tidak punya dan tidak akan pernah punya jalur order (terverifikasi audit 2026-09-11).
+- **CLI = logging + deviasi + otomasi.** Live-runner hanya didistribusikan sebagai CLI; key trade hanya hidup di mesin user. Tanggung jawab eksekusi di user.
+- Syarat mutlak sebelum user eksternal masuk: validasi read-only saat submit key (tolak key berizin trade/withdraw) + kode server hanya boleh memanggil endpoint read (fills/assets).
