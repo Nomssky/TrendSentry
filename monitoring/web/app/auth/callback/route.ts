@@ -13,6 +13,11 @@ export async function GET(request: Request) {
   const loginError = (msg: string) =>
     NextResponse.redirect(new URL(`/auth/login?error=${encodeURIComponent(msg)}`, url.origin))
 
+  // Supabase meneruskan kegagalan verifikasi (link kedaluwarsa / sudah dipakai)
+  // sebagai ?error= di redirect — teruskan pesannya, jangan tutupi dengan no_code.
+  const upstreamError = url.searchParams.get("error_description") ?? url.searchParams.get("error")
+  if (upstreamError) return loginError(upstreamError)
+
   const supabase = await createClient()
 
   const tokenHash = url.searchParams.get("token_hash")
