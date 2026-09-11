@@ -1,6 +1,7 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
+import { storedReferral } from "@/app/components/AnalyticsBeacon"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -16,7 +17,7 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signUp({
       email: form.get("email") as string,
       password: form.get("password") as string,
-      options: { data: { full_name: form.get("name") as string } },
+      options: { data: { full_name: form.get("name") as string, referral_source: storedReferral() } },
     })
     if (error) return setError(error.message)
     router.push("/auth/login?check_email=1")

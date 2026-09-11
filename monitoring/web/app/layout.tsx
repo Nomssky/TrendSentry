@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { AnalyticsBeacon } from "./components/AnalyticsBeacon";
 
 const display = Space_Grotesk({
   variable: "--font-display",
@@ -29,7 +30,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${display.variable} ${mono.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-black font-display text-[#ebebeb]">{children}</body>
+      <body className="flex min-h-full flex-col bg-black font-display text-[#ebebeb]"><AnalyticsBeacon />{children}</body>
     </html>
   );
 }

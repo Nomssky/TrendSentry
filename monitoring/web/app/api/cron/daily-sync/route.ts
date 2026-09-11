@@ -146,8 +146,14 @@ export async function GET(request: Request) {
         .eq("is_active", true)
       const strategyId = strategies?.[0]?.id ?? null
 
-      const enriched = newTrades.map(({ trade_id: _tid, ...t }) => ({
-        ...t,
+      const enriched = newTrades.map((t) => ({
+        pair: t.pair,
+        side: t.side,
+        price: t.price,
+        amount: t.amount,
+        fee: t.fee,
+        fee_currency: t.fee_currency,
+        executed_at: t.executed_at,
         user_id: user.id,
         exchange: "bitget",
         strategy_id: strategyId,
