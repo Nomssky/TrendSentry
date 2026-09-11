@@ -6,3 +6,4 @@ vectorbt>=1.0,<2
 pytest>=8.0,<9
 PyYAML>=6.0,<7
 requests>=2.28,<3
+rich>=13,<14  # CLI output (trendsentry TUI bertahap)
