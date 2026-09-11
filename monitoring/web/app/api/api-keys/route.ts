@@ -37,6 +37,18 @@ export async function POST(request: Request) {
   }
 
   const { api_key, api_secret, passphrase } = parsed.data
+
+  // Syarat PLAN.md §9: key harus valid + punya akses read SEBELUM disimpan.
+  // Verifikasi via endpoint read-only (tidak menyentuh dana, tidak order).
+  const { verifySpotReadAccess } = await import("@/lib/bitget")
+  const verified = await verifySpotReadAccess(api_key, api_secret, passphrase ?? "")
+  if (!verified.ok) {
+    return NextResponse.json(
+      { error: `API key tidak valid / tanpa akses read spot (${verified.reason}) — gunakan API key read-only Bitget` },
+      { status: 400 }
+    )
+  }
+
   const { encrypt } = await import("@/lib/encryption")
   const [api_key_enc, api_secret_enc, passphrase_enc] = await Promise.all([
     encrypt(api_key),
