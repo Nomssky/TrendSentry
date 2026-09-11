@@ -17,7 +17,10 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signUp({
       email: form.get("email") as string,
       password: form.get("password") as string,
-      options: { data: { full_name: form.get("name") as string, referral_source: storedReferral() } },
+      options: {
+        data: { full_name: form.get("name") as string, referral_source: storedReferral() },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     })
     if (error) return setError(error.message)
     router.push("/auth/login?check_email=1")
