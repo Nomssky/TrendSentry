@@ -86,3 +86,61 @@ def entry_signal(df: pd.DataFrame, idx: int, entry_period: int) -> bool:
 def exit_signal(df: pd.DataFrame, idx: int, exit_period: int) -> bool:
     """Exit: close hari ini < lowest low 10 hari sebelumnya."""
     return bool(df["close"].iloc[idx] < donchian_low(df, exit_period).iloc[idx])
+
+
+def sma(df: pd.DataFrame, period: int) -> pd.Series:
+    """Simple moving average close, value hari t = dari data s.d. hari t."""
+    return df["close"].rolling(period).mean()
+
+
+def sma_entry_signal(df: pd.DataFrame, idx: int, fast: int, slow: int) -> bool:
+    """Long entry: golden-cross kemarin (fast potong slow dari bawah ke atas).
+
+    Cross dicek di bar SEBELUMNYA (i-1 vs i-2) + rezim close > slow —
+    eksekusi selalu 1 hari setelah sinyal (anti look-ahead, pola runner).
+    """
+    if idx < 2:
+        return False
+    f, s = sma(df, fast), sma(df, slow)
+    return bool(
+        f.iloc[idx - 1] > s.iloc[idx - 1]
+        and f.iloc[idx - 2] <= s.iloc[idx - 2]
+        and df["close"].iloc[idx - 1] > s.iloc[idx - 1]
+    )
+
+
+def sma_exit_signal(df: pd.DataFrame, idx: int, fast: int, slow: int) -> bool:
+    """Exit: dead-cross kemarin (fast potong slow dari atas ke bawah)."""
+    if idx < 2:
+        return False
+    f, s = sma(df, fast), sma(df, slow)
+    return bool(f.iloc[idx - 1] < s.iloc[idx - 1] and f.iloc[idx - 2] >= s.iloc[idx - 2])
+
+
+def rsi(df: pd.DataFrame, period: int) -> pd.Series:
+    """RSI Wilder (RMA alpha=1/period), seed rata-rata sederhana awal biar stabil."""
+    delta = df["close"].diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    avg_gain = gain.ewm(alpha=1.0 / period, adjust=False, min_periods=period).mean()
+    avg_loss = loss.ewm(alpha=1.0 / period, adjust=False, min_periods=period).mean()
+    rs = avg_gain / avg_loss
+    out = 100 - 100 / (1 + rs)
+    out[avg_loss == 0] = 100.0  # tak ada loss -> RSI 100 (bukan NaN/inf)
+    out.iloc[: period - 1] = float("nan")
+    return out
+
+
+def rsi_entry_signal(df: pd.DataFrame, idx: int, period: int, oversold: float) -> bool:
+    """Long entry: RSI kemarin cross ke atas dari zona oversold (adaptasi long-only)."""
+    if idx < 2:
+        return False
+    r = rsi(df, period)
+    return bool(r.iloc[idx - 1] > oversold >= r.iloc[idx - 2])
+
+
+def rsi_exit_signal(df: pd.DataFrame, idx: int, period: int, exit_level: float) -> bool:
+    """Exit: RSI kemarin di atas level exit (momentum memanas)."""
+    if idx < 1:
+        return False
+    return bool(rsi(df, period).iloc[idx - 1] > exit_level)

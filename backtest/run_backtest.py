@@ -7,6 +7,7 @@ dibebankan di tiap transaksi. Output: equity curve, daftar trade, dan metrik
 """
 
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -17,7 +18,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import yaml
 
-from strategy import atr, donchian_high, donchian_low, position_size, cluster_position_count
+from strategy import (
+    atr, donchian_high, donchian_low, position_size, cluster_position_count,
+    sma, sma_entry_signal, sma_exit_signal, rsi, rsi_entry_signal, rsi_exit_signal,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("run_backtest")
@@ -28,15 +32,36 @@ REPORTS = Path(__file__).resolve().parent / "reports"
 
 def load_config() -> dict:
     with open(ROOT / "config.yaml") as f:
-        return yaml.safe_load(f)
+        cfg = yaml.safe_load(f)
+    # Overlay preset beku (parameter FROZEN di file preset — runner TIDAK tuning).
+    preset = os.environ.get("PRESET")
+    if preset:
+        with open(ROOT / preset) as f:
+            p = yaml.safe_load(f)
+        cfg["strategy"] = {**cfg["strategy"], "model": p.get("model", "donchian"),
+                           **p.get("params", {})}
+        cfg["strategy"]["pairs"] = p.get("pairs", cfg["strategy"]["pairs"])
+        cfg["risk"] = {**cfg["risk"], **p.get("risk", {})}
+    cfg["strategy"].setdefault("model", "donchian")
+    return cfg
 
 
-def load_ohlcv(symbol: str, timeframe: str) -> pd.DataFrame:
+def load_ohlcv(symbol: str, timeframe: str, cfg: dict | None = None) -> pd.DataFrame:
     csv = ROOT / "data" / "historical" / f"{symbol.replace('/', '_')}_{timeframe}.csv"
     df = pd.read_csv(csv, parse_dates=["date"]).set_index("date")
-    df["atr"] = atr(df, 14)
-    df["don_hi"] = donchian_high(df, 20)
-    df["don_lo"] = donchian_low(df, 10)
+    strat = (cfg or {}).get("strategy", {}) if cfg else {}
+    model = strat.get("model", "donchian")
+    df["atr"] = atr(df, strat.get("atr_period", 14))
+    if model == "donchian":
+        df["don_hi"] = donchian_high(df, strat["donchian_entry_period"])
+        df["don_lo"] = donchian_low(df, strat["donchian_exit_period"])
+    elif model == "sma":
+        df["sma_fast"] = sma(df, strat["sma_fast_period"])
+        df["sma_slow"] = sma(df, strat["sma_slow_period"])
+    elif model == "rsi":
+        df["rsi"] = rsi(df, strat["rsi_period"])
+    else:
+        raise ValueError(f"model tak dikenal: {model}")
     return df
 
 
@@ -59,9 +84,19 @@ def run_backtest(dfs: dict[str, pd.DataFrame], cfg: dict) -> tuple[pd.DataFrame,
                 continue
             i = df.index.get_loc(d)
             close = df["close"].iloc[i]
-            if symbol in pos:  # cek exit: donchian exit atau kena stop
+            model = strat.get("model", "donchian")
+            if model == "donchian":
+                exit_hit = close < df["don_lo"].iloc[i]
+                exit_label = "donchian_exit"
+            elif model == "sma":
+                exit_hit = sma_exit_signal(df, i, strat["sma_fast_period"], strat["sma_slow_period"])
+                exit_label = "sma_exit"
+            else:  # rsi
+                exit_hit = rsi_exit_signal(df, i, strat["rsi_period"], strat["rsi_exit"])
+                exit_label = "rsi_exit"
+            if symbol in pos:  # cek exit: sinyal exit model atau kena stop
                 p = pos[symbol]
-                if close <= p["stop"] or close < df["don_lo"].iloc[i]:
+                if close <= p["stop"] or exit_hit:
                     proceeds = p["units"] * close * (1 - fee - slip)
                     pnl = proceeds - p["units"] * p["entry"]
                     trades.append(
@@ -74,14 +109,20 @@ def run_backtest(dfs: dict[str, pd.DataFrame], cfg: dict) -> tuple[pd.DataFrame,
                             "units": round(p["units"], 6),
                             "pnl": round(pnl, 2),
                             "r_multiple": round(pnl / p["risk_amount"], 3) if p["risk_amount"] else 0.0,
-                            "exit_reason": "stop_loss" if close <= p["stop"] else "donchian_exit",
+                            "exit_reason": "stop_loss" if close <= p["stop"] else exit_label,
                         }
                     )
                     cash += proceeds
                     del pos[symbol]
-            else:  # cek entry: breakout di close kemarin -> eksekusi open hari ini
+            else:  # cek entry: sinyal close kemarin -> eksekusi open hari ini
                 prev = df.iloc[i - 1] if i > 0 else None
-                if prev is not None and prev["close"] > prev["don_hi"] and len(pos) < risk["max_concurrent_positions"]:
+                if model == "donchian":
+                    entry_hit = prev is not None and prev["close"] > prev["don_hi"]
+                elif model == "sma":
+                    entry_hit = sma_entry_signal(df, i, strat["sma_fast_period"], strat["sma_slow_period"])
+                else:  # rsi
+                    entry_hit = rsi_entry_signal(df, i, strat["rsi_period"], strat["rsi_oversold"])
+                if entry_hit and len(pos) < risk["max_concurrent_positions"]:
                     max_per_cluster = strat.get("max_positions_per_cluster", 0)
                     if max_per_cluster > 0 and cluster_position_count(pos, symbol) >= max_per_cluster:
                         continue
@@ -183,8 +224,26 @@ def compute_metrics(curve: pd.DataFrame, trades: pd.DataFrame, dfs: dict[str, pd
     }
 
 
-def save_report(curve: pd.DataFrame, trades: pd.DataFrame, metrics: dict, dfs: dict[str, pd.DataFrame]) -> None:
-    REPORTS.mkdir(parents=True, exist_ok=True)
+def reports_dir() -> Path:
+    sub = os.environ.get("REPORT_SUBDIR", "")
+    d = Path(__file__).resolve().parent / "reports" / sub if sub else Path(__file__).resolve().parent / "reports"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def model_label(cfg: dict) -> str:
+    s = cfg["strategy"]
+    m = s.get("model", "donchian")
+    if m == "sma":
+        return f"SMA {s['sma_fast_period']}/{s['sma_slow_period']} + ATR({s['atr_period']})x{s['atr_stop_multiplier']}, long-only"
+    if m == "rsi":
+        return f"RSI({s['rsi_period']}) {s['rsi_oversold']}/{s['rsi_exit']} + ATR({s['atr_period']})x{s['atr_stop_multiplier']}, long-only"
+    return f"Donchian {s['donchian_entry_period']}/{s['donchian_exit_period']} + ATR({s['atr_period']})x{s['atr_stop_multiplier']}, long-only"
+
+
+def save_report(curve: pd.DataFrame, trades: pd.DataFrame, metrics: dict, dfs: dict[str, pd.DataFrame], cfg: dict) -> None:
+    REPORTS = reports_dir()
+    label = model_label(cfg)
     curve.to_csv(REPORTS / "equity_curve.csv")
     trades.to_csv(REPORTS / "trades.csv", index=False)
 
@@ -199,11 +258,11 @@ def save_report(curve: pd.DataFrame, trades: pd.DataFrame, metrics: dict, dfs: d
     dd = (curve["equity"] / roll_max - 1) * 100
     ax2.fill_between(curve.index, dd, 0, color="red", alpha=0.4)
     ax2.set_ylabel("Drawdown %")
-    fig.suptitle("Donchian 20/10 + ATR(14)x2, long-only, 1% risk")
+    fig.suptitle(f"{label}, 1% risk")
     fig.tight_layout()
     fig.savefig(REPORTS / "equity_drawdown.png", dpi=110)
 
-    lines = ["# Backtest Report — Donchian 20/10 + ATR(14)x2, long-only", ""]
+    lines = [f"# Backtest Report — {label}", ""]
     lines.append(f"| Metrik | Nilai |")
     lines.append(f"|---|---|")
     for k, v in metrics.items():
@@ -215,10 +274,10 @@ def save_report(curve: pd.DataFrame, trades: pd.DataFrame, metrics: dict, dfs: d
 
 def main() -> int:
     cfg = load_config()
-    dfs = {s: load_ohlcv(s, cfg["strategy"]["timeframe"]) for s in cfg["strategy"]["pairs"]}
+    dfs = {s: load_ohlcv(s, cfg["strategy"]["timeframe"], cfg) for s in cfg["strategy"]["pairs"]}
     curve, trades = run_backtest(dfs, cfg)
     metrics = compute_metrics(curve, trades, dfs, cfg)
-    save_report(curve, trades, metrics, dfs)
+    save_report(curve, trades, metrics, dfs, cfg)
     for k, v in metrics.items():
         log.info("%s = %s", k, v)
     return 0

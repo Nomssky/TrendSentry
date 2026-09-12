@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from backtest.strategy import atr, donchian_high, donchian_low, position_size, cluster_name, cluster_position_count
+from backtest.strategy import sma, sma_entry_signal, sma_exit_signal, rsi, rsi_entry_signal, rsi_exit_signal
 
 
 def make_df(high, low, close, prev_close=None):
@@ -87,3 +88,61 @@ class TestClusterLimit:
         assert cluster_position_count(pos, "ETH/USDT") == 1
         # SOL is in cluster A, also counts BTC (1)
         assert cluster_position_count(pos, "SOL/USDT") == 1
+
+def ohlc(close):
+    n = len(close)
+    return pd.DataFrame({
+        "high": [c + 1 for c in close],
+        "low": [c - 1 for c in close],
+        "close": close,
+    })
+
+
+class TestSMA:
+    def test_sma_basic(self):
+        df = ohlc([10.0, 20.0, 30.0])
+        assert sma(df, 3).iloc[2] == pytest.approx(20.0)
+        assert pd.isna(sma(df, 3).iloc[1])  # warmup, bukan tebakan
+
+    def test_entry_golden_cross_kemarin(self):
+        # flat 10x10 lalu naik: cross terjadi di bar kemarin, sinyal di bar ini
+        df = ohlc([10.0] * 10 + [11.0, 12.0])
+        assert sma_entry_signal(df, 11, 2, 5) is True
+        # di bar cross itu sendiri (idx 10) belum sinyal — anti look-ahead
+        assert sma_entry_signal(df, 10, 2, 5) is False
+
+    def test_entry_butuh_rezim_uptrend(self):
+        # cross tanpa close > slow tidak dihitung
+        df = ohlc([20.0] * 10 + [5.0, 6.0])
+        assert sma_entry_signal(df, 11, 2, 5) is False
+
+    def test_exit_dead_cross(self):
+        df = ohlc([10.0] * 10 + [30.0, 29.0, 5.0, 4.0, 3.0])
+        assert sma_exit_signal(df, 14, 2, 5) is True
+        assert sma_exit_signal(df, 13, 2, 5) is False
+
+
+class TestRSI:
+    def test_pure_uptrend_mendekati_100(self):
+        df = ohlc([float(c) for c in range(1, 40)])
+        assert rsi(df, 14).iloc[-1] > 90
+
+    def test_pure_downtrend_mendekati_0(self):
+        df = ohlc([float(40 - c) for c in range(40)])
+        assert rsi(df, 14).iloc[-1] < 10
+
+    def test_warmup_nan(self):
+        df = ohlc([10.0] * 10)
+        assert pd.isna(rsi(df, 14).iloc[5])
+
+    def test_entry_keluar_oversold_kemarin(self):
+        # jatuh dalam lalu memantul: RSI(14) lag 1 bar, cross 30 selesai di bar 21 -> sinyal di 22
+        df = ohlc([100.0 - c * 3.0 for c in range(20)] + [45.0, 60.0, 70.0])
+        assert rsi_entry_signal(df, 22, 14, 30) is True
+        assert rsi_entry_signal(df, 21, 14, 30) is False  # cross belum selesai: anti look-ahead
+
+    def test_exit_di_atas_level(self):
+        df = ohlc([float(c) for c in range(1, 40)])
+        assert rsi_exit_signal(df, 38, 14, 55) is True
+        df2 = ohlc([100.0 - c * 3.0 for c in range(30)])
+        assert rsi_exit_signal(df2, 29, 14, 55) is False
