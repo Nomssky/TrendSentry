@@ -18,8 +18,13 @@ function pick(obj: Record<string, unknown>, fields: string[]) {
 }
 
 export async function POST(request: Request) {
+  const secret = process.env.CRON_SECRET
+  if (!secret) {
+    console.error("CRON_SECRET is not set — refusing cron request")
+    return NextResponse.json({ error: "server misconfigured" }, { status: 500 })
+  }
   const authHeader = request.headers.get("authorization")
-  const expected = `Bearer ${process.env.CRON_SECRET}`
+  const expected = `Bearer ${secret}`
   if (!authHeader || authHeader.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 })
   }

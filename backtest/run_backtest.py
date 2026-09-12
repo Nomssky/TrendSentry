@@ -132,6 +132,7 @@ def run_backtest(dfs: dict[str, pd.DataFrame], cfg: dict) -> tuple[pd.DataFrame,
                     cost = units * entry_price * (1 + fee)
                     if cost > cash:
                         units = (cash / (entry_price * (1 + fee))) if entry_price > 0 else 0.0
+                        cost = units * entry_price * (1 + fee)
                     if units > 0:
                         cash -= cost
                         pos[symbol] = {
