@@ -84,8 +84,9 @@
 - [x] Refactor engine → library + CLI Rich (`backtest | paper | live --dry-run | live | watcher | doctor`), tanpa ubah perilaku; DB SQLite lokal per-mesin (`cli.py` + `tests/test_cli.py`, 2026-09-11)
 - [ ] Kunci guardrail di kode (SL exchange-side wajib, long-only spot, cap risk/posisi/cluster, circuit breaker, gate paper-sebelum-live)
 - [x] Preset 1: Donchian/Cluster-A2 (bungkus config + laporan yang ada) (`presets/donchian_cluster_a2.yaml`, 2026-09-11)
-- [ ] Preset 2: SMA crossover (indikator + logic + test anti-look-ahead + backtest + laporan)
-- [ ] Preset 3: RSI mean-reversion long-only (indikator + logic + test anti-look-ahead + backtest + laporan)
+- [x] Preset 2: SMA crossover — **TIDAK LOLOS** (Sharpe 0.35, DD -53.21% > 30%, return +41% << B&H +155%, n=58; tanpa tuning, parameter beku; laporan `backtest/reports/presets/sma/`, 2026-09-12)
+- [x] Preset 3: RSI mean-reversion long-only — **TIDAK LOLOS** (Sharpe 0.15, return +5.99% << B&H +155%, n=56; tanpa tuning, parameter beku; laporan `backtest/reports/presets/rsi/`, 2026-09-12)
+- [x] Aturan beku parameter terkunci mekanis (`tests/test_presets.py::test_parameter_beku` — nilai preset berubah = suite merah)
 - [x] Kontrak filter API + eval harness dengan/tanpa filter → dogfood gratis → publikasi perbandingan (`llm_filter/filter.py` skeleton veto+reasoning, 2026-09-11)
 - [x] Audit loop watcher web selesai 2026-09-11: daily-sync pakai fills user (bukan market trades) + kabel deviasi + skor; verifikasi read-only saat submit key; guardrail 8 template dikunci; metrik M4 (beacon + referral) terpasang
 - [x] Verifikasi kontaminasi data 2026-09-11: tabel user kosong (0 profiles/key/strategy/trade) — bug market-trades tidak pernah menyentuh data user nyata, tidak ada yang perlu dihapus
