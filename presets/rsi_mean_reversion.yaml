@@ -1,0 +1,35 @@
+# Preset 3/3 — RSI Mean-Reversion (adaptasi long-only). Config CONTOH edukasi, BUKAN rekomendasi.
+# FROZEN 2026-09-11 (aturan beku parameter, PLAN.md): nilai di bawah TIDAK BOLEH
+# diubah untuk mempercantik backtest. Backtest = ujian lulus/gagal saja.
+# Ekspektasi jujur: kandidat kuat GAGAL gate — bila gagal dipublikasikan "tidak lolos".
+name: rsi_mean_reversion
+kind: mean-reversion
+direction: long_only
+timeframe: 1d
+model: rsi
+params:
+  rsi_period: 14
+  rsi_oversold: 30
+  rsi_exit: 55
+  atr_period: 14
+  atr_stop_multiplier: 2.0
+  max_positions_per_cluster: 2
+risk:
+  risk_per_trade_pct: 1.0
+  max_concurrent_positions: 5
+  max_drawdown_circuit_breaker_pct: 15.0
+pairs:
+  - BTC/USDT
+  - ETH/USDT
+  - SOL/USDT
+  - BNB/USDT
+  - XRP/USDT
+  - AVAX/USDT
+  - LINK/USDT
+  - DOGE/USDT
+  - ADA/USDT
+  - HYPE/USDT
+gate:
+  status: failed
+  decided: "2026-09-12"
+  reason: "return +5.99% << B&H +155.03%; Sharpe 0.15 << 0.82 (n=56). Tanpa tuning (parameter beku)."
