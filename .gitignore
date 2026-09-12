@@ -14,6 +14,8 @@ __pycache__/
 # Data & reports output
 backtest/reports/*.csv
 backtest/reports/*.png
+backtest/reports/presets/*/*.csv
+backtest/reports/presets/*/*.png
 
 # Paper trading state
 db/*.db
