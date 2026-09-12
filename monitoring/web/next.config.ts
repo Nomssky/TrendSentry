@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone", // image Docker ramping (deploy/ + Coolify)
+  // Standalone HANYA untuk image Docker (deploy/Dockerfile.web set DOCKER_BUILD=1).
+  // Vercel melakukan tracing sendiri — standalone di sana meledak (ENOENT .nft.json).
+  ...(process.env.DOCKER_BUILD ? { output: "standalone" as const } : {}),
   images: { unoptimized: true },
   async headers() {
     return [
