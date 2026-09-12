@@ -9,6 +9,7 @@ __pycache__/
 .env.*
 !.env.example
 !monitoring/web/.env.example
+!deploy/.env.example
 
 # Data & reports output
 backtest/reports/*.csv
@@ -28,3 +29,4 @@ db/backups/
 .dump
 .vercel
 .env*
+!deploy/.env.example
