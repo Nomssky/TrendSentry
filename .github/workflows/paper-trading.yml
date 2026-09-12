@@ -26,8 +26,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install deps (minimal — live_signal butuh ccxt, pandas, pyyaml saja)
-        run: pip install ccxt pandas pyyaml pytest
+      - name: Install deps (minimal — live_signal butuh ccxt, pandas, pyyaml saja + rich untuk cli.py)
+        # ponytail: daftar ini WAJIB mencakup semua import yang dipakai tests/.
+        # 2026-09-12: run mati sehari karena test_cli.py butuh rich yang tidak
+        # di-install (requirements.txt ada, baris ini tidak).
+        run: pip install ccxt pandas pyyaml pytest rich
 
       - name: Run tests
         run: python -m pytest tests/ -v
@@ -54,3 +57,16 @@ jobs:
           git add -f db/paper_trading.db
           git diff --cached --quiet || git commit -m "[paper-trading] update DB state $(date -u +%F)"
           git push
+
+      # ponytail: crash alert di live_signal.py hanya mencakup exception engine.
+      # Step gagal lain (tests merah, sync gagal, commit gagal) sebelumnya SILENT —
+      # 2026-09-12 ketahuan dari dashboard, bukan dari alert. Step ini menutup itu.
+      - name: Notify Telegram on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="[paper-trading] workflow FAILED (run ${{ github.run_id }}) — engine/sync TIDAK jalan. Cek Actions log." > /dev/null
