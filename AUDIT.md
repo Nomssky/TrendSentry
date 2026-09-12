@@ -28,9 +28,10 @@ Legenda: **P0** = wajib segera (uang/keamanan), **P1** = tinggi, **P2** = sedang
 
 ### Sisa manual (dashboard, tidak bisa via CLI/MCP)
 > Panduan langkah-demi-langkah + perintah verifikasi: lihat **`SECURITY-ACTIONS.md`**.
+> **Keputusan 2026-09-12:** rotasi service role & token Telegram **tidak dilakukan** karena tidak ada bukti kebocoran (`.env*` tak pernah ter-commit). Prosedurnya tetap ada di `SECURITY-ACTIONS.md` sebagai referensi.
 1. **Leaked Password Protection**: TIDAK BISA di plan Free (HTTP 402, butuh Pro) — menu sengaja tak muncul. Mitigasi pengganti sudah aktif: `password_min_length=10` + wajib huruf besar/kecil/angka (via Management API).
-2. **Rotasi `SUPABASE_SERVICE_ROLE_KEY`**: project menolak `sb_secret_` new-style (sudah diuji: REST/Auth → 401, padahal publishable new-style → 200). Satu-satunya cara = rotate **JWT secret** di Dashboard → Settings → API (mengubah anon+service_role legacy, memaksa semua user logout). Detail di `SECURITY-ACTIONS.md` §4.
-3. **Rotasi token Telegram**: @BotFather → `/mybots` → API Token → Revoke, update GitHub Secrets + `.env`. Verifikasi: `./venv/bin/python monitoring/telegram_alert.py`.
+2. **Rotasi `SUPABASE_SERVICE_ROLE_KEY`** (bila nanti perlu): project menolak `sb_secret_` new-style (diuji 401). Cara = rotate **JWT secret** di Dashboard → Settings → API (mengubah anon+service_role legacy, memaksa semua user logout). Detail di `SECURITY-ACTIONS.md` §4.
+3. **Rotasi token Telegram** (bila nanti perlu): @BotFather → `/mybots` → API Token → Revoke, update GitHub Secrets + `.env`.
 4. **Rotasi `ENCRYPTION_KEY`**: sudah dilakukan; jangan ulangi setelah ada `user_api_keys` terenkripsi tanpa re-enkripsi.
 
 ---

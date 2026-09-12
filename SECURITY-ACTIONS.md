@@ -15,9 +15,13 @@ mana yang butuh Dashboard/akun yang hanya kamu miliki.
 | 1 | `CRON_SECRET` | ✅ Ya | **Sudah dirotasi** (lokal + Vercel + GitHub) |
 | 2 | `ENCRYPTION_KEY` | ✅ Ya | **Sudah dirotasi** (lokal + Vercel) |
 | 3 | Password policy (min 10 + karakter) | ✅ Ya | **Sudah diaktifkan** |
-| 4 | `SUPABASE_SERVICE_ROLE_KEY` | ❌ Tidak | **Tidak kompatibel** — tutorial di bawah |
-| 5 | Token Telegram | ❌ Tidak | Butuh @BotFather — tutorial di bawah |
-| 6 | Leaked Password Protection | ❌ Tidak | Butuh plan Pro — dijelaskan di bawah |
+| 4 | `SUPABASE_SERVICE_ROLE_KEY` | ❌ Tidak | **Tidak dirotasi — keputusan sadar** (tidak ada kebocoran; teknik alternatif tak kompatibel). Referensi di §4 |
+| 5 | Token Telegram | ❌ Tidak | **Tidak dirotasi — keputusan sadar** (tidak ada kebocoran). Referensi di §5 |
+| 6 | Leaked Password Protection | ❌ Tidak | Butuh plan Pro — dijelaskan di §6 |
+
+> **Keputusan (2026-09-12):** rotasi §4 & §5 **tidak dilakukan** karena audit tidak menemukan
+> bukti kebocoran eksternal (`.env*` tidak pernah ter-commit, `git log --all -- .env` bersih).
+> Bagian §4/§5 tetap disimpan sebagai prosedur bila suatu saat diperlukan (mis. key bocor).
 
 ---
 
@@ -165,6 +169,6 @@ curl -s "https://api.supabase.com/v1/projects/ypkdnvwlekxmmotxsvrm/config/auth" 
 - [x] `ENCRYPTION_KEY` dirotasi + terverifikasi.
 - [x] Password policy min 10 + karakter aktif.
 - [x] Key uji / `__probe__` dibersihkan.
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` dirotasi (opsional, via Dashboard → JWT secret).
-- [ ] Token Telegram dirotasi (via @BotFather).
-- [ ] Leaked Password Protection (butuh Pro).
+- [x] `SUPABASE_SERVICE_ROLE_KEY` — **diputuskan tidak dirotasi** (tidak ada kebocoran).
+- [x] Token Telegram — **diputuskan tidak dirotasi** (tidak ada kebocoran).
+- [ ] Leaked Password Protection (butuh Pro; opsional — mitigasi pengganti sudah aktif).
