@@ -124,6 +124,17 @@ Catatan: parameter ini **tidak boleh diutak-atik berdasarkan feeling** selama fa
 | Fase 4 (live) | Node.js + `ccxt` (eksekusi), PostgreSQL (kalau butuh lebih robust dari SQLite), Redis (kalau perlu decouple signal→execution), Telegram Bot API (notifikasi) |
 | Deployment | VPS kecil (Contabo/DigitalOcean, ~$10-20/bulan), Docker untuk isolasi environment |
 
+**Amendemen 2026-09-11 (riset stack Fase 4, persetujuan owner):** eksekusi live **tetap Python** (`ccxt` sama, API identik di semua bahasa; rewrite Node/TS menambah runtime + risiko drift sizing/SL tanpa menambah kemampuan). Baris "Node.js" di atas diganti Python. Ini amendemen stack, BUKAN izin implementasi — kode order riil tetap dilarang sebelum gate Fase 2 lolos (AGENTS.md aturan 3–4).
+
+### Envelope desain Fase 4 (dikunci, implementasi menyusul gate)
+
+- Paritas paper/live: engine sama (`paper_trading/live_signal.py`), flip = `execution.mode`; reconciler 15 menit sebagai service terpisah dari sinyal harian.
+- Stop berlapis: exchange-side (WAJIB verifikasi programatik `featureValue(...,"stopLossPrice")` + uji dust saat dry-run; klaim tidak boleh jadi asumsi — riset 2026-09-11: stop spot Bitget memakai plan/trigger order dengan aturan param sendiri) + reconciler market-exit sebagai fallback. Reconciler tracking via `fetchOpenOrders` (ID stop baru saat terpicu).
+- Circuit breaker 15% → auto-pause + Telegram, resume manual; kill-switch global.
+- Dry-run = jalur kode live penuh + paper money; uji dust hanya untuk verifikasi stop spot.
+- Modal sendiri $50–100, spot only; key trade-no-withdraw + whitelist IP VPS.
+- Stop menjamin exit attempt, bukan harga — slippage gap tetap ada (masuk disclaimer produk).
+
 ---
 
 ## 4. Struktur Folder (usulan)
