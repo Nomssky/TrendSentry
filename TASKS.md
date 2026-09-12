@@ -60,7 +60,7 @@
 > **DILARANG implementasi order riil** sebelum gate Fase 2 lolos (AGENTS.md aturan 3–4). Item di bawah = persiapan yang boleh dikerjakan sekarang (bertanda [PREP]) vs dilarang (bertanda [GATED]).
 
 - [x] [PREP] Desain envelope: paritas engine, reconciler 15 mnt, stop berlapis + verifikasi programatik, breaker 15%, dry-run = live-infra + paper money, modal $50–100 spot, key trade-no-withdraw + IP whitelist
-- [ ] [PREP] `risk_manager/` Python: reuse `position_size` + circuit breaker pure logic + unit test (**tanpa satu pun `createOrder`**)
+- [x] [PREP] `risk_manager/` Python: reuse `position_size` + circuit breaker pure logic + unit test (**tanpa satu pun `createOrder`**)
 - [ ] [GATED] Implementasi `execution/` — koneksi exchange API via `ccxt`, order dengan SL wajib
 - [ ] Implementasi circuit breaker (auto-pause kalau drawdown > threshold)
 - [ ] Implementasi `execution/` — koneksi exchange API via `ccxt`, order dengan SL wajib
