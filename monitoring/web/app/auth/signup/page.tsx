@@ -33,7 +33,7 @@ export default function SignupPage() {
         {error && <p className="text-sm text-rose-400">{error}</p>}
         <input name="name" placeholder="Name" required className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
         <input name="email" type="email" placeholder="Email" required className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
-        <input name="password" type="password" placeholder="Password (min 6)" required minLength={6} className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
+        <input name="password" type="password" placeholder="Password (min 10, huruf besar/kecil + angka)" required minLength={10} className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
         <button className="w-full rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00]">Sign up</button>
         <p className="text-center text-sm text-white/40">Already have one? <a href="/auth/login" className="text-[#ccff00] hover:underline">Sign in</a></p>
       </form>

@@ -27,10 +27,11 @@ Legenda: **P0** = wajib segera (uang/keamanan), **P1** = tinggi, **P2** = sedang
 - **P1-7** `CRON_SECRET` **dirotasi** (64-hex baru) dan disinkronkan ke lokal + Vercel (prod/preview) + GitHub; diverifikasi live + workflow GitHub success. `ENCRYPTION_KEY`/`SERVICE_ROLE_KEY`/token Telegram: **belum** dirotasi (butuh dashboard) — lihat tutorial di bawah.
 
 ### Sisa manual (dashboard, tidak bisa via CLI/MCP)
-1. **Supabase Dashboard → Authentication → Policies → aktifkan "Leaked Password Protection"** (satu klik). Ini menutup satu-satunya warning advisor.
-2. **Rotasi `SUPABASE_SERVICE_ROLE_KEY`**: Dashboard → Project Settings → API → rotate JWT/secret, lalu update di Vercel (Production + Preview) dan `.env.local`. Catatan: rotasi JWT secret juga memengaruhi anon/publishable key.
-3. **Rotasi token Telegram**: chat dengan @BotFather → `/revoke` → pilih bot → token baru; update GitHub Secrets + `.env` lokal.
-4. **Rotasi `ENCRYPTION_KEY`** (opsional, aman sekarang karena 0 API key): generate 64-hex, update Vercel + lokal. **Jangan** lakukan setelah ada `user_api_keys` terenkripsi tanpa re-enkripsi.
+> Panduan langkah-demi-langkah yang detail + perintah verifikasi: lihat **`SECURITY-ACTIONS.md`**.
+1. **Leaked Password Protection**: TIDAK BISA di plan Free (HTTP 402, butuh Pro). Menu sengaja tak muncul. Sudah diganti mitigasi lain: password policy `min 10` + wajib huruf besar/kecil + angka (sudah diaktifkan via Management API). Upgrade Pro bila mau fitur HIBP.
+2. **Rotasi `SUPABASE_SERVICE_ROLE_KEY`**: buat **Secret key** baru (`sb_secret_...`) di Settings → API Keys, pasang di Vercel (prod+preview) + `.env.local`, redeploy, verifikasi cron 200, lalu deactivate key `service_role` lama. Jangan rotate JWT secret.
+3. **Rotasi token Telegram**: @BotFather → `/mybots` → API Token → Revoke, update GitHub Secrets + `.env`. Verifikasi: `./venv/bin/python monitoring/telegram_alert.py`.
+4. **Rotasi `ENCRYPTION_KEY`** (aman sekarang, 0 API key): `openssl rand -hex 32`, pasang Vercel + lokal, redeploy. Jangan lakukan setelah ada `user_api_keys` terenkripsi tanpa re-enkripsi.
 
 ---
 

@@ -5,7 +5,7 @@ import { z } from "zod"
 
 const PasswordSchema = z.object({
   current_password: z.string().min(1),
-  new_password: z.string().min(6),
+  new_password: z.string().min(10),
 })
 
 export async function POST(request: Request) {
