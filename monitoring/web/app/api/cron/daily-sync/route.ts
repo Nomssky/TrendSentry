@@ -89,15 +89,24 @@ export async function GET(request: Request) {
 
   const supabase = createAdminClient()
   const { decrypt } = await import("@/lib/encryption")
-  const { data: users, error: usersError } = await supabase.auth.admin.listUsers()
-  if (usersError) {
-    console.error("List users error:", usersError)
-    return NextResponse.json({ error: "failed to list users" }, { status: 500 })
+
+  // Paginasi: listUsers() default hanya halaman pertama (~50 user), sehingga
+  // user ke-51+ tidak pernah tersinkron tanpa error. Ambil semua halaman.
+  const allUsers: { id: string }[] = []
+  const PER_PAGE = 1000
+  for (let page = 1; ; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: PER_PAGE })
+    if (error) {
+      console.error("List users error:", error)
+      return NextResponse.json({ error: "failed to list users" }, { status: 500 })
+    }
+    allUsers.push(...data.users)
+    if (data.users.length < PER_PAGE) break
   }
 
   const results: { userId: string; trades: number; deviations: number }[] = []
 
-  for (const user of users.users) {
+  for (const user of allUsers) {
     const { data: apiKey } = await supabase
       .from("user_api_keys")
       .select("id, user_id, api_key_enc, api_secret_enc, passphrase_enc, is_active")
@@ -149,8 +158,11 @@ export async function GET(request: Request) {
         .select("id, name, params, rules_json")
         .eq("user_id", user.id)
         .eq("is_active", true)
-      const strategyId = strategies?.[0]?.id ?? null
 
+      // Fill exchange tidak membawa sinyal strategi mana yang menghasilkannya.
+      // Atribusi hanya dilakukan bila TEPAT satu strategi aktif (tidak ambigu);
+      // kalau ada >1, biarkan null agar discipline score tidak menyesatkan.
+      const soleStrategy = strategies?.length === 1 ? strategies[0] : null
       const enriched = newTrades.map((t) => ({
         pair: t.pair,
         side: t.side,
@@ -161,7 +173,7 @@ export async function GET(request: Request) {
         executed_at: t.executed_at,
         user_id: user.id,
         exchange: "bitget",
-        strategy_id: strategyId,
+        strategy_id: soleStrategy?.id ?? null,
       }))
 
       let inserted: { id: number; pair: string; side: string; price: number; amount: number; executed_at: string; strategy_id: number | null }[] = []
@@ -177,34 +189,42 @@ export async function GET(request: Request) {
         inserted = rows ?? []
       }
 
-      // Deviasi: tiap trade baru vs tiap strategi aktif (Telegram per-user
-      // belum ada routing chat id — deviasi tampil di dashboard; alert
-      // Telegram user = tier premium, butuh kolom chat id tersendiri).
+      // Deviasi: hanya untuk trade yang teratribusi ke satu strategi tunggal.
+      // accountEquity tidak diteruskan (tidak ada sumber equity per-user) —
+      // rule position_sizing nonaktif sampai model itu ada, bukan pakai 1000.
       let devCount = 0
-      if (inserted.length > 0 && strategies && strategies.length > 0) {
-        const { count: todayCount } = await supabase
-          .from("user_trades")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .gte("executed_at", `${new Date().toISOString().split("T")[0]}T00:00:00Z`)
+      if (inserted.length > 0 && soleStrategy) {
+        const attributed = inserted.filter((t) => t.strategy_id === soleStrategy.id)
+        const dates = [...new Set(attributed.map((t) => t.executed_at.split("T")[0]))]
+        const dailyCount = new Map<string, number>()
+        await Promise.all(
+          dates.map(async (date) => {
+            const { count } = await supabase
+              .from("user_trades")
+              .select("id", { count: "exact", head: true })
+              .eq("user_id", user.id)
+              .eq("strategy_id", soleStrategy.id)
+              .gte("executed_at", `${date}T00:00:00Z`)
+              .lte("executed_at", `${date}T23:59:59.999Z`)
+            dailyCount.set(date, count ?? 0)
+          })
+        )
         const rows = [] as {
           user_id: string; strategy_id: number; trade_id: number;
           rule_key: string; expected: string; actual: string; severity: string
         }[]
-        for (const trade of inserted) {
-          for (const s of strategies) {
-            try {
-              const devs = checkDeviation(
-                { pair: trade.pair, side: trade.side as "buy" | "sell", price: trade.price, amount: trade.amount, executed_at: trade.executed_at },
-                s,
-                { dailyTrades: todayCount ?? 0, accountEquity: 1000 }
-              )
-              for (const dev of devs) {
-                rows.push({ user_id: user.id, strategy_id: s.id, trade_id: trade.id, ...dev })
-              }
-            } catch (err) {
-              console.error("Deviation check failed:", err)
+        for (const trade of attributed) {
+          try {
+            const devs = checkDeviation(
+              { pair: trade.pair, side: trade.side as "buy" | "sell", price: trade.price, amount: trade.amount, executed_at: trade.executed_at },
+              soleStrategy,
+              { dailyTrades: dailyCount.get(trade.executed_at.split("T")[0]) ?? 0 }
+            )
+            for (const dev of devs) {
+              rows.push({ user_id: user.id, strategy_id: soleStrategy.id, trade_id: trade.id, ...dev })
             }
+          } catch (err) {
+            console.error("Deviation check failed:", err)
           }
         }
         if (rows.length > 0) {
@@ -212,14 +232,11 @@ export async function GET(request: Request) {
           if (devError) console.error("Deviation insert error:", devError)
           else devCount = rows.length
         }
-        const dates = [...new Set(inserted.map((t) => t.executed_at.split("T")[0]))]
         for (const date of dates) {
-          for (const s of strategies) {
-            try {
-              await calculateDisciplineScore(user.id, s.id, date, supabase)
-            } catch (err) {
-              console.error("Discipline score failed:", err)
-            }
+          try {
+            await calculateDisciplineScore(user.id, soleStrategy.id, date, supabase)
+          } catch (err) {
+            console.error("Discipline score failed:", err)
           }
         }
       }

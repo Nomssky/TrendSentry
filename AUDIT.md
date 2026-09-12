@@ -3,9 +3,34 @@
 Tanggal: 2026-09-12
 Cakupan: Python engine (backtest, paper, risk, llm, scripts), web Next.js (API, lib, auth, UI), Supabase migrations + RLS (via MCP), GitHub Actions, deploy scripts/Docker.
 Metode: pembacaan penuh file + `git log` untuk kebocoran secret + Supabase security advisor + `pytest` (54 passed).
-Status: **temuan di bawah belum diperbaiki** — ini laporan, bukan patch.
+Status per 2026-09-12: **P0 selesai & terverifikasi; P1 selesai kecuali rotasi secret yang butuh dashboard (lihat bagian "Status Perbaikan").** Temuan P2/P3 masih terbuka.
 
 Legenda: **P0** = wajib segera (uang/keamanan), **P1** = tinggi, **P2** = sedang, **P3** = rendah/hygiene.
+
+---
+
+## Status Perbaikan
+
+### P0 — SELESAI ✅
+- **P0-1** cron auth bypass: kedua route fail-closed (500) bila `CRON_SECRET` kosong. Diverifikasi live: valid→200, `Bearer undefined`→401, salah→401.
+- **P0-2** RLS `profiles`: policy `profiles_self` (FOR ALL) diganti `profiles_select_self` (SELECT saja). Diterapkan ke remote; tulis billing hanya service role.
+- **P0-3** kas negatif backtest: `cost` dihitung ulang setelah clamp `units`. Test regresi `tests/test_backtest_cash.py` (terbukti gagal tanpa fix). Angka backtest resmi tidak berubah.
+- Sinkronisasi env: `CRON_SECRET` (lokal=Vercel=GitHub), `ENCRYPTION_KEY`/`SERVICE_ROLE_KEY` disamakan ke Vercel. Deploy Ready.
+
+### P1 — SELESAI (kecuali rotasi) 
+- **P1-1** `.dockerignore` ditambahkan (secret, `node_modules`, `.next`, DB tidak masuk image).
+- **P1-2** query kolom hantu dibuang (`user_trades.exit_price`, `profiles.equity`); `dailyTrades` dihitung dari DB; tidak ada lagi `accountEquity ?? 1000`.
+- **P1-3** webhook Stripe: tolak `payment_status=unpaid`, handle `invoice.paid` + `customer.subscription.updated` (renewal), metadata diteruskan ke subscription. Idempotency key palsu (`Date.now()`) dihapus.
+- **P1-4** `daily-sync` tidak lagi menautkan semua fill ke `strategies[0]`; atribusi hanya bila tepat 1 strategi aktif.
+- **P1-5** `listUsers()` dipaginasi (1000/halaman) sampai habis.
+- **P1-6** verifikasi izin API key: Bitget tidak menyediakan endpoint permission & dokumentasi tidak menjamin endpoint trade menolak key read-only. Karena itu klaim "read-only enforced" dihapus dan diganti instruksi eksplisit di UI. **Enforcement sejati tidak mungkin tanpa key nyata** — jangan tambahkan probe yang bisa false-reject.
+- **P1-7** `CRON_SECRET` **dirotasi** (64-hex baru) dan disinkronkan ke lokal + Vercel (prod/preview) + GitHub; diverifikasi live + workflow GitHub success. `ENCRYPTION_KEY`/`SERVICE_ROLE_KEY`/token Telegram: **belum** dirotasi (butuh dashboard) — lihat tutorial di bawah.
+
+### Sisa manual (dashboard, tidak bisa via CLI/MCP)
+1. **Supabase Dashboard → Authentication → Policies → aktifkan "Leaked Password Protection"** (satu klik). Ini menutup satu-satunya warning advisor.
+2. **Rotasi `SUPABASE_SERVICE_ROLE_KEY`**: Dashboard → Project Settings → API → rotate JWT/secret, lalu update di Vercel (Production + Preview) dan `.env.local`. Catatan: rotasi JWT secret juga memengaruhi anon/publishable key.
+3. **Rotasi token Telegram**: chat dengan @BotFather → `/revoke` → pilih bot → token baru; update GitHub Secrets + `.env` lokal.
+4. **Rotasi `ENCRYPTION_KEY`** (opsional, aman sekarang karena 0 API key): generate 64-hex, update Vercel + lokal. **Jangan** lakukan setelah ada `user_api_keys` terenkripsi tanpa re-enkripsi.
 
 ---
 

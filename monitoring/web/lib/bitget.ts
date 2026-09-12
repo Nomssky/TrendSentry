@@ -23,7 +23,18 @@ function authHeaders(apiKey: string, signature: string, timestamp: string, passp
   }
 }
 
-/** Verifikasi key user valid + punya akses read spot. Tidak menyentuh dana. */
+/**
+ * Verifikasi key user valid + punya akses read spot (endpoint read-only,
+ * tidak menyentuh dana).
+ *
+ * CATATAN KEAMANAN: Bitget tidak menyediakan endpoint untuk membaca daftar
+ * permission sebuah API key, dan dokumentasi tidak menjamin endpoint trade
+ * (mis. spot/trade/unfilled-orders) menolak key read-only. Karena itu kita
+ * TIDAK mengklaim bisa menegakkan read-only di sini — verifikasi ini hanya
+ * memastikan key valid & dapat membaca akun. Pemilik key WAJIB membuatnya
+ * tanpa izin Trade/Withdraw (lihat UI settings + PLAN.md §9). Key yang
+ * tersimpan TIDAK PERNAH dipakai untuk order oleh kode ini.
+ */
 export async function verifySpotReadAccess(
   apiKey: string,
   apiSecret: string,
@@ -43,3 +54,5 @@ export async function verifySpotReadAccess(
     return { ok: false, reason: err instanceof Error ? err.message : "network error" }
   }
 }
+
+

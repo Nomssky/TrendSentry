@@ -1,0 +1,37 @@
+# Jangan kirim ke Docker build context: secret, dependensi, dan artefak build.
+# Tanpa file ini, `COPY monitoring/web/ ./` di Dockerfile.web ikut membawa
+# .env.local (service role, encryption key, cron secret) dan node_modules host.
+.git
+.gitignore
+.vercel
+**/.vercel
+
+# Secrets
+**/.env
+**/.env.*
+!**/.env.example
+
+# Python
+**/__pycache__
+**/*.pyc
+venv/
+.venv/
+**/.pytest_cache
+
+# Node / Next
+**/node_modules
+**/.next
+**/out
+**/build
+**/*.tsbuildinfo
+**/test-results
+**/playwright-report
+
+# Data & state (jangan bawa ke image)
+db/*.db
+db/*.db-wal
+db/*.db-shm
+db/backups/
+**/*.dump
+data/
+backtest/reports/

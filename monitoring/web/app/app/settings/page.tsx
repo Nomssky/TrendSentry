@@ -103,7 +103,11 @@ export default function SettingsPage() {
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-white">Bitget API Key</h2>
-        <p className="text-sm text-white/40">Read-only API key from Bitget. Your keys are encrypted at rest with AES-256-GCM.</p>
+        <p className="text-sm text-white/40">
+          Use a <strong className="text-white/70">read-only</strong> Bitget API key (no Trade, no Withdraw permission).
+          Bitget doesn&apos;t expose a permission-check API, so we can&apos;t verify this for you — please create the key
+          correctly. Keys are encrypted at rest with AES-256-GCM and never used to place orders.
+        </p>
 
         {!loading && existingKey && (
           <div className="rounded-lg border border-white/10 bg-white/5 p-4">

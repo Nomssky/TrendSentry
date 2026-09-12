@@ -44,7 +44,6 @@ export async function POST(request: Request) {
   const origin = request.headers.get("origin") ?? "https://trendsentry.vercel.app"
 
   try {
-    const idempotencyKey = `checkout_${user.id}_${plan}_${Date.now()}`
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
@@ -67,7 +66,10 @@ export async function POST(request: Request) {
       client_reference_id: user.id,
       customer_email: user.email,
       metadata: { user_id: user.id, plan },
-    }, { idempotencyKey })
+      // Teruskan metadata ke subscription agar event renewal
+      // (invoice.paid / customer.subscription.updated) tetap membawa user_id.
+      subscription_data: { metadata: { user_id: user.id, plan } },
+    })
 
     return NextResponse.json({ url: session.url })
   } catch (err) {

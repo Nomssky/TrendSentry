@@ -87,24 +87,41 @@ export async function POST(request: Request) {
     }
 
     // Collect all deviations in parallel (pure computation)
-    const allDeviations: { trade: typeof data[0]; strategy: typeof strategyMap extends Map<infer K, infer V> ? V : never; dev: { rule_key: string; expected: string; actual: string; severity: "info" | "warning" | "critical" } }[] = []
+    type StrategyInfo = { name: string; params: Record<string, unknown>; rules_json?: Record<string, unknown> | null }
+    const allDeviations: { trade: typeof data[0]; strategy: StrategyInfo; dev: { rule_key: string; expected: string; actual: string; severity: "info" | "warning" | "critical" } }[] = []
 
-    // Fetch context for deviation checks (open positions, today's trades, equity)
-    const [{ count: openCount }, equityRes] = await Promise.all([
-      supabase.from("user_trades").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("exit_price", null),
-      supabase.from("profiles").select("equity").eq("id", user.id).single(),
-    ])
-    const openPositions = openCount ?? 0
-    const accountEquity = equityRes.data?.equity ?? 1000
+    // Context deviasi yang benar-benar tersedia.
+    // user_trades adalah log fill (bukan tabel posisi) dan tidak ada kolom equity
+    // per-user — jadi openPositions/accountEquity sengaja TIDAK diteruskan
+    // (rule max_concurrent & position_sizing nonaktif sampai model posisi/equity ada).
+    // dailyTrades dihitung dari DB (bukan hanya batch request ini).
+    const dayKeys = new Map<string, { strategyId: number; date: string }>()
+    for (const t of data) {
+      if (!t.strategy_id || !t.executed_at) continue
+      const date = t.executed_at.split("T")[0]
+      dayKeys.set(`${t.strategy_id}|${date}`, { strategyId: t.strategy_id, date })
+    }
+    const dailyCounts = new Map<string, number>()
+    await Promise.all(
+      [...dayKeys.values()].map(async ({ strategyId, date }) => {
+        const { count } = await supabase
+          .from("user_trades")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("strategy_id", strategyId)
+          .gte("executed_at", `${date}T00:00:00Z`)
+          .lte("executed_at", `${date}T23:59:59.999Z`)
+        dailyCounts.set(`${strategyId}|${date}`, count ?? 0)
+      })
+    )
 
     for (const trade of data) {
       if (!trade.strategy_id) continue
       const strategy = strategyMap.get(trade.strategy_id)
       if (!strategy) continue
 
-      // Count today's trades for this strategy
       const tradeDate = trade.executed_at?.split("T")[0]
-      const dailyTrades = tradeDate ? data.filter((t) => t.executed_at?.startsWith(tradeDate) && t.strategy_id === trade.strategy_id).length : 0
+      const dailyTrades = tradeDate ? dailyCounts.get(`${trade.strategy_id}|${tradeDate}`) ?? 0 : 0
 
       try {
         const devs = checkDeviation({
@@ -113,7 +130,7 @@ export async function POST(request: Request) {
           price: trade.price,
           amount: trade.amount,
           executed_at: trade.executed_at,
-        }, strategy, { openPositions, dailyTrades, accountEquity })
+        }, strategy, { dailyTrades })
         for (const dev of devs) {
           allDeviations.push({ trade, strategy, dev })
         }
