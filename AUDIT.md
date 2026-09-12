@@ -24,14 +24,14 @@ Legenda: **P0** = wajib segera (uang/keamanan), **P1** = tinggi, **P2** = sedang
 - **P1-4** `daily-sync` tidak lagi menautkan semua fill ke `strategies[0]`; atribusi hanya bila tepat 1 strategi aktif.
 - **P1-5** `listUsers()` dipaginasi (1000/halaman) sampai habis.
 - **P1-6** verifikasi izin API key: Bitget tidak menyediakan endpoint permission & dokumentasi tidak menjamin endpoint trade menolak key read-only. Karena itu klaim "read-only enforced" dihapus dan diganti instruksi eksplisit di UI. **Enforcement sejati tidak mungkin tanpa key nyata** — jangan tambahkan probe yang bisa false-reject.
-- **P1-7** `CRON_SECRET` **dirotasi** (64-hex baru) dan disinkronkan ke lokal + Vercel (prod/preview) + GitHub; diverifikasi live + workflow GitHub success. `ENCRYPTION_KEY`/`SERVICE_ROLE_KEY`/token Telegram: **belum** dirotasi (butuh dashboard) — lihat tutorial di bawah.
+- **P1-7** Rotasi secret: `CRON_SECRET` + `ENCRYPTION_KEY` **sudah dirotasi** (lokal + Vercel + GitHub untuk CRON; Vercel untuk ENCRYPTION), terverifikasi. Password policy naik ke min 10 + huruf besar/kecil/angka. `SUPABASE_SERVICE_ROLE_KEY` **tidak bisa** diganti `sb_secret_` (project ini menolak key new-style di data plane — sudah diuji; legacy `service_role` tetap dipakai). Token Telegram & rotasi service_role legacy: manual via Dashboard/@BotFather. Key uji/`__probe__` sudah dibersihkan.
 
 ### Sisa manual (dashboard, tidak bisa via CLI/MCP)
-> Panduan langkah-demi-langkah yang detail + perintah verifikasi: lihat **`SECURITY-ACTIONS.md`**.
-1. **Leaked Password Protection**: TIDAK BISA di plan Free (HTTP 402, butuh Pro). Menu sengaja tak muncul. Sudah diganti mitigasi lain: password policy `min 10` + wajib huruf besar/kecil + angka (sudah diaktifkan via Management API). Upgrade Pro bila mau fitur HIBP.
-2. **Rotasi `SUPABASE_SERVICE_ROLE_KEY`**: buat **Secret key** baru (`sb_secret_...`) di Settings → API Keys, pasang di Vercel (prod+preview) + `.env.local`, redeploy, verifikasi cron 200, lalu deactivate key `service_role` lama. Jangan rotate JWT secret.
+> Panduan langkah-demi-langkah + perintah verifikasi: lihat **`SECURITY-ACTIONS.md`**.
+1. **Leaked Password Protection**: TIDAK BISA di plan Free (HTTP 402, butuh Pro) — menu sengaja tak muncul. Mitigasi pengganti sudah aktif: `password_min_length=10` + wajib huruf besar/kecil/angka (via Management API).
+2. **Rotasi `SUPABASE_SERVICE_ROLE_KEY`**: project menolak `sb_secret_` new-style (sudah diuji: REST/Auth → 401, padahal publishable new-style → 200). Satu-satunya cara = rotate **JWT secret** di Dashboard → Settings → API (mengubah anon+service_role legacy, memaksa semua user logout). Detail di `SECURITY-ACTIONS.md` §4.
 3. **Rotasi token Telegram**: @BotFather → `/mybots` → API Token → Revoke, update GitHub Secrets + `.env`. Verifikasi: `./venv/bin/python monitoring/telegram_alert.py`.
-4. **Rotasi `ENCRYPTION_KEY`** (aman sekarang, 0 API key): `openssl rand -hex 32`, pasang Vercel + lokal, redeploy. Jangan lakukan setelah ada `user_api_keys` terenkripsi tanpa re-enkripsi.
+4. **Rotasi `ENCRYPTION_KEY`**: sudah dilakukan; jangan ulangi setelah ada `user_api_keys` terenkripsi tanpa re-enkripsi.
 
 ---
 
