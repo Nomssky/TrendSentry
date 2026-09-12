@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone", // image Docker ramping (deploy/ + Coolify)
   images: { unoptimized: true },
   async headers() {
     return [

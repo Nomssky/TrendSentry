@@ -1,0 +1,12 @@
+# Engine paper/watcher (live_signal.py via cron host -> docker exec).
+# Dipicu systemd timer di VPS (lihat RUNBOOK.md), BUKAN daemon tidur.
+FROM python:3.12-slim AS run
+WORKDIR /srv/trendsentry
+COPY requirements-engine.txt ./
+RUN pip install --no-cache-dir -r requirements-engine.txt
+COPY backtest/ ./backtest/
+COPY paper_trading/ ./paper_trading/
+COPY monitoring/telegram_alert.py ./monitoring/telegram_alert.py
+COPY config.yaml db/schema.sql ./
+# DB SQLite + .env dimount dari host saat run (lihat docker-compose.yml).
+CMD ["python", "paper_trading/live_signal.py"]

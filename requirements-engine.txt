@@ -1,0 +1,5 @@
+# Dependensi runtime engine paper/watcher (image ramping, tanpa backtest full).
+# Versi selaras requirements.txt.
+ccxt>=4.5,<5
+pandas>=3.0,<4
+PyYAML>=6.0,<7
