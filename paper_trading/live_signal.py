@@ -72,6 +72,18 @@ def set_cash(conn: sqlite3.Connection, cash: float) -> None:
 
 
 def log_slippage(conn: sqlite3.Connection, exchange: ccxt.Exchange, pair: str) -> None:
+    """Catat spread order book, maksimum 1 sampel per pair per hari UTC.
+
+    Dedupe harian: run manual berulang di hari sama tidak menambah baris, dan
+    tabel tidak tumbuh liar (cukup 1 snapshot/hari/pair untuk perbandingan
+    vs asumsi slippage).
+    """
+    today = datetime.now(timezone.utc).date().isoformat()
+    if conn.execute(
+        "SELECT 1 FROM slippage_log WHERE pair=? AND substr(timestamp,1,10)=?",
+        (pair, today),
+    ).fetchone():
+        return
     ob = fetch_retry(lambda: exchange.fetch_order_book(pair, limit=5))
     bid, ask = ob["bids"][0][0], ob["asks"][0][0]
     mid = (bid + ask) / 2

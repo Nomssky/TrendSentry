@@ -37,13 +37,10 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient()
 
-  // Clean up related data before deleting user
-  const tables = ["user_api_keys", "user_trades", "user_strategies", "deviation_log", "discipline_scores", "profiles"]
-  for (const table of tables) {
-    const { error: delErr } = await admin.from(table).delete().eq("user_id", user.id)
-    if (delErr) console.error(`Cleanup ${table} error:`, delErr)
-  }
-
+  // Semua tabel user (profiles, user_api_keys, user_trades, user_strategies,
+  // deviation_log, discipline_scores) punya FK `user_id/id REFERENCES auth.users
+  // ON DELETE CASCADE`. Jadi cukup hapus auth user; Postgres membersihkan sisanya.
+  // (Loop cleanup lama salah kolom untuk profiles dan mubazir.)
   const { error } = await admin.auth.admin.deleteUser(user.id)
   if (error) return NextResponse.json({ error: "delete failed" }, { status: 500 })
 

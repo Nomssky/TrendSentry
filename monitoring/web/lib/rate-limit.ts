@@ -19,12 +19,15 @@ function getStore(name: string): Map<string, Entry> {
   return s
 }
 
-/** IP klien tepercaya. `x-real-ip` diset Vercel; fallback ke hop pertama XFF. */
+/** IP klien tepercaya. `x-real-ip` diset Vercel; fallback ke hop pertama XFF.
+ *  Kalau tak ada sama sekali (mis. non-Vercel), kembalikan "unknown" — request
+ *  tanpa IP berbagi satu bucket; di Vercel ini praktis tak terjadi. */
 export function clientIp(request: Request): string {
   const real = request.headers.get("x-real-ip")
   if (real) return real.trim()
   const xff = request.headers.get("x-forwarded-for")
   if (xff) return xff.split(",")[0].trim()
+  console.warn("rate-limit: tidak ada x-real-ip / x-forwarded-for — memakai bucket 'unknown'")
   return "unknown"
 }
 

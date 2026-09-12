@@ -89,7 +89,27 @@ def fetch_pair(exchange: ccxt.Exchange, symbol: str, timeframe: str = "1d") -> p
 
     df = pd.DataFrame(all_candles, columns=["ts", "open", "high", "low", "close", "volume"])
     df["date"] = pd.to_datetime(df["ts"], unit="ms", utc=True).dt.date
-    df = df.drop(columns=["ts"]).drop_duplicates(subset=["date"]).sort_values("date").reset_index(drop=True)
+    df = df.drop(columns=["ts"])
+
+    # Deteksi gap antar-candle (missing day) SEBELUM dedupe, agar lubang data
+    # terlihat eksplisit — bukan tersembunyi. Data ini dasar backtest.
+    dates_sorted = sorted(df["date"].unique())
+    if dates_sorted:
+        span = (dates_sorted[-1] - dates_sorted[0]).days + 1
+        missing = span - len(dates_sorted)
+    else:
+        missing = 0
+    dupes = int(df.duplicated(subset=["date"]).sum())
+    if dupes:
+        print(f"  WARN {symbol}: {dupes} candle duplikat tanggal (di-drop, ambil pertama)", flush=True)
+    if missing > 0:
+        print(
+            f"  WARN {symbol}: {missing} hari hilang dalam rentang "
+            f"{dates_sorted[0]}..{dates_sorted[-1]} — cek gap sebelum backtest",
+            flush=True,
+        )
+
+    df = df.drop_duplicates(subset=["date"]).sort_values("date").reset_index(drop=True)
     return df
 
 

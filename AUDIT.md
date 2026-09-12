@@ -3,7 +3,7 @@
 Tanggal: 2026-09-12
 Cakupan: Python engine (backtest, paper, risk, llm, scripts), web Next.js (API, lib, auth, UI), Supabase migrations + RLS (via MCP), GitHub Actions, deploy scripts/Docker.
 Metode: pembacaan penuh file + `git log` untuk kebocoran secret + Supabase security advisor + `pytest` (54 passed).
-Status per 2026-09-12: **P0 & P1 selesai; P2 selesai (lihat "Status Perbaikan").** Temuan P3 masih terbuka.
+Status per 2026-09-12: **P0, P1, P2, P3 selesai** (lihat "Status Perbaikan"). Sisa hanya item manual ber-dashboard (lihat `SECURITY-ACTIONS.md`).
 
 Legenda: **P0** = wajib segera (uang/keamanan), **P1** = tinggi, **P2** = sedang, **P3** = rendah/hygiene.
 
@@ -45,6 +45,20 @@ Legenda: **P0** = wajib segera (uang/keamanan), **P1** = tinggi, **P2** = sedang
 - **P2-8** satu sumber angka referensi: `monitoring/web/lib/backtest-reference.json`, dibaca `reference.ts` (TS) dan `scripts/compare_live_vs_backtest.py` (Python). Duplikasi dihapus.
 - **P2-9** backup pakai `gpg --symmetric --cipher-algo AES256` (authenticated, tamper terdeteksi) ganti `openssl enc` CBC; `restore.sh` validasi basename + `mktemp` (cegah path traversal).
 - **P2-10** ganti password mencabut **semua sesi** (`signOut({scope:'global'})`); UI redirect ke login. Password min 10 + karakter (lihat P1-7).
+
+### P3 — SELESAI
+- **P3-1** CSP + HSTS di `next.config.ts` (frame-ancestors none, connect-src self+supabase+bitget, img/font terbatas). Terverifikasi via header respons.
+- **P3-2** `account/delete` cleanup loop dihapus (profiles salah kolom; FK `on delete cascade` sudah menangani).
+- **P3-3** `/api/templates` auth dipertahankan + komentar alasan (defense-in-depth).
+- **P3-4** heuristik `position_sizing` turun severity ke `warning` + teks jujur (notional vs anggaran risk).
+- **P3-5** trigger Postgres `trg_recalc_discipline` recompute `discipline_scores` saat `deviation_log` insert/update/delete — skor tak bisa basi.
+- **P3-6** `db/paper_trading.db` di git: **accepted risk** (by design = backup off-disk Fase 2, bukan secret). Tidak diubah.
+- **P3-7** `ApiKeyPostSchema` batas 256 char (key/secret/passphrase).
+- **P3-8** fallback IP "unknown" diberi log peringatan eksplisit.
+- **P3-9** `log_slippage` dedupe 1/pair/hari (+ test idempotensi diperluas).
+- **P3-10** `fetch_bitget_data.py` laporkan gap & duplikat tanggal eksplisit (tidak senyap).
+- **P3-11** komentar `config.yaml` `max_concurrent_positions` diperjelas (maksimum riil 3).
+- **P3-12** `package.json`: `typecheck` = `tsc --noEmit`, `lint` = `eslint .`.
 
 ---
 

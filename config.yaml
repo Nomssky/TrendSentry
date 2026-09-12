@@ -24,7 +24,9 @@ strategy:
 
 risk:
   risk_per_trade_pct: 1.0          # persen dari modal per trade
-  max_concurrent_positions: 5      # dikombinasikan dengan cluster-limit 2/cluster -> effective max ditentukan oleh yg lebih ketat
+  max_concurrent_positions: 5      # batas atas global; efektif lebih ketat karena cluster-limit
+                                   # 2/cluster (A) + 1 (B) -> maksimum riil 3 posisi. Angka 5 sengaja
+                                   # disimpan sebagai plafon; jangan naikkan tanpa riset korelasi ulang.
   max_drawdown_circuit_breaker_pct: 15.0   # auto-pause kalau drawdown modal awal tembus ini
 
 paper_trading:

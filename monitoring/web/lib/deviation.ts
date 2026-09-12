@@ -107,14 +107,17 @@ export function checkDeviation(
   }
 
   if (context?.accountEquity != null && context.accountEquity > 0 && rules.risk_per_trade_pct != null && trade.side === "buy") {
+    // Heuristik kasar: notional jauh melebihi anggaran risk (10x) menandakan
+    // sizing mungkin salah. Bukan pelanggaran keras — stop distance nyata tidak
+    // diketahui di sini — jadi severity "warning", bukan "critical".
     const riskAmount = context.accountEquity * (rules.risk_per_trade_pct / 100)
     const tradeValue = trade.price * trade.amount
     if (tradeValue > riskAmount * 10) {
       results.push({
         rule_key: "position_sizing",
-        expected: `risk ${rules.risk_per_trade_pct}% (${riskAmount.toFixed(2)} USD)`,
-        actual: `trade value ${tradeValue.toFixed(2)} USD (>${(riskAmount * 10).toFixed(2)})`,
-        severity: "critical",
+        expected: `notional dekat anggaran risk ${rules.risk_per_trade_pct}% (${riskAmount.toFixed(2)} USD)`,
+        actual: `notional ${tradeValue.toFixed(2)} USD (>10x anggaran)`,
+        severity: "warning",
       })
     }
   }

@@ -67,9 +67,10 @@ export const StrategyDeleteSchema = z.object({
 })
 
 export const ApiKeyPostSchema = z.object({
-  api_key: z.string().min(1),
-  api_secret: z.string().min(1),
-  passphrase: z.string().optional(),
+  // Batas panjang: kunci exchange realistis < 256 char. Cegah simpan string raksasa.
+  api_key: z.string().min(1).max(256),
+  api_secret: z.string().min(1).max(256),
+  passphrase: z.string().max(256).optional(),
 })
 
 export const CheckoutPostSchema = z.object({

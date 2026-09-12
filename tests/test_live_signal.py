@@ -132,8 +132,10 @@ def test_idempotent_no_duplicate(tmp_path):
     n = conn.execute("SELECT COUNT(*) FROM signals").fetchone()[0]
     n_pos = conn.execute("SELECT COUNT(*) FROM positions").fetchone()[0]
     n_yield = conn.execute("SELECT COUNT(*) FROM yield_log").fetchone()[0]
+    n_slip = conn.execute("SELECT COUNT(*) FROM slippage_log").fetchone()[0]
     conn.close()
     assert n == 10 and n_pos == 0 and n_yield == 1  # 10 pair x 1 candle, yield 1x/hari, tidak dobel
+    assert n_slip == 10  # slippage dedupe harian: 1/pair, bukan 20 setelah 2 run
 
 
 def test_yield_credit_once_per_day(tmp_path):
