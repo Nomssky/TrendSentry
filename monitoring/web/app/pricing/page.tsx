@@ -62,7 +62,7 @@ export default function Pricing() {
         alert(data.error ?? "Checkout failed. Please try again.")
         return
       }
-      window.location.href = data.url
+      window.location.assign(data.url)
     } catch {
       alert("Network error. Please try again.")
     }

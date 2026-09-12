@@ -96,8 +96,12 @@ export default function NewStrategyPage() {
   }, [])
 
   const selectedTemplate = templates.find((t) => t.id === selected)
+  const [lastTpl, setLastTpl] = useState<number | null>(null)
 
-  useEffect(() => {
+  // Isi default params saat template berganti — render-phase update,
+  // bukan setState sinkron di dalam effect.
+  if (selected !== lastTpl) {
+    setLastTpl(selected)
     if (selectedTemplate) {
       const defaults: Record<string, unknown> = {}
       for (const [key, schema] of Object.entries(selectedTemplate.params_schema.properties)) {
@@ -105,7 +109,7 @@ export default function NewStrategyPage() {
       }
       setParams(defaults)
     }
-  }, [selectedTemplate])
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

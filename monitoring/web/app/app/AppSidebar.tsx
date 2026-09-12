@@ -14,10 +14,14 @@ const links = [
 export function AppSidebar() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
+  const [lastPath, setLastPath] = useState(pathname)
 
-  useEffect(() => {
+  // Tutup menu saat navigasi — render-phase update (pola React resmi),
+  // bukan setState sinkron di dalam effect.
+  if (lastPath !== pathname) {
+    setLastPath(pathname)
     setOpen(false)
-  }, [pathname])
+  }
 
   return (
     <>
