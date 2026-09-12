@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server"
 
-const ALLOWED_ORIGINS = [
-  "https://trendsentry.vercel.app",
-  "http://localhost:3000",
-  "http://localhost:3001",
-]
+// Origin diizinkan untuk request mutasi. Dikonfigurasi lewat env supaya domain
+// kustom tidak perlu ubah kode. Default: produksi + dev lokal.
+function allowedOrigins(): string[] {
+  const fromEnv = process.env.ALLOWED_ORIGINS
+  if (fromEnv) {
+    return fromEnv.split(",").map((o) => o.trim()).filter(Boolean)
+  }
+  return [
+    "https://trendsentry.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:3001",
+  ]
+}
 
 function isAllowedHost(host: string): boolean {
-  return ALLOWED_ORIGINS.some((o) => {
+  return allowedOrigins().some((o) => {
     try { return new URL(o).host === host } catch { return false }
   })
 }
@@ -24,7 +32,7 @@ export function validateOrigin(request: Request): NextResponse | null {
     return NextResponse.json({ error: "forbidden" }, { status: 403 })
   }
 
-  // Origin absent: only allow same-origin requests (host must match allowlist)
+  // Origin absent: hanya izinkan kalau host cocok allowlist.
   if (host && isAllowedHost(host)) return null
 
   return NextResponse.json({ error: "forbidden" }, { status: 403 })

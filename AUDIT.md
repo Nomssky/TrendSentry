@@ -3,7 +3,7 @@
 Tanggal: 2026-09-12
 Cakupan: Python engine (backtest, paper, risk, llm, scripts), web Next.js (API, lib, auth, UI), Supabase migrations + RLS (via MCP), GitHub Actions, deploy scripts/Docker.
 Metode: pembacaan penuh file + `git log` untuk kebocoran secret + Supabase security advisor + `pytest` (54 passed).
-Status per 2026-09-12: **P0 selesai & terverifikasi; P1 selesai kecuali rotasi secret yang butuh dashboard (lihat bagian "Status Perbaikan").** Temuan P2/P3 masih terbuka.
+Status per 2026-09-12: **P0 & P1 selesai; P2 selesai (lihat "Status Perbaikan").** Temuan P3 masih terbuka.
 
 Legenda: **P0** = wajib segera (uang/keamanan), **P1** = tinggi, **P2** = sedang, **P3** = rendah/hygiene.
 
@@ -33,6 +33,18 @@ Legenda: **P0** = wajib segera (uang/keamanan), **P1** = tinggi, **P2** = sedang
 2. **Rotasi `SUPABASE_SERVICE_ROLE_KEY`** (bila nanti perlu): project menolak `sb_secret_` new-style (diuji 401). Cara = rotate **JWT secret** di Dashboard → Settings → API (mengubah anon+service_role legacy, memaksa semua user logout). Detail di `SECURITY-ACTIONS.md` §4.
 3. **Rotasi token Telegram** (bila nanti perlu): @BotFather → `/mybots` → API Token → Revoke, update GitHub Secrets + `.env`.
 4. **Rotasi `ENCRYPTION_KEY`**: sudah dilakukan; jangan ulangi setelah ada `user_api_keys` terenkripsi tanpa re-enkripsi.
+
+### P2 — SELESAI
+- **P2-1** guardrail server-side (`checkStrategyGuardrails`) di POST/PUT strategi: long-only, `risk_per_trade_pct` ≤ 1%, `max_concurrent` ≤ 5. UI-only dulu → sekarang ditegakkan server.
+- **P2-2** `/api/events`: `validateOrigin` + rate limit 30/menit/IP.
+- **P2-3** CSRF allowlist via env `ALLOWED_ORIGINS` (default produksi + localhost). Domain kustom tak perlu ubah kode.
+- **P2-4** rate limiter bersama `lib/rate-limit.ts`; IP dari `x-real-ip` (bukan XFF mentah), prune tanpa `setInterval`.
+- **P2-5** sync paper **inkremental**: `sync_state` di SQLite; signals/slippage/yield by id, positions = open + baru + baru-ditutup, equity_log by date. Cap schema dinaikkan sebagai jaring pengaman.
+- **P2-6** `live_stop` memakai `today_str` yang sama dengan snapshot/backfill (bukan `datetime.now()` terpisah).
+- **P2-7** ATR & RSI di-seed Wilder benar (SMA periode pertama + rekursi manual), bukan `ewm` yang rekur dari bar pertama. **Angka referensi backtest berubah** (return 149.59%→152.0%, DD -26.19%→-26.45%, avgR 1.02→1.03) dan sudah diselaraskan di `backtest-reference.json`.
+- **P2-8** satu sumber angka referensi: `monitoring/web/lib/backtest-reference.json`, dibaca `reference.ts` (TS) dan `scripts/compare_live_vs_backtest.py` (Python). Duplikasi dihapus.
+- **P2-9** backup pakai `gpg --symmetric --cipher-algo AES256` (authenticated, tamper terdeteksi) ganti `openssl enc` CBC; `restore.sh` validasi basename + `mktemp` (cegah path traversal).
+- **P2-10** ganti password mencabut **semua sesi** (`signOut({scope:'global'})`); UI redirect ke login. Password min 10 + karakter (lihat P1-7).
 
 ---
 

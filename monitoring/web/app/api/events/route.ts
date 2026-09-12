@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { validateOrigin } from "@/lib/csrf"
+import { clientIp, isRateLimited } from "@/lib/rate-limit"
 import { z } from "zod"
 
 const EventSchema = z.object({
@@ -7,7 +9,18 @@ const EventSchema = z.object({
   ref: z.string().max(100).nullish(),
 })
 
+// 30 event / menit / IP — cukup untuk 1 beacon per page-view, menahan spam.
+const RATE_LIMIT = 30
+const RATE_WINDOW_MS = 60_000
+
 export async function POST(request: Request) {
+  const csrf = validateOrigin(request)
+  if (csrf) return csrf
+
+  if (isRateLimited("events", clientIp(request), RATE_LIMIT, RATE_WINDOW_MS)) {
+    return NextResponse.json({ error: "rate limited" }, { status: 429 })
+  }
+
   let body: unknown
   try {
     body = await request.json()

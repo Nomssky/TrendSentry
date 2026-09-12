@@ -47,6 +47,22 @@ class TestATR:
         result = atr(df, 14)
         assert result.iloc[-1] > result.iloc[20]  # naik setelah vol naik
 
+    def test_wilder_seed_dan_rekursi(self):
+        # close konstan 100; high=100+x, low=100-x -> TR = 2x (deterministik).
+        # Verifikasi seed SMA di index period-1 lalu rekursi Wilder, bukan ewm.
+        period = 5
+        xs = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
+        df = make_df([100.0 + x for x in xs], [100.0 - x for x in xs], [100.0] * len(xs))
+        tr = [2 * x for x in xs]
+        result = atr(df, period)
+        seed = sum(tr[:period]) / period  # index 4
+        assert result.iloc[period - 1] == pytest.approx(seed)
+        expected = seed
+        for i in range(period, len(tr)):
+            expected = (expected * (period - 1) + tr[i]) / period
+            assert result.iloc[i] == pytest.approx(expected), f"idx {i}"
+
+
 
 class TestDonchian:
     def test_no_lookahead(self):
@@ -146,3 +162,16 @@ class TestRSI:
         assert rsi_exit_signal(df, 38, 14, 55) is True
         df2 = ohlc([100.0 - c * 3.0 for c in range(30)])
         assert rsi_exit_signal(df2, 29, 14, 55) is False
+
+    def test_rsi_wilder_seed_dan_rekursi(self):
+        # period=2, close=[10,11,10,12,11] -> delta=[_,+1,-1,+2,-1]
+        # seed idx2: avg_gain=(1+0)/2=.5, avg_loss=(0+1)/2=.5 -> RSI 50
+        # idx3: g=(.5+2)/2=1.25, l=(.5+0)/2=.25 -> RSI 83.333
+        # idx4: g=(1.25+0)/2=.625, l=(.25+1)/2=.625 -> RSI 50
+        df = ohlc([10.0, 11.0, 10.0, 12.0, 11.0])
+        r = rsi(df, 2)
+        assert pd.isna(r.iloc[0]) and pd.isna(r.iloc[1])
+        assert r.iloc[2] == pytest.approx(50.0)
+        assert r.iloc[3] == pytest.approx(100 - 100 / 6)
+        assert r.iloc[4] == pytest.approx(50.0)
+

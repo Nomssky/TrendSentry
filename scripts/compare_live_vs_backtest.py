@@ -12,26 +12,32 @@ sesuai kriteria sukses Fase 2 di TASKS.md.
 """
 
 import argparse
+import json
 import sqlite3
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB = ROOT / "db" / "paper_trading.db"
+REFERENCE_JSON = ROOT / "monitoring" / "web" / "lib" / "backtest-reference.json"
 
-# Mirror reference.ts — satu-satunya angka pembanding yang valid.
+# SATU sumber: monitoring/web/lib/backtest-reference.json (dipakai juga oleh
+# web/lib/reference.ts). Jangan hardcode angka di sini.
+with open(REFERENCE_JSON) as _f:
+    _ref = json.load(_f)
+
 REF = {
-    "win_rate_pct": 36.17,
-    "avg_win_r": 4.31,
-    "avg_loss_r": -0.84,
-    "avg_r": 1.02,
-    "profit_factor": 2.26,
+    "win_rate_pct": _ref["winRatePct"],
+    "avg_win_r": _ref["avgWinR"],
+    "avg_loss_r": _ref["avgLossR"],
+    "avg_r": _ref["avgR"],
+    "profit_factor": _ref["profitFactor"],
 }
-EVAL_MIN_TRADES = 10
-WIN_RATE_TOLERANCE_PP = 15.0
-AVG_R_FLOOR = 0.5
-SLIPPAGE_ASSUMPTION_PCT = 0.05
-SLIPPAGE_ALERT_MULT = 2.0
+EVAL_MIN_TRADES = _ref["evalMinTrades"]
+WIN_RATE_TOLERANCE_PP = _ref["winRateTolerancePp"]
+AVG_R_FLOOR = _ref["avgRFloor"]
+SLIPPAGE_ASSUMPTION_PCT = _ref["slippageAssumptionPct"]
+SLIPPAGE_ALERT_MULT = _ref["slippageAlertMult"]
 
 
 def realized_stats(conn: sqlite3.Connection) -> dict:

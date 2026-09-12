@@ -46,5 +46,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "update failed" }, { status: 400 })
   }
 
-  return NextResponse.json({ ok: true })
+  // Cabut SEMUA sesi (termasuk sesi ini) — password berubah, jadi sesi lama
+  // di perangkat lain tidak boleh tetap valid. User login ulang.
+  await supabase.auth.signOut({ scope: "global" })
+
+  return NextResponse.json({ ok: true, reauth: true })
 }

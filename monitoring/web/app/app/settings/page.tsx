@@ -74,8 +74,9 @@ export default function SettingsPage() {
       const { error } = await res.json()
       return setPasswordMsg(error)
     }
-    setPasswordMsg("Password updated")
     setCurrentPassword(""); setNewPassword("")
+    setPasswordMsg("Password updated — signing you out. Redirecting to login…")
+    setTimeout(() => { router.push("/auth/login"); router.refresh() }, 1500)
   }
 
   async function deleteAccount() {

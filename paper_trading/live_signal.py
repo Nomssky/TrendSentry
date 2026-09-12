@@ -306,6 +306,8 @@ def main() -> int:
         log.warning("TELEGRAM_BOT_TOKEN/CHAT_ID kosong — notif ENTER/EXIT akan di-skip")
     strat, risk, bt = cfg["strategy"], cfg["risk"], cfg["backtest"]
     fee, slip = bt["fee_pct"] / 100.0, bt["slippage_pct"] / 100.0
+    # Satu tanggal acuan UTC untuk seluruh run (live_stop, insert sinyal, snapshot).
+    today_str = str(datetime.now(timezone.utc).date())
     conn = connect()
     cash = get_cash(conn, cfg)
     exchange = make_exchange(cfg)
@@ -331,7 +333,7 @@ def main() -> int:
             r = pnl / p_risk if p_risk else 0.0
             conn.execute(
                 "UPDATE positions SET status='closed', exit_date=?, exit_price=?, exit_reason=?, pnl=?, r_multiple=? WHERE id=?",
-                (str(datetime.now(timezone.utc).date()), round(exit_price, 2),
+                (today_str, round(exit_price, 2),
                  "live_stop", round(pnl, 2), round(r, 3), p_id),
             )
             set_cash(conn, cash + proceeds)
@@ -511,7 +513,6 @@ def main() -> int:
     # Snapshot equity end-of-day + backfill hari yang bolong (untuk kurva web,
     # tanpa fetch harga saat build). Dipanggil setelah credit_yield supaya cash
     # sudah termasuk yield hari ini.
-    today_str = str(datetime.now(timezone.utc).date())
     snapshot_equity(conn, today_str, marks)
     backfill_equity(conn, cfg, today_str)
 

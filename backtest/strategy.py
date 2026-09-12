@@ -35,7 +35,11 @@ def cluster_position_count(pos: dict[str, dict], symbol: str) -> int:
 
 
 def atr(df: pd.DataFrame, period: int) -> pd.Series:
-    """Average True Range (Wilder smoothing), value hari t = dari data s.d. hari t."""
+    """Average True Range (Wilder smoothing), value hari t = dari data s.d. hari t.
+
+    Wilder standar: nilai pertama = SMA TR periode pertama (index period-1),
+    lalu rekursi ATR[t] = (ATR[t-1]*(period-1) + TR[t]) / period.
+    """
     prev_close = df["close"].shift(1)
     tr = pd.concat(
         [
@@ -45,11 +49,12 @@ def atr(df: pd.DataFrame, period: int) -> pd.Series:
         ],
         axis=1,
     ).max(axis=1)
-    # Wilder = EMA alpha=1/period, seed dengan SMA awal biar stabil.
-    atr_series = tr.iloc[:period].mean()
-    result = tr.ewm(alpha=1.0 / period, adjust=False, min_periods=period).mean()
-    result.iloc[: period - 1] = float("nan")
-    result.iloc[period - 1] = atr_series
+    result = pd.Series(float("nan"), index=df.index, dtype=float)
+    if len(tr) < period:
+        return result
+    result.iloc[period - 1] = float(tr.iloc[:period].mean())
+    for i in range(period, len(tr)):
+        result.iloc[i] = (result.iloc[i - 1] * (period - 1) + tr.iloc[i]) / period
     return result
 
 
@@ -118,16 +123,23 @@ def sma_exit_signal(df: pd.DataFrame, idx: int, fast: int, slow: int) -> bool:
 
 
 def rsi(df: pd.DataFrame, period: int) -> pd.Series:
-    """RSI Wilder (RMA alpha=1/period), seed rata-rata sederhana awal biar stabil."""
+    """RSI Wilder. Seed = rata-rata gain/loss periode pertama (insight period-1),
+    lalu rekursi avg = (avg*(period-1) + nilai_baru) / period."""
     delta = df["close"].diff()
     gain = delta.clip(lower=0)
     loss = -delta.clip(upper=0)
-    avg_gain = gain.ewm(alpha=1.0 / period, adjust=False, min_periods=period).mean()
-    avg_loss = loss.ewm(alpha=1.0 / period, adjust=False, min_periods=period).mean()
-    rs = avg_gain / avg_loss
-    out = 100 - 100 / (1 + rs)
-    out[avg_loss == 0] = 100.0  # tak ada loss -> RSI 100 (bukan NaN/inf)
-    out.iloc[: period - 1] = float("nan")
+    out = pd.Series(float("nan"), index=df.index, dtype=float)
+    if len(delta) <= period:
+        return out
+    # delta[0] = NaN; insight pertama pada index 1..period.
+    seed_gain = float(gain.iloc[1 : period + 1].mean())
+    seed_loss = float(loss.iloc[1 : period + 1].mean())
+    idx_seed = period
+    out.iloc[idx_seed] = 100.0 if seed_loss == 0 else 100 - 100 / (1 + seed_gain / seed_loss)
+    for i in range(idx_seed + 1, len(delta)):
+        seed_gain = (seed_gain * (period - 1) + gain.iloc[i]) / period
+        seed_loss = (seed_loss * (period - 1) + loss.iloc[i]) / period
+        out.iloc[i] = 100.0 if seed_loss == 0 else 100 - 100 / (1 + seed_gain / seed_loss)
     return out
 
 

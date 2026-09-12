@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { StrategyPostSchema, StrategyPutSchema, StrategyDeleteSchema } from "@/lib/validations"
+import { StrategyPostSchema, StrategyPutSchema, StrategyDeleteSchema, checkStrategyGuardrails } from "@/lib/validations"
 import { validateOrigin } from "@/lib/csrf"
 
 export async function GET() {
@@ -37,6 +37,10 @@ export async function POST(request: Request) {
   }
 
   const { name, template_id, params, rules_json } = parsed.data
+  const guardrailError = checkStrategyGuardrails(params, rules_json)
+  if (guardrailError) {
+    return NextResponse.json({ error: guardrailError }, { status: 400 })
+  }
   const { data, error } = await supabase
     .from("user_strategies")
     .insert({ user_id: user.id, name, template_id, params, rules_json })
@@ -70,6 +74,12 @@ export async function PUT(request: Request) {
   }
 
   const { id, name, params, rules_json, is_active } = parsed.data
+  if (params || rules_json) {
+    const guardrailError = checkStrategyGuardrails(params ?? {}, rules_json)
+    if (guardrailError) {
+      return NextResponse.json({ error: guardrailError }, { status: 400 })
+    }
+  }
   const { data, error } = await supabase
     .from("user_strategies")
     .update({ name, params, rules_json, is_active, updated_at: new Date().toISOString() })

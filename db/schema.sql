@@ -70,3 +70,11 @@ CREATE TABLE IF NOT EXISTS equity_log (
     n_open        INTEGER NOT NULL DEFAULT 0,
     total_equity  REAL NOT NULL      -- cash + positions_mtm
 );
+
+-- State sync ke cloud (dipakai scripts/sync_paper_to_supabase.py). Menyimpan
+-- id terakhir yang sudah terkirim agar sync berikutnya cukup mengirim baris baru
+-- (append-only tables), tidak menabrak cap payload seiring waktu.
+CREATE TABLE IF NOT EXISTS sync_state (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);

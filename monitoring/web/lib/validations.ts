@@ -27,6 +27,41 @@ export const StrategyPutSchema = z.object({
   is_active: z.boolean().optional(),
 })
 
+// Guardrail server-side (PLAN.md §9 + seed strategy_templates): envelope yang
+// mengikat terlepas dari UI. Mencegah user menggeser batas risk/max_concurrent
+// demi menaikkan discipline score.
+export const GUARDRAILS = {
+  direction: "long_only",
+  maxRiskPerTradePct: 1.0,
+  maxConcurrent: 5,
+} as const
+
+/** Return error message kalau params/rules_json melanggar guardrail, atau null. */
+export function checkStrategyGuardrails(
+  params: Record<string, unknown>,
+  rules_json?: Record<string, unknown> | null
+): string | null {
+  if (params.direction != null && params.direction !== GUARDRAILS.direction) {
+    return `direction harus "${GUARDRAILS.direction}"`
+  }
+  if (params.risk_per_trade_pct != null) {
+    const v = Number(params.risk_per_trade_pct)
+    if (!Number.isFinite(v) || v <= 0 || v > GUARDRAILS.maxRiskPerTradePct) {
+      return `risk_per_trade_pct harus > 0 dan <= ${GUARDRAILS.maxRiskPerTradePct}`
+    }
+  }
+  if (params.max_concurrent != null) {
+    const v = Number(params.max_concurrent)
+    if (!Number.isInteger(v) || v < 1 || v > GUARDRAILS.maxConcurrent) {
+      return `max_concurrent harus 1..${GUARDRAILS.maxConcurrent}`
+    }
+  }
+  if (rules_json && "max_concurrent" in rules_json) {
+    return "max_concurrent tidak boleh di rules_json (pakai params)"
+  }
+  return null
+}
+
 export const StrategyDeleteSchema = z.object({
   id: z.number().int().positive(),
 })
@@ -42,12 +77,14 @@ export const CheckoutPostSchema = z.object({
 })
 
 export const PaperSyncSchema = z.object({
-  // ponytail: cap 2000 — sync kirim full-table tiap hari (~10 baris/hari/tabel
-  // tumbuh; 500 jebol sebelum Fase 2 selesai 8 minggu). Payload tetap KB.
-  signals: z.array(z.record(z.string(), z.unknown(), {}), {}).max(2000).optional(),
-  positions: z.array(z.record(z.string(), z.unknown(), {}), {}).max(100).optional(),
-  equity_log: z.array(z.record(z.string(), z.unknown(), {}), {}).max(365).optional(),
-  slippage_log: z.array(z.record(z.string(), z.unknown(), {}), {}).max(2000).optional(),
-  yield_log: z.array(z.record(z.string(), z.unknown(), {}), {}).max(365).optional(),
+  // Sync mengirim inkremental untuk tabel append-only (signals/slippage/yield),
+  // dan union (open + baru + baru-ditutup) untuk positions. Cap di sini hanya
+  // jaring pengaman payload; angka besar agar sync tidak mati permanen saat
+  // data bertambah (mis. equity_log ~1 baris/hari jangka panjang).
+  signals: z.array(z.record(z.string(), z.unknown(), {}), {}).max(5000).optional(),
+  positions: z.array(z.record(z.string(), z.unknown(), {}), {}).max(2000).optional(),
+  equity_log: z.array(z.record(z.string(), z.unknown(), {}), {}).max(5000).optional(),
+  slippage_log: z.array(z.record(z.string(), z.unknown(), {}), {}).max(5000).optional(),
+  yield_log: z.array(z.record(z.string(), z.unknown(), {}), {}).max(5000).optional(),
   meta: z.record(z.string(), z.string(), {}).optional(),
 })
