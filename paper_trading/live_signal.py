@@ -32,7 +32,6 @@ sys.path.insert(0, str(ROOT / "backtest"))
 sys.path.insert(0, str(ROOT / "monitoring"))
 from strategy import atr, donchian_high, donchian_low, position_size, cluster_position_count  # noqa: E402
 from telegram_alert import send_alert  # noqa: E402
-from llm_filter.filter import evaluate as llm_evaluate, SignalContext  # noqa: E402
 
 DB_PATH = ROOT / "db" / "paper_trading.db"
 SCHEMA_PATH = ROOT / "db" / "schema.sql"
@@ -488,6 +487,7 @@ def main() -> int:
                 # Veto = skip entry dengan alasan; flag = tetap entry + catat risiko.
                 llm_veto_reason: str | None = None
                 if cfg.get("llm_filter", {}).get("enabled", False):
+                    from llm_filter.filter import evaluate as llm_evaluate, SignalContext  # noqa: E402
                     ctx = SignalContext(
                         pair=pair, close=float(close),
                         donchian_hi=float(don_hi) if pd.notna(don_hi) else None,
