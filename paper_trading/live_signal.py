@@ -28,6 +28,7 @@ import pandas as pd
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "backtest"))
 sys.path.insert(0, str(ROOT / "monitoring"))
 from strategy import atr, donchian_high, donchian_low, position_size, cluster_position_count  # noqa: E402
