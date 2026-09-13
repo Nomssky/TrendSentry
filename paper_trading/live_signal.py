@@ -32,6 +32,7 @@ sys.path.insert(0, str(ROOT / "backtest"))
 sys.path.insert(0, str(ROOT / "monitoring"))
 from strategy import atr, donchian_high, donchian_low, position_size, cluster_position_count  # noqa: E402
 from telegram_alert import send_alert  # noqa: E402
+from llm_filter.filter import evaluate as llm_evaluate, SignalContext  # noqa: E402
 
 DB_PATH = ROOT / "db" / "paper_trading.db"
 SCHEMA_PATH = ROOT / "db" / "schema.sql"
@@ -308,6 +309,15 @@ def backfill_equity(conn: sqlite3.Connection, cfg: dict, today_str: str) -> int:
 
 def main() -> int:
     cfg = load_config()
+    from risk_manager.guards import validate_config
+
+    errs = validate_config(cfg)
+    if errs:
+        for e in errs:
+            log.error("config: %s", e)
+        send_alert(f"[paper-trading] Config GAGAL validasi — {len(errs)} error, lihat log")
+        return 1
+
     # ponytail: config check di awal — misconfig telegram (mis. CHAT_ID salah
     # di GitHub Secrets) harus terlihat di log TIAP run, bukan cuma di hari
     # ada ENTER/EXIT. Tanpa ini kegagalan notif silent berhari-hari.
@@ -474,37 +484,57 @@ def main() -> int:
                     decision, reason, signal = "IGNORE", f"cluster limit ({max_per_cluster} per cluster)", "HOLD"
                     log.info("%s: CLUSTER LIMIT skip — %s", pair, reason)
             if not cluster_skip:
-                ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
-                entry_price = ticker["last"] * (1 + slip)
-                stop = close - strat["atr_stop_multiplier"] * atr_v
-                try:
-                    units = position_size(cash, entry_price, stop, risk["risk_per_trade_pct"])
-                except ValueError:
-                    log.warning("%s: position_size error (stop >= entry?), skipping", pair)
-                    units = 0.0
-                cost = units * entry_price * (1 + fee)
-                if cost > cash:
-                    units = cash / (entry_price * (1 + fee)) if entry_price > 0 else 0.0
+                # LLM filter: hanya dipanggil saat ada sinyal valid (entry).
+                # Veto = skip entry dengan alasan; flag = tetap entry + catat risiko.
+                llm_veto_reason: str | None = None
+                if cfg.get("llm_filter", {}).get("enabled", False):
+                    ctx = SignalContext(
+                        pair=pair, close=float(close),
+                        donchian_hi=float(don_hi) if pd.notna(don_hi) else None,
+                        donchian_lo=float(don_lo) if pd.notna(don_lo) else None,
+                        atr=float(atr_v) if pd.notna(atr_v) else None,
+                        signal="LONG_ENTRY",
+                    )
+                    verdict = llm_evaluate(ctx)
+                    if verdict.verdict == "veto":
+                        llm_veto_reason = verdict.reasoning
+                        decision, reason, signal = "IGNORE", f"LLM veto: {verdict.reasoning}", "HOLD"
+                        log.info("%s: LLM VETO — %s", pair, verdict.reasoning)
+                    elif verdict.verdict == "flag":
+                        log.info("%s: LLM FLAG — risk_factors=%s reasoning=%s", pair, verdict.risk_factors, verdict.reasoning)
+
+                if llm_veto_reason is None:
+                    ticker = fetch_retry(lambda: exchange.fetch_ticker(pair))
+                    entry_price = ticker["last"] * (1 + slip)
+                    stop = close - strat["atr_stop_multiplier"] * atr_v
+                    try:
+                        units = position_size(cash, entry_price, stop, risk["risk_per_trade_pct"])
+                    except ValueError:
+                        log.warning("%s: position_size error (stop >= entry?), skipping", pair)
+                        units = 0.0
                     cost = units * entry_price * (1 + fee)
-                if units > 0:
-                    conn.execute(
-                        "INSERT INTO positions (pair, entry_date, entry_price, units, stop_price, risk_amount) VALUES (?,?,?,?,?,?)",
-                        (pair, d, round(entry_price, 2), round(units, 6), round(stop, 2), round(units * (entry_price - stop), 2)),
-                    )
-                    set_cash(conn, cash - cost)
-                    cash -= cost
-                    decision, signal = "ENTER", "LONG_ENTRY"
-                    reason = f"close {close:.2f} > don_hi(20) {don_hi:.2f}"
-                    log.info("%s: ENTER @%.2f units=%.4f stop=%.2f risk=%.2f", pair, entry_price, units, stop, units * (entry_price - stop))
-                    send_alert(
-                        f"🟢 ENTER {pair}\n"
-                        f"Close {close:.2f} > DonHi(20) {don_hi:.2f}\n"
-                        f"────────────────────\n"
-                        f"Entry: {entry_price:.2f}\n"
-                        f"Units: {units:.4f}\n"
-                        f"Stop: {stop:.2f} (2×ATR)\n"
-                        f"Risk: {units * (entry_price - stop):.2f} USD"
-                    )
+                    if cost > cash:
+                        units = cash / (entry_price * (1 + fee)) if entry_price > 0 else 0.0
+                        cost = units * entry_price * (1 + fee)
+                    if units > 0:
+                        conn.execute(
+                            "INSERT INTO positions (pair, entry_date, entry_price, units, stop_price, risk_amount) VALUES (?,?,?,?,?,?)",
+                            (pair, d, round(entry_price, 2), round(units, 6), round(stop, 2), round(units * (entry_price - stop), 2)),
+                        )
+                        set_cash(conn, cash - cost)
+                        cash -= cost
+                        decision, signal = "ENTER", "LONG_ENTRY"
+                        reason = f"close {close:.2f} > don_hi(20) {don_hi:.2f}"
+                        log.info("%s: ENTER @%.2f units=%.4f stop=%.2f risk=%.2f", pair, entry_price, units, stop, units * (entry_price - stop))
+                        send_alert(
+                            f"🟢 ENTER {pair}\n"
+                            f"Close {close:.2f} > DonHi(20) {don_hi:.2f}\n"
+                            f"────────────────────\n"
+                            f"Entry: {entry_price:.2f}\n"
+                            f"Units: {units:.4f}\n"
+                            f"Stop: {stop:.2f} (2×ATR)\n"
+                            f"Risk: {units * (entry_price - stop):.2f} USD"
+                        )
 
         conn.execute(
             "INSERT INTO signals (candle_date, processed_at, pair, close_price, donchian_hi, donchian_lo, atr, signal, decision, reason) "
@@ -521,6 +551,11 @@ def main() -> int:
         continue
 
     credit_yield(conn, cfg)
+
+    # Simpan timestamp run terakhir untuk stale detection di dashboard
+    conn.execute("INSERT INTO meta VALUES ('lastRun', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                 (datetime.now(timezone.utc).isoformat(),))
+    conn.commit()
 
     # Snapshot equity end-of-day + backfill hari yang bolong (untuk kurva web,
     # tanpa fetch harga saat build). Dipanggil setelah credit_yield supaya cash

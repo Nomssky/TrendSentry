@@ -6,6 +6,7 @@
   "avgLossR": -0.85,
   "avgR": 1.03,
   "profitFactor": 2.27,
+  "sharpeRatio": 0.82,
   "maxDrawdownPct": -26.45,
   "totalReturnPct": 152.0,
   "trades": 94,

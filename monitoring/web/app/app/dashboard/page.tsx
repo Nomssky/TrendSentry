@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { EquityCurveChart } from "./EquityCurveChart"
 import { ScoreTrendChart } from "./ScoreTrendChart"
 
 export default async function DashboardPage() {

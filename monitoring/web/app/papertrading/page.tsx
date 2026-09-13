@@ -33,6 +33,26 @@ export default async function PaperTrading() {
     Math.abs(d.realized.winRatePct - BACKTEST_REFERENCE.winRatePct) <= WIN_RATE_TOLERANCE_PP;
   const slippageOver = d.slippage.avgPct != null && d.slippage.avgPct > SLIPPAGE_ASSUMPTION_PCT * SLIPPAGE_ALERT_MULT;
 
+  // Stale check: > 30h sejak lastRun = kemungkinan cron skip
+  const lastRunAt = d.lastRun ? new Date(d.lastRun) : null;
+  const now = new Date();
+  const isStale = lastRunAt != null && (now.getTime() - lastRunAt.getTime()) > 30 * 60 * 60 * 1000;
+
+  // Sharpe/DD dari equity curve (kalau sudah ada cukup data)
+  const eqReturns = d.equityCurve.length > 1
+    ? d.equityCurve.slice(1).map((p, i) => (p.equity - d.equityCurve[i].equity) / d.equityCurve[i].equity)
+    : []
+  const sharpeLive = eqReturns.length > 5
+    ? (eqReturns.reduce((s, r) => s + r, 0) / eqReturns.length) / (Math.sqrt(
+        eqReturns.reduce((s, r) => s + (r - eqReturns.reduce((s, r) => s + r, 0) / eqReturns.length) ** 2, 0) / eqReturns.length
+      ) || 1) * Math.sqrt(365)
+    : null
+  const maxDDLive = d.equityCurve.length > 1
+    ? Math.round(Math.min(0, ...d.equityCurve.map((p, i) =>
+        i === 0 ? 0 : (p.equity - Math.max(...d.equityCurve.slice(0, i + 1).map(x => x.equity))) / Math.max(...d.equityCurve.slice(0, i + 1).map(x => x.equity)) * 100
+      )) * 100) / 100
+    : null
+
   return (
     <SiteShell>
       <main className="mx-auto max-w-6xl space-y-10 px-5 pb-16 pt-28 sm:px-10 sm:pt-32 lg:px-16">
@@ -41,6 +61,14 @@ export default async function PaperTrading() {
           <div className="rounded-[2rem] border border-rose-500/30 bg-rose-500/5 p-5 text-sm text-rose-300">
             ⚠ Downtime detected: {d.gaps.length} day(s) with no record ({d.gaps[0]} .. {d.gaps[d.gaps.length - 1]}).
             Stale signals are deliberately not chased — this is an honest representation of downtime.
+          </div>
+        )}
+
+        {/* Stale data warning */}
+        {isStale && (
+          <div className="rounded-[2rem] border border-amber-500/30 bg-amber-500/5 p-5 text-sm text-amber-300">
+            ⚠ Data mungkin stale — sync terakhir {lastRunAt?.toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) ?? "?"} WIB.
+            Pastikan cron GitHub Actions berjalan (cek Actions tab).
           </div>
         )}
 
@@ -153,6 +181,27 @@ export default async function PaperTrading() {
               </div>
               <p className="mt-3 text-xs leading-relaxed text-white/40">
                 Measured from order-book spread on each signal ({d.slippage.n} samples).
+              </p>
+            </Card>
+
+            <Card title="Sharpe / Max DD">
+              <div className="flex flex-col gap-3">
+                <div>
+                  <span className="font-mono-tech text-4xl font-bold tracking-tight">
+                    {sharpeLive != null ? sharpeLive.toFixed(2) : "—"}
+                  </span>
+                  <span className="ml-2 font-mono-tech text-[11px] text-white/40">vs ref {BACKTEST_REFERENCE.sharpeRatio}</span>
+                </div>
+                <div>
+                  <span className={`font-mono-tech text-4xl font-bold tracking-tight ${maxDDLive != null && maxDDLive < -20 ? "text-rose-400" : ""}`}>
+                    {maxDDLive != null ? `${maxDDLive.toFixed(1)}%` : "—"}
+                  </span>
+                  <span className="ml-2 font-mono-tech text-[11px] text-white/40">vs ref {BACKTEST_REFERENCE.maxDrawdownPct}%</span>
+                </div>
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-white/40">
+                Annualised Sharpe & peak-to-trough drawdown from equity curve ({d.equityCurve.length} points).
+                Not evaluated until sufficient data.
               </p>
             </Card>
           </div>

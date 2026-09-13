@@ -39,7 +39,7 @@ function Mockup() {
           </div>
           <div className="text-right">
             <p className="tech-label text-white/40">SHARPE</p>
-            <p className="font-mono-tech text-2xl font-bold">0.82</p>
+            <p className="font-mono-tech text-2xl font-bold">{BACKTEST_REFERENCE.sharpeRatio}</p>
           </div>
         </div>
       </div>

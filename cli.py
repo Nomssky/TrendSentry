@@ -121,16 +121,12 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
     try:
         import yaml
 
+        from risk_manager.guards import validate_config
+
         cfg = yaml.safe_load(CONFIG_DEFAULT.read_text())
-        guard = (
-            cfg["strategy"]["atr_stop_multiplier"] > 0
-            and cfg["risk"]["risk_per_trade_pct"] <= 1.0
-            and cfg["risk"]["max_drawdown_circuit_breaker_pct"] > 0
-            and cfg["execution"]["mode"] in ("backtest", "paper", "live")
-        )
-        check("config guardrail", guard, f"risk={cfg['risk']['risk_per_trade_pct']}% mode={cfg['execution']['mode']}")
-        if cfg["execution"]["mode"] == "live":
-            check("mode live", False, "Fase 4 belum tersedia — pakai paper")
+        errs = validate_config(cfg)
+        guard = len(errs) == 0
+        check("config guardrail", guard, "; ".join(errs) if errs else f"risk={cfg['risk']['risk_per_trade_pct']}% mode={cfg['execution']['mode']}")
     except Exception as e:  # noqa: BLE001 - doctor harus tahan semua error config
         check("config guardrail", False, str(e))
 

@@ -81,6 +81,8 @@ export async function getDashboardData(): Promise<DashboardData> {
   const meta = Object.fromEntries((metaRes.data ?? []).map((r) => [r.key, r.value]))
 
   const cash = Number(meta.paper_cash ?? 1000)
+  const lastRun = meta.lastRun ?? signals[0]?.processed_at ?? ""
+  const lastRunDate = lastRun ? lastRun.slice(0, 10) : ""
   const dates = [...new Set(signals.map((s) => s.candle_date))].sort()
   const startDate = dates[0] ?? new Date().toISOString().slice(0, 10)
   const lastCandleDate = dates[dates.length - 1] ?? startDate
@@ -120,7 +122,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     cash,
     startDate,
     lastCandleDate,
-    lastRun: signals[0]?.processed_at ?? "",
+    lastRun,
     daysRunning,
     gaps,
     openPositions,

@@ -10,6 +10,7 @@ export const BACKTEST_REFERENCE = {
   avgLossR: ref.avgLossR,
   avgR: ref.avgR,
   profitFactor: ref.profitFactor,
+  sharpeRatio: ref.sharpeRatio,
   maxDrawdownPct: ref.maxDrawdownPct,
   totalReturnPct: ref.totalReturnPct,
   trades: ref.trades,

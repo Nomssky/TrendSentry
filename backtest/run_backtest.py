@@ -11,10 +11,13 @@ import os
 import sys
 from pathlib import Path
 
-import matplotlib
+try:
+    import matplotlib
 
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
 import pandas as pd
 import yaml
 
@@ -248,20 +251,21 @@ def save_report(curve: pd.DataFrame, trades: pd.DataFrame, metrics: dict, dfs: d
     curve.to_csv(REPORTS / "equity_curve.csv")
     trades.to_csv(REPORTS / "trades.csv", index=False)
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
-    ax1.plot(curve.index, curve["equity"], label="Strategy equity")
-    for symbol, df in dfs.items():
-        norm = df["close"] / df["close"].iloc[0] * 500
-        ax1.plot(df.index, norm, "--", alpha=0.6, label=f"{symbol} B&H (scaled)")
-    ax1.set_ylabel("USD")
-    ax1.legend(loc="upper left")
-    roll_max = curve["equity"].cummax()
-    dd = (curve["equity"] / roll_max - 1) * 100
-    ax2.fill_between(curve.index, dd, 0, color="red", alpha=0.4)
-    ax2.set_ylabel("Drawdown %")
-    fig.suptitle(f"{label}, 1% risk")
-    fig.tight_layout()
-    fig.savefig(REPORTS / "equity_drawdown.png", dpi=110)
+    if plt is not None:
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
+        ax1.plot(curve.index, curve["equity"], label="Strategy equity")
+        for symbol, df in dfs.items():
+            norm = df["close"] / df["close"].iloc[0] * 500
+            ax1.plot(df.index, norm, "--", alpha=0.6, label=f"{symbol} B&H (scaled)")
+        ax1.set_ylabel("USD")
+        ax1.legend(loc="upper left")
+        roll_max = curve["equity"].cummax()
+        dd = (curve["equity"] / roll_max - 1) * 100
+        ax2.fill_between(curve.index, dd, 0, color="red", alpha=0.4)
+        ax2.set_ylabel("Drawdown %")
+        fig.suptitle(f"{label}, 1% risk")
+        fig.tight_layout()
+        fig.savefig(REPORTS / "equity_drawdown.png", dpi=110)
 
     lines = [f"# Backtest Report — {label}", ""]
     lines.append(f"| Metrik | Nilai |")
