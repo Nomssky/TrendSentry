@@ -51,6 +51,10 @@ function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ccff00] font-mono-tech text-lg font-bold text-black">T</span>
+        <span className="text-lg font-semibold tracking-tight text-white">TrendSentry</span>
+      </div>
       <h1 className="text-2xl font-bold text-white">Sign in</h1>
       {checkEmail && (
         <p className="rounded-lg border border-[#ccff00]/30 bg-[#ccff00]/10 px-4 py-3 text-sm text-[#ccff00]">

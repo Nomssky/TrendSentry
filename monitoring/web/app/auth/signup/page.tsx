@@ -29,6 +29,10 @@ export default function SignupPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-black px-4">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ccff00] font-mono-tech text-lg font-bold text-black">T</span>
+          <span className="text-lg font-semibold tracking-tight text-white">TrendSentry</span>
+        </div>
         <h1 className="text-2xl font-bold text-white">Create account</h1>
         {error && <p className="text-sm text-rose-400">{error}</p>}
         <input name="name" placeholder="Name" required className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
