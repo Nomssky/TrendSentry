@@ -16,7 +16,15 @@ export default async function DeviationLogPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-white">Deviation Log</h1>
-      {!deviations?.length && <p className="text-sm text-white/40">No deviations logged yet.</p>}
+      {!deviations?.length ? (
+        <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-8 text-center">
+          <p className="tech-label text-white/40">NO DEVIATIONS YET</p>
+          <p className="mt-2 text-sm text-white/50">
+            Deviations appear here when your trades break your strategy rules. Make sure you&apos;ve
+            connected your API key and created a strategy — the daily sync will start checking automatically.
+          </p>
+        </div>
+      ) : (
       <div className="space-y-2">
         {deviations?.map((d) => (
           <div key={d.id} className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm">
@@ -33,6 +41,7 @@ export default async function DeviationLogPage() {
           </div>
         ))}
       </div>
+      )}
     </div>
   )
 }

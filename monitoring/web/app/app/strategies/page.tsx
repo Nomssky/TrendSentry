@@ -20,8 +20,17 @@ export default async function StrategiesPage() {
         <Link href="/app/strategies/new" className="rounded-full bg-[#ccff00] px-5 py-2 text-sm font-semibold text-black hover:bg-[#aadd00]">+ New</Link>
       </div>
 
-      {!strategies?.length && <p className="text-sm text-white/40">No strategies yet. Create your first one.</p>}
-
+      {!strategies?.length ? (
+        <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-8 text-center">
+          <p className="tech-label text-white/40">NO STRATEGIES YET</p>
+          <p className="mt-2 text-sm text-white/50">
+            Create a strategy to define your entry/exit rules. TrendSentry will check your trades against these rules and flag deviations.
+          </p>
+          <Link href="/app/strategies/new" className="mt-4 inline-block rounded-full bg-[#ccff00] px-6 py-2.5 text-sm font-semibold text-black hover:bg-[#aadd00]">
+            Create your first strategy →
+          </Link>
+        </div>
+      ) : (
       <div className="grid gap-4 md:grid-cols-2">
         {strategies?.map((s) => (
           <div key={s.id} className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -33,6 +42,7 @@ export default async function StrategiesPage() {
           </div>
         ))}
       </div>
+      )}
     </div>
   )
 }
