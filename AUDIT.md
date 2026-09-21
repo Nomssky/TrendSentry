@@ -95,25 +95,19 @@ Proyek ini dalam kondisi sehat. Dari 28 temuan audit sebelumnya (P0-3, P1-7, P2-
 - **Dampak:** Circuit breaker 15% tidak auto-pause paper trading saat drawdown. Ini **disengaja** berdasarkan keputusan 2026-09-10 di PLAN.md: "Proteksi realtime (exchange-side stop order + circuit breaker) disyaratkan sebagai syarat masuk Fase 4, bukan dibangun di paper."
 - **Verdict:** Bukan bug. Sesuai design. Circuit breaker akan di-integrasikan di Fase 4.
 
-### P4-2. .gitignore punya duplikat pattern (nit)
-- **Lokasi:** `.gitignore:33` (`**/.env*`) meng-override `.gitignore:9` (`.env.*`)
-- **Dampak:** Praktis tidak ada (kedua pattern sudah menutupi `.env*`). Tapi redundan dan membingungkan.
-- **Fix:** Hapus baris 33-34 (`.env*` + `!deploy/.env.example` sudah dicakup baris 8-11).
+### P4-2. ~~.gitignore punya duplikat pattern~~ ✅ FIXED
+- **Fix:** Hapus baris 33-34 (commit `52a52f0`).
 
-### P4-3. conftest.py kosong (nit)
-- **Lokasi:** `/home/kresna/project/conftest.py` — 0 baris.
-- **Dampak:** Tidak ada (pytest tetap jalan). Tapi file kosong tidak perlu di-commit.
+### P4-3. ~~conftest.py kosong~~ ✅ FIXED
+- **Fix:** Dihapus (commit `52a52f0`).
 
 ### P4-4. deploy/docker-compose.yml tidak punya .env.example (P3)
 - **Lokasi:** `deploy/docker-compose.yml` membutuhkan 10 env vars tapi tidak ada template.
 - **Dampak:** Deploy manual butuh baca docker-compose.yml untuk tahu env apa yang dibutuhkan.
 - **Fix:** Buat `deploy/.env.example` dengan placeholder.
 
-### P4-5. Backtest metrics sedikit berbeda dari TASKS.md (observasi)
-- **TASKS.md line 27** mencatat: "win rate 33.72%, avg win +3.59R, avg loss -0.89R"
-- **backtest-reference.json**: winRatePct=36.17, avgWinR=4.35, avgLossR=-0.85
-- **Penyebab:** P2-7 fix Wilder seed mengubah angka backtest (tercatat di AUDIT.md lama: "return 149.59%→152.0%, DD -26.19%→-26.45%"). TASKS.md belum di-update untuk mencerminkan angka baru.
-- **Fix:** Update referensi di TASKS.md line 27 agar sinkron dengan `backtest-reference.json`.
+### P4-5. ~~Backtest metrics sedikit berbeda dari TASKS.md~~ ✅ FIXED
+- **Fix:** Update referensi di TASKS.md (commit `52a52f0`).
 
 ### P4-6. live_signal.py 595 baris — border-file (observasi)
 - File terpanjang di proyek. Logic utama (entry, exit, live_stop, yield, backfill, snapshot) semuanya di satu file.
@@ -129,6 +123,56 @@ Proyek ini dalam kondisi sehat. Dari 28 temuan audit sebelumnya (P0-3, P1-7, P2-
 ### P4-8. test_live_signal.py monkey-patching (nit)
 - **Lokasi:** `tests/test_live_signal.py:66-72` — patching `ls.DB_PATH`, `ls.send_alert`, `ls.make_exchange` langsung di module global.
 - **Dampak:** Fungsi. Tapi fragile kalau refactor import structure. Pertimbangkan dependency injection di versi mendatang.
+
+---
+
+## Re-Audit Web Frontend (2026-09-21, sesi kedua)
+
+Cakupan: semua file TSX/TS di `monitoring/web/` (70+ file), termasuk komponen React, API routes, lib, CSS, proxy, e2e test.
+
+### P0 — Fixed ✅
+
+| # | Temuan | Lokasi | Fix |
+|---|--------|--------|-----|
+| W-0 | Dashboard query kolom tidak ada: `pnl`, `r_multiple`, `exit_price` di `user_trades` — stats selalu 0/null | `app/app/dashboard/page.tsx:14` | Ganti dengan Total Fills + Deviations Detected (commit `1daf764`) |
+
+### P1 — Fixed ✅
+
+| # | Temuan | Lokasi | Fix |
+|---|--------|--------|-----|
+| W-1 | Render-phase setState di AppSidebar (React anti-pattern) | `app/app/AppSidebar.tsx:21-24` | `useEffect(() => setOpen(false), [pathname])` (commit `1daf764`) |
+| W-2 | Render-phase setState di strategies/new (sama) | `app/app/strategies/new/page.tsx:103-112` | `useEffect` untuk default params (commit `be0e271`) |
+| W-3 | Sharpe ratio O(n²): mean di-recompute di inner loop | `app/papertrading/page.tsx:45-48` | Pre-compute mean, single-pass variance (commit `1daf764`) |
+| W-4 | Max drawdown O(n²): `Math.max` diulang tiap slice | `app/papertrading/page.tsx:50-54` | Single-pass running peak (commit `1daf764`) |
+
+### P2 — Fixed ✅
+
+| # | Temuan | Lokasi | Fix |
+|---|--------|--------|-----|
+| W-5 | Password success message tidak pernah hijau: exact match vs actual message | `app/app/settings/page.tsx:135` | `.startsWith()` check (commit `be0e271`) |
+| W-6 | Disclaimer hardcoded `+149.59%` (stale dari P2-7) | `app/disclaimer/page.tsx:25` | Ganti `+152%` (commit `be0e271`) |
+| W-7 | TASKS.md backtest numbers stale (P2-7 Wilder seed) | `TASKS.md:27,33` | Update angka (commit `52a52f0`) |
+| W-8 | `.gitignore` duplikat pattern override exceptions | `.gitignore:33-34` | Hapus duplikat (commit `52a52f0`) |
+| W-9 | `conftest.py` kosong 0 baris | `/conftest.py` | Dihapus (commit `52a52f0`) |
+
+### Observasi (bukan bug)
+
+| # | Temuan | Catatan |
+|---|--------|---------|
+| W-10 | Pricing page seluruhnya `"use client"` | Bisa dioptimasi jadi server + client islands. Bukan bug, hanya performance. |
+| W-11 | `/papertrading` tidak di-proxy middleware | By design — data publik pakai admin client. |
+| W-12 | `fmt()` pakai `toLocaleString` | Locale-dependent, tapi acceptable untuk display. |
+| W-13 | Proxy file benar: `proxy.ts` (Next.js 16 convention) | Middleware deprecated → renamed to proxy. Sudah sesuai docs. |
+
+### Tidak ditemukan (verifikasi negatif)
+
+- ❌ Tidak ada hardcoded stale numbers yang tersisa (sudah bersih)
+- ❌ Tidak ada render-phase setState lain yang tersisa
+- ❌ Tidak ada query ke kolom tidak ada yang tersisa
+- ❌ Tidak ada security hole baru (CSRF, RLS, auth — semua solid)
+- ❌ TypeScript check: **0 errors**
+- ❌ Next.js build: **success**
+- ❌ Python tests: **64 passed**
 
 ---
 
@@ -170,14 +214,14 @@ Coverage area kritis:
 
 ## Prioritas Perbaikan (Jika Dikerjakan)
 
-| Urutan | Item | Alasan | Effort |
-|--------|------|--------|--------|
-| 1 | P4-5 Update referensi di TASKS.md | Inkonsistensi angka backtest vs aktual | 1 menit |
-| 2 | P4-2 Bersihkan .gitignore duplikat | Hygiene | 1 menit |
-| 3 | P4-3 Hapus conftest.py kosong | Hygiene | 1 menit |
-| 4 | P4-4 Buat deploy/.env.example | Deploy experience | 5 menit |
-| 5 | P3-6 Rotasi service role (manual) | Higiene kredensial (opsional) | 15 menit |
-| 6 | P3-6 Rotasi token Telegram (manual) | Higiene kredensial (opsional) | 10 menit |
+| Urutan | Item | Alasan | Effort | Status |
+|--------|------|--------|--------|--------|
+| 1 | ~~P4-5 Update referensi di TASKS.md~~ | ~~Inkonsistensi angka backtest vs aktual~~ | ~~1 menit~~ | ✅ Done |
+| 2 | ~~P4-2 Bersihkan .gitignore duplikat~~ | ~~Hygiene~~ | ~~1 menit~~ | ✅ Done |
+| 3 | ~~P4-3 Hapus conftest.py kosong~~ | ~~Hygiene~~ | ~~1 menit~~ | ✅ Done |
+| 4 | P4-4 Buat deploy/.env.example | Deploy experience | 5 menit | |
+| 5 | P3-6 Rotasi service role (manual) | Higiene kredensial (opsional) | 15 menit | |
+| 6 | P3-6 Rotasi token Telegram (manual) | Higiene kredensial (opsional) | 10 menit | |
 
 ---
 
