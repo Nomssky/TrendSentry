@@ -4,8 +4,12 @@
 import type { ReactNode } from "react";
 import { Footer } from "./Footer";
 import { Nav } from "./Nav";
+import { createClient } from "@/lib/supabase/server";
 
-export function SiteShell({ children }: { children: ReactNode }) {
+export async function SiteShell({ children }: { children: ReactNode }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <div className="min-h-screen bg-black px-2 py-2 sm:px-4 sm:py-4">
       <div className="noise-overlay relative mx-auto max-w-[1600px] overflow-hidden rounded-[2.5rem] bg-[#0c0c0c] shadow-2xl ring-1 ring-white/10">
@@ -13,7 +17,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
         <div className="glow-sphere left-[-10%] top-[-5%] h-[480px] w-[480px] bg-[#ccff00]/10" />
         <div className="glow-sphere bottom-[10%] right-[-8%] h-[420px] w-[420px] bg-[#10b981]/10" />
         <div className="relative">
-          <Nav />
+          <Nav isLoggedIn={!!user} />
           {children}
           <Footer />
         </div>

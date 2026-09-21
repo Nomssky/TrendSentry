@@ -1,9 +1,8 @@
-"use client"
-
 import Link from "next/link"
 import { SiteShell } from "../components/marketing/SiteShell"
 import { GlassCard, TechLabel } from "../components/marketing/ui"
 import { SITE } from "@/lib/site"
+import { CheckoutButton } from "./CheckoutButton"
 
 const TIERS = [
   {
@@ -37,7 +36,7 @@ const TIERS = [
     price: "$49/mo",
     state: "COMING SOON",
     hot: false,
-    plan: null, // ponytail: tier belum ada — plan null = tidak ada tombol checkout.
+    plan: null,
     comingSoon: true,
     features: [
       "Everything in Paper Beta, plus:",
@@ -50,24 +49,6 @@ const TIERS = [
 ] as const
 
 export default function Pricing() {
-  async function handleCheckout(plan: string) {
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
-      })
-      const data = await res.json()
-      if (!res.ok || !data.url) {
-        alert(data.error ?? "Checkout failed. Please try again.")
-        return
-      }
-      window.location.assign(data.url)
-    } catch {
-      alert("Network error. Please try again.")
-    }
-  }
-
   return (
     <SiteShell>
       <main className="px-5 pb-20 pt-32 sm:px-10 sm:pt-40 lg:px-16">
@@ -109,16 +90,7 @@ export default function Pricing() {
                   Coming soon
                 </span>
               ) : t.plan ? (
-                <button
-                  onClick={() => handleCheckout(t.plan)}
-                  className={`mt-8 w-full rounded-full px-6 py-3 font-semibold transition ${
-                    t.hot
-                      ? "bg-black text-[#ccff00] hover:bg-black/80"
-                      : "bg-[#ccff00] text-black hover:bg-[#aadd00]"
-                  }`}
-                >
-                  Subscribe
-                </button>
+                <CheckoutButton plan={t.plan} hot={t.hot} />
               ) : (
                 <Link
                   href="/auth/signup"

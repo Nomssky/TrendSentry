@@ -2,11 +2,29 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { NAV_LINKS, SITE } from "@/lib/site";
+import { SITE } from "@/lib/site";
 import { StatusTag } from "./ui";
 
-export function Nav() {
+type NavProps = {
+  isLoggedIn: boolean;
+};
+
+const publicLinks = [
+  { href: "/start", label: "Start" },
+  { href: "/proof", label: "Proof" },
+  { href: "/papertrading", label: "Paper" },
+  { href: "/pricing", label: "Pricing" },
+] as const;
+
+const authLinks = [
+  { href: "/app/dashboard", label: "Dashboard" },
+  { href: "/papertrading", label: "Paper" },
+  { href: "/proof", label: "Proof" },
+] as const;
+
+export function Nav({ isLoggedIn }: NavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const links = isLoggedIn ? authLinks : publicLinks;
 
   return (
     <header className="absolute inset-x-0 top-0 z-50 flex items-center justify-between gap-4 px-5 pt-5 sm:px-10 sm:pt-7">
@@ -18,7 +36,7 @@ export function Nav() {
       </Link>
 
       <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1.5 backdrop-blur md:flex">
-        {NAV_LINKS.map((l) => (
+        {links.map((l) => (
           <Link
             key={l.href}
             href={l.href}
@@ -31,20 +49,31 @@ export function Nav() {
 
       <div className="flex items-center gap-3">
         <span className="hidden lg:inline">
-          <StatusTag text="WATCHER // FREE" />
+          <StatusTag text={isLoggedIn ? "WATCHER // ACTIVE" : "WATCHER // FREE"} />
         </span>
-        <Link
-          href="/auth/login"
-          className="hidden rounded-full border border-white/20 px-5 py-2.5 text-sm text-white/80 transition hover:border-[#ccff00]/50 hover:text-[#ccff00] sm:inline-block"
-        >
-          Sign in
-        </Link>
-        <Link
-          href="/start"
-          className="hidden rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#ccff00] sm:inline-block"
-        >
-          Start free
-        </Link>
+        {isLoggedIn ? (
+          <Link
+            href="/app/dashboard"
+            className="hidden rounded-full bg-[#ccff00] px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#aadd00] sm:inline-block"
+          >
+            Dashboard
+          </Link>
+        ) : (
+          <>
+            <Link
+              href="/auth/login"
+              className="hidden rounded-full border border-white/20 px-5 py-2.5 text-sm text-white/80 transition hover:border-[#ccff00]/50 hover:text-[#ccff00] sm:inline-block"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/start"
+              className="hidden rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#ccff00] sm:inline-block"
+            >
+              Start free
+            </Link>
+          </>
+        )}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 backdrop-blur md:hidden"
@@ -63,7 +92,7 @@ export function Nav() {
       {mobileOpen && (
         <div className="absolute inset-x-0 top-full z-50 mt-2 rounded-2xl border border-white/10 bg-black/95 p-4 backdrop-blur-xl md:hidden">
           <nav className="flex flex-col gap-1">
-            {NAV_LINKS.map((l) => (
+            {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
@@ -75,20 +104,32 @@ export function Nav() {
             ))}
           </nav>
           <div className="mt-3 flex gap-3 border-t border-white/10 pt-3">
-            <Link
-              href="/auth/login"
-              onClick={() => setMobileOpen(false)}
-              className="flex-1 rounded-full border border-white/20 px-5 py-2.5 text-center text-sm text-white/80 transition hover:border-[#ccff00]/50 hover:text-[#ccff00]"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/start"
-              onClick={() => setMobileOpen(false)}
-              className="flex-1 rounded-full bg-white px-5 py-2.5 text-center text-sm font-semibold text-black transition hover:bg-[#ccff00]"
-            >
-              Start free
-            </Link>
+            {isLoggedIn ? (
+              <Link
+                href="/app/dashboard"
+                onClick={() => setMobileOpen(false)}
+                className="flex-1 rounded-full bg-[#ccff00] px-5 py-2.5 text-center text-sm font-semibold text-black transition hover:bg-[#aadd00]"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/auth/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex-1 rounded-full border border-white/20 px-5 py-2.5 text-center text-sm text-white/80 transition hover:border-[#ccff00]/50 hover:text-[#ccff00]"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/start"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex-1 rounded-full bg-white px-5 py-2.5 text-center text-sm font-semibold text-black transition hover:bg-[#ccff00]"
+                >
+                  Start free
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}
