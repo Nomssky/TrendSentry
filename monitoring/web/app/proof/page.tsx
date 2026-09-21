@@ -17,7 +17,7 @@ const ROWS: [string, string][] = [
   ["Direction", "Long-only"],
   ["Cluster limit", "Max 2 positions per correlation cluster (Cluster-A2)"],
   ["Costs", "Fee 0.1% + slippage asumsi 0.05%"],
-  ["Sharpe", "0.82"],
+  ["Sharpe", String(BACKTEST_REFERENCE.sharpeRatio)],
   ["Max drawdown", `${BACKTEST_REFERENCE.maxDrawdownPct}%`],
   ["Total return", `+${BACKTEST_REFERENCE.totalReturnPct}%`],
   ["Trades", `${BACKTEST_REFERENCE.trades} (~${BACKTEST_REFERENCE.tradesPerYear}/tahun)`],

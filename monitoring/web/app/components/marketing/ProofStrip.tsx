@@ -7,7 +7,7 @@ import { SITE } from "@/lib/site";
 import { StatusTag } from "./ui";
 
 const STATS = [
-  { label: "SHARPE (6Y)", value: "0.82" },
+  { label: "SHARPE (6Y)", value: String(BACKTEST_REFERENCE.sharpeRatio) },
   { label: "MAX DRAWDOWN", value: `${BACKTEST_REFERENCE.maxDrawdownPct}%` },
   { label: "TOTAL RETURN", value: `+${BACKTEST_REFERENCE.totalReturnPct}%` },
   { label: "TRADES", value: String(BACKTEST_REFERENCE.trades) },
