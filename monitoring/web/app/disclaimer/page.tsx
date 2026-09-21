@@ -22,7 +22,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: "Past performance proves nothing",
     body: [
-      "The 6-year reference (+149.59%, Sharpe 0.82, 94 trades) contains survivorship bias and a wide confidence interval. Top-5 trades carried ~100% of net PnL — if no 2020–21-style supertrend recurs, future returns can be far flatter.",
+      "The 6-year reference (+152%, Sharpe 0.82, 94 trades) contains survivorship bias and a wide confidence interval. Top-5 trades carried ~100% of net PnL — if no 2020–21-style supertrend recurs, future returns can be far flatter.",
       "Paper trading omits real-world frictions: slippage beyond the 0.05% assumption, exchange outages, API failures, and (in paper) platform risk on the simulated 5% APY idle yield.",
     ],
   },

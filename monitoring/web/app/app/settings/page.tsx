@@ -132,7 +132,7 @@ export default function SettingsPage() {
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-white">Change Password</h2>
-        {passwordMsg && <p className={`text-sm ${passwordMsg === "Password updated" ? "text-emerald-400" : "text-rose-400"}`}>{passwordMsg}</p>}
+        {passwordMsg && <p className={`text-sm ${passwordMsg.startsWith("Password updated") ? "text-emerald-400" : "text-rose-400"}`}>{passwordMsg}</p>}
         <form onSubmit={changePassword} className="space-y-3">
           <input value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Current password" required type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
           <input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password (min 10 chars, upper/lower + digit)" required minLength={10} type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
