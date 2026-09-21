@@ -30,5 +30,3 @@ node_modules/
 db/backups/
 .dump
 .vercel
-.env*
-!deploy/.env.example
