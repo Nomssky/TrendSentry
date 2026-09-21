@@ -38,20 +38,28 @@ export default async function PaperTrading() {
   const now = new Date();
   const isStale = lastRunAt != null && (now.getTime() - lastRunAt.getTime()) > 30 * 60 * 60 * 1000;
 
-  // Sharpe/DD dari equity curve (kalau sudah ada cukup data)
+  // Sharpe/DD dari equity curve (kalau sudah ada cukup data) — O(n) single-pass.
   const eqReturns = d.equityCurve.length > 1
     ? d.equityCurve.slice(1).map((p, i) => (p.equity - d.equityCurve[i].equity) / d.equityCurve[i].equity)
     : []
-  const sharpeLive = eqReturns.length > 5
-    ? (eqReturns.reduce((s, r) => s + r, 0) / eqReturns.length) / (Math.sqrt(
-        eqReturns.reduce((s, r) => s + (r - eqReturns.reduce((s, r) => s + r, 0) / eqReturns.length) ** 2, 0) / eqReturns.length
-      ) || 1) * Math.sqrt(365)
-    : null
-  const maxDDLive = d.equityCurve.length > 1
-    ? Math.round(Math.min(0, ...d.equityCurve.map((p, i) =>
-        i === 0 ? 0 : (p.equity - Math.max(...d.equityCurve.slice(0, i + 1).map(x => x.equity))) / Math.max(...d.equityCurve.slice(0, i + 1).map(x => x.equity)) * 100
-      )) * 100) / 100
-    : null
+  let sharpeLive: number | null = null
+  let maxDDLive: number | null = null
+  if (eqReturns.length > 5) {
+    const n = eqReturns.length
+    const mean = eqReturns.reduce((s, r) => s + r, 0) / n
+    const variance = eqReturns.reduce((s, r) => s + (r - mean) ** 2, 0) / n
+    sharpeLive = (mean / (Math.sqrt(variance) || 1)) * Math.sqrt(365)
+  }
+  if (d.equityCurve.length > 1) {
+    let peak = d.equityCurve[0].equity
+    let worstDD = 0
+    for (const p of d.equityCurve) {
+      if (p.equity > peak) peak = p.equity
+      const dd = (p.equity - peak) / peak * 100
+      if (dd < worstDD) worstDD = dd
+    }
+    maxDDLive = Math.round(worstDD * 100) / 100
+  }
 
   return (
     <SiteShell>

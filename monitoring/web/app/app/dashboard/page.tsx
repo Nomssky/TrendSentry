@@ -7,21 +7,20 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/auth/login")
 
-  const [scores, deviations, strategies, trades] = await Promise.all([
+  const [scores, deviations, strategies, trades, totalDeviations] = await Promise.all([
     supabase.from("discipline_scores").select("*").eq("user_id", user.id).order("date", { ascending: false }).limit(30),
     supabase.from("deviation_log").select("*").eq("user_id", user.id).order("detected_at", { ascending: false }).limit(10),
     supabase.from("user_strategies").select("id, name, is_active").eq("user_id", user.id).order("created_at", { ascending: false }),
-    supabase.from("user_trades").select("id, pair, side, price, amount, pnl, r_multiple, executed_at, exit_price").eq("user_id", user.id).order("executed_at", { ascending: false }).limit(100),
+    supabase.from("user_trades").select("id, pair, side, price, amount, executed_at").eq("user_id", user.id).order("executed_at", { ascending: false }).limit(100),
+    supabase.from("deviation_log").select("id", { count: "exact", head: true }).eq("user_id", user.id),
   ])
 
   const avgScore = scores.data?.length
     ? Math.round(scores.data.reduce((s, r) => s + r.score, 0) / scores.data.length)
     : null
 
-  const totalPnl = trades.data?.reduce((sum, t) => sum + (t.pnl ?? 0), 0) ?? 0
-  const closedTrades = trades.data?.filter((t) => t.exit_price != null) ?? []
-  const wins = closedTrades.filter((t) => (t.pnl ?? 0) > 0).length
-  const winRate = closedTrades.length > 0 ? Math.round((wins / closedTrades.length) * 100) : null
+  // user_trades is a fill log (no pnl/exit_price columns) — show total fills instead.
+  const totalTrades = trades.data?.length ?? 0
 
   const scoreData = scores.data
     ? [...scores.data].reverse().map((s) => ({ date: s.date, score: s.score }))
@@ -41,12 +40,12 @@ export default async function DashboardPage() {
           <p className="mt-1 font-mono-tech text-4xl font-bold text-white">{strategies.data?.filter((s) => s.is_active).length ?? 0}</p>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p className="text-xs text-white/40">Total PnL</p>
-          <p className={`mt-1 font-mono-tech text-4xl font-bold ${totalPnl >= 0 ? "text-[#ccff00]" : "text-rose-400"}`}>{totalPnl >= 0 ? "+" : ""}{totalPnl.toFixed(2)}</p>
+          <p className="text-xs text-white/40">Total Fills Logged</p>
+          <p className="mt-1 font-mono-tech text-4xl font-bold text-white">{totalTrades}</p>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p className="text-xs text-white/40">Win Rate (closed)</p>
-          <p className="mt-1 font-mono-tech text-4xl font-bold text-white">{winRate !== null ? `${winRate}%` : "—"}</p>
+          <p className="text-xs text-white/40">Deviations Detected</p>
+          <p className={`mt-1 font-mono-tech text-4xl font-bold ${(totalDeviations.count ?? 0) > 0 ? "text-rose-400" : "text-[#ccff00]"}`}>{totalDeviations.count ?? 0}</p>
         </div>
       </div>
 
