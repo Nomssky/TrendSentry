@@ -1,27 +1,44 @@
 /**
  * E2E test: Free-tier user flow — 1 minggu simulasi.
  *
- * Jalankan:
+ * Jalankan (test auth butuh kredensial akun test via environment variable —
+ * fail-closed: tanpa env, test login gagal dengan pesan jelas, tanpa fallback):
  *   cd monitoring/web
+ *   export E2E_TEST_EMAIL="..."      # isi dari password manager owner; JANGAN commit
+ *   export E2E_TEST_PASSWORD="..."
  *   BASE_URL=https://trendsentry.vercel.app npx playwright test e2e/free-tier-flow.spec.ts --headed
  *
- * Test ini melakukan LOGIN NYATA — jangan run di CI.
+ * Test ini melakukan LOGIN NYATA ke environment produksi — jangan run di CI.
+ * Kredensial TIDAK boleh ada di source; baca dari process.env saja (lihat
+ * authCredentials()). Histori git lama masih memuat kredensial — lihat PHASE2C audit.
  */
 
 import { test, expect, type Page } from "@playwright/test"
 import fs from "fs"
 
 const BASE = process.env.BASE_URL || "https://trendsentry.vercel.app"
-const EMAIL = "als.kresna@gmail.com"
-const PASSWORD = "kresnaaji12"
 const AUTH_FILE = "e2e/.auth/user.json"
+
+// Fail-closed: hanya baca dari environment, tanpa nilai default/dummy.
+// Pesan error hanya menyebut NAMA variabel — jangan pernah mencetak nilainya.
+function authCredentials(): { email: string; password: string } {
+  const email = process.env.E2E_TEST_EMAIL
+  const password = process.env.E2E_TEST_PASSWORD
+  if (!email || !password) {
+    throw new Error(
+      "E2E_TEST_EMAIL and E2E_TEST_PASSWORD must be set — export keduanya sebelum menjalankan test login (lihat header file ini)",
+    )
+  }
+  return { email, password }
+}
 
 // Helper: login and save storage state
 async function login(page: Page) {
+  const { email, password } = authCredentials()
   await page.goto(`${BASE}/auth/login`)
   await page.getByPlaceholder("Email").waitFor({ timeout: 15000 })
-  await page.getByPlaceholder("Email").fill(EMAIL)
-  await page.locator('input[type="password"]').fill(PASSWORD)
+  await page.getByPlaceholder("Email").fill(email)
+  await page.locator('input[type="password"]').fill(password)
   await page.getByRole("button", { name: "Sign in" }).click()
   await expect(page).toHaveURL(/\/app\/dashboard/, { timeout: 15000 })
 }
@@ -229,13 +246,8 @@ test.describe("Free Tier — Full User Flow", () => {
   test("1-week simulation: daily dashboard check", async ({ page }) => {
     test.setTimeout(120_000) // 7 cycles need more time
 
-    // Login once, verify all pages work consistently across "days"
-    await page.goto(`${BASE}/auth/login`)
-    await page.getByPlaceholder("Email").waitFor({ timeout: 15000 })
-    await page.getByPlaceholder("Email").fill(EMAIL)
-    await page.locator('input[type="password"]').fill(PASSWORD)
-    await page.getByRole("button", { name: "Sign in" }).click()
-    await expect(page).toHaveURL(/\/app\/dashboard/, { timeout: 15000 })
+    // Login sekali, verifikasi halaman konsisten lintas "hari"
+    await login(page)
 
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
