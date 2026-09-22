@@ -179,8 +179,13 @@ live_signal.py ──► SQLite ──► scripts/sync_paper_to_supabase.py
                    watermark dimaju HANYA setelah HTTP 200
 ```
 
-- **Skema Postgres: `supabase/migrations/*.sql` (9 file) = source of truth.**
+- **Skema Postgres: `supabase/migrations/*.sql` (10 file) = source of truth.**
   (Bukan `db/migrations/` — path itu tidak pernah ada.)
+- **Seed 8 `strategy_templates` built-in** = migration `20260922120000_insert_builtin_strategy_templates.sql`
+  (`INSERT … ON CONFLICT (name) DO NOTHING`, ID 1–8 eksplisit + sinkron sequence).
+  Ini **satu-satunya** mekanisme seed — berlaku untuk DB segar maupun yang sudah terisi
+  (no-op, tanpa overwrite). `supabase/seed.sql` & blok `[db.seed]` di `config.toml` **dihapus**
+  (file tak pernah ada; payload tidak diduplikasi). Ubah template = migration baru, forward-only.
 - Tabel `paper_*` = mirror dashboard; tabel `user_*`/`profiles` = domain produk.
 - RLS aktif di semua tabel + event trigger auto-enable tabel baru.
 
@@ -344,7 +349,7 @@ Tidak ada di repo:                 Penjaga yang memastikan:
 | Skema SQLite | `db/schema.sql` | — |
 | Skema Postgres | **`supabase/migrations/*.sql`** | — (`db/migrations/` tidak ada) |
 | Paper trading data (untuk web) | Supabase `paper_*` (mirror) ← SQLite `db/paper_trading.db` (asli) | arah sinkron satu jalur §7 |
-| Guardrail strategi (web) | `lib/validations.ts GUARDRAILS` | `risk_manager/guards.py` (engine), seed `20260911120000` (template) |
+| Guardrail strategi (web) | `lib/validations.ts GUARDRAILS` | `risk_manager/guards.py` (engine), seed `20260911120000` + `20260922120000` (template) |
 | Formula discipline score | `lib/deviation.ts` **dan** trigger SQL — keduanya identik, wajib paritas | — |
 | Web strategy model | Supabase `user_strategies` + `strategy_templates` | `lib/deviation.ts::parseRules` (interpretasi) |
 | Business/product rules | `PLAN.md` §9 | komentar kode: `lib/bitget.ts`, checkout gate, `validate_config` |

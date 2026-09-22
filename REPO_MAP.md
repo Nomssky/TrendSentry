@@ -110,7 +110,7 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 │   └── backups/                 # ignored lokal
 ├── supabase/
 │   ├── config.toml              # config Supabase CLI (local dev)
-│   └── migrations/              # 9 file .sql — SOURCE OF TRUTH skema Postgres
+│   └── migrations/              # 10 file .sql — SOURCE OF TRUTH skema Postgres
 ├── deploy/                      # persiapan VPS/Coolify (belum pernah dibuild — RUNBOOK)
 ├── .github/workflows/           # 4 workflow: paper-trading, daily-sync, fetch-data, test-api
 ├── data/
@@ -334,7 +334,7 @@ Catatan implementasi: semua route `ƒ` (dynamic) kecuali `/_not-found` — **tid
 - Persistensi: di-commit ke git tiap run (accepted risk, tercatat di AUDIT.md P3-6).
 
 ### B. Supabase Postgres (domain: produk user + mirror paper)
-- **Source of truth skema: `supabase/migrations/*.sql` (9 file)**, bukan `db/migrations/`
+- **Source of truth skema: `supabase/migrations/*.sql` (10 file)**, bukan `db/migrations/`
   (yang disebut AGENTS.md tidak ada).
 - Tabel user: `profiles`, `strategy_templates`, `user_strategies`, `user_api_keys`,
   `user_trades` (log fill — TIDAK punya kolom pnl/exit_price), `deviation_log`,
@@ -687,7 +687,7 @@ Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan.
   `monitoring/telegram_alert.py`, `llm_filter/filter.py`, plus direktori yang tidak pernah
   disebut: `monitoring/web/`, `scripts/`, `presets/`, `supabase/`, `tests/`, `deploy/`, `cli.py`.
 - `AGENTS.md:42` "Migration tersimpan di `db/migrations/`" → **tidak ada**; aktual
-  `supabase/migrations/` (9 file).
+  `supabase/migrations/` (10 file).
 - `AGENTS.md:5` "Ikuti struktur folder di PLAN.md Section 4" → mewarisi struktur yang sudah basi.
 - Status: **kontradiksi**.
 
@@ -862,7 +862,7 @@ tanpa signup submit / connect key) → jalur tulis produk tidak teruji otomatis.
 | **Parameter risk** (risk 1%, max 5, CB 15%) | `config.yaml` `risk:` + guard `risk_manager/guards.validate_config` | `presets/*.yaml risk`, `lib/validations.ts GUARDRAILS` (web), seed SQL template | Konsisten (1% / 5 / long_only) di 3 tempat — sumber terpisah |
 | **Paper execution behavior** | `paper_trading/live_signal.py` (+ `config.yaml paper_trading`) | — | tunggal |
 | **Database schema SQLite** | `db/schema.sql` | dibaca ulang tiap start (idempoten) | tunggal |
-| **Database schema Postgres** | `supabase/migrations/*.sql` (9) | `AGENTS.md` salah menyebut `db/migrations/` | Dokumentasi salah, kode benar |
+| **Database schema Postgres** | `supabase/migrations/*.sql` (10) | `AGENTS.md` salah menyebut `db/migrations/` | Dokumentasi salah, kode benar |
 | **Backtest reference metrics** | **ambigu**: `monitoring/web/lib/backtest-reference.json` (dipakai kode) vs `backtest/reports/metrics.md` (output runner) | DESIGN §6.1, README, PLAN, TASKS, RULES, disclaimer, presets | **YA — 2 keluarga angka beda (§12.9/§14 #1-2)** |
 | **Web user strategy model** | Supabase `user_strategies` + `strategy_templates` (seed SQL) + `lib/validations.ts` guardrail | `lib/deviation.ts parseRules` (interpretasi params) | Konsisten; interpretasi rules ada di 1 tempat |
 | **Paper trading data (untuk web)** | Supabase `paper_*` (mirror), diisi `/api/cron/paper-sync` | `db/paper_trading.db` (asli, di CI) | Tidak konflik — arah sinkron satu jalir; **tetapi README/PLAN masih mengklaim web membaca SQLite** |
