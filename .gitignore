@@ -30,3 +30,6 @@ node_modules/
 db/backups/
 .dump
 .vercel
+
+# Playwright auth storage state (regenerable — dibuat ulang test login e2e)
+monitoring/web/e2e/.auth/
