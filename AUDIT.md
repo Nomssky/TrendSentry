@@ -80,7 +80,7 @@ Proyek ini dalam kondisi sehat. Dari 28 temuan audit sebelumnya (P0-3, P1-7, P2-
 | P2-5 | PaperSyncSchema cap 2000 sync mati permanen | Sync inkremental via watermark + cap naik ke 5000 |
 | P2-6 | backfill_equity drift | Yield log sebagai anchor; rollback drift saat ada yield row |
 | P2-7 | ATR & RSI tidak di-seed Wilder benar | Seed eksplisit SMA + rekursi manual; angka referensi di-update |
-| P2-8 | Duplikasi sumber angka referensi | Satu sumber: `backtest-reference.json`, dibaca Python + TS |
+| P2-8 | Duplikasi sumber angka referensi | **Riwayat:** perbaikan P2 dianggap selesai (satu sumber `backtest-reference.json`, dibaca Python + TS). **Phase 0 (2026-09-22) menemukan kembali diskrepansi** — ada dua snapshot angka; **canonical metric saat ini masih pending keputusan owner** → `ARCHITECTURE.md` §16 + provenance detail di `PHASE2_SOURCE_OF_TRUTH.md` §7.1 |
 | P2-9 | Backup AES-CBC tanpa autentikasi | GPG AES-256 + MDC; restore.sh validasi basename + mktemp |
 | P2-10 | Session/password hygiene | `signOut({scope:'global'})`; password min 10 + karakter |
 

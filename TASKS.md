@@ -73,7 +73,6 @@
 - [x] [PREP] `risk_manager/` Python: reuse `position_size` + circuit breaker pure logic + unit test (**tanpa satu pun `createOrder`**)
 - [ ] [GATED] Implementasi `execution/` — koneksi exchange API via `ccxt`, order dengan SL wajib
 - [ ] Implementasi circuit breaker (auto-pause kalau drawdown > threshold)
-- [ ] Implementasi `execution/` — koneksi exchange API via `ccxt`, order dengan SL wajib
 - [ ] Unit test untuk risk manager & circuit breaker
 - [ ] Setup notifikasi circuit breaker — **file yang ada saat ini: `monitoring/telegram_alert.py`** (nama lama `monitoring/telegram_bot.py` tidak pernah ada); tinggal menambah event breaker saat Fase 4
 - [ ] Dry-run mode dulu (paper tapi pakai infra live) sebelum sentuh modal riil
