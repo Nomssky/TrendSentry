@@ -1,8 +1,16 @@
 # PLAN.md — Crypto Trend-Following Bot
 
-> Status: Fase 2 — Paper Trading aktif (sejak 2026-08-25, hari ke-11/56).
+> Status: Fase 2 — Paper Trading aktif (sejak 2026-08-25; snapshot 2026-09-22 = hari ke-28/56, minggu ke-4).
 > Tujuan: Capital growth jangka panjang, modal kecil, bukan sumber income rutin.
 > Prinsip: Business first, risk-managed, no overengineering, MVP-driven.
+
+> **Legenda dokumen (diperjelas 2026-09-22, Phase 1 Documentation Reset):**
+> - **CURRENT IMPLEMENTATION** — yang benar-benar berjalan sekarang → dokumentasi fakta di
+>   [`ARCHITECTURE.md`](ARCHITECTURE.md) & [`REPO_MAP.md`](REPO_MAP.md).
+> - **FUTURE PLAN** — roadmap & desain yang digated (Fase 3 LLM filter, Fase 4 live) → §2, §3 (envelope), §9.
+> - **HISTORICAL DECISION** — catatan keputusan & alasan (jangan dihapus, jangan dianggap status saat ini) → §6, §7, catatan bertanggal.
+> Struktur folder usulan di §4 sudah diganti struktur aktual; klaim teknis basi (static export,
+> Node.js) sudah diperbaiki — riwayatnya di `REPO_MAP.md` §12.
 
 ---
 
@@ -83,9 +91,15 @@ Catatan: parameter ini **tidak boleh diutak-atik berdasarkan feeling** selama fa
 
 ## 3. Arsitektur Teknis
 
+> **Catatan pembaca (2026-09-22):** diagram di bawah adalah **target end-state seluruh fase**
+> (termasuk Fase 3/4 yang belum ada). Yang **berjalan hari ini** hanya:
+> Data → Signal Engine → Risk Manager → Logger+DB → Monitoring (tanpa LLM filter, tanpa
+> execution engine) + jalur produk web. Diagram fakta sistem aktual ada di
+> [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
 ```
 ┌─────────────────┐
-│  Data Ingestion  │  ← ccxt (harga OHLCV), RSS/news API (untuk LLM filter)
+│  Data Ingestion  │  ← ccxt (harga OHLCV Bitget, publik tanpa API key)
 └────────┬─────────┘
          │
 ┌────────▼─────────┐
@@ -94,35 +108,35 @@ Catatan: parameter ini **tidak boleh diutak-atik berdasarkan feeling** selama fa
 └────────┬─────────┘
          │ raw signal (BUY/SELL/HOLD + confidence)
 ┌────────▼─────────┐
-│  LLM Filter Layer │  ← DeepSeek API (Fase 3+), sanity-check risiko
+│  LLM Filter Layer │  ← DeepSeek API — FASE 3, NONAKTIF (skeleton di llm_filter/filter.py)
 └────────┬─────────┘
-         │ approved signal
+         │ approved signal (saat ini: signal apa adanya, filter dilewati)
 ┌────────▼─────────┐
 │  Risk Manager      │  ← position sizing, max drawdown limit, SL wajib
 └────────┬─────────┘
          │
 ┌────────▼─────────┐
-│  Execution Engine  │  ← Node.js + ccxt → exchange API
-│  (Node.js, Fase 4)  │     idempotent order, retry logic
+│  Execution Engine  │  ← Python + ccxt → exchange API  (FASE 4, GATED — belum ada kode)
+│  (belum ada)       │     idempotent order, retry logic
 └────────┬─────────┘
          │
 ┌────────▼─────────┐
-│  Logger + DB        │  ← PostgreSQL/SQLite: setiap trade, signal, reasoning
+│  Logger + DB        │  ← SQLite (paper, AKTIF) + PostgreSQL via Supabase (web produk, AKTIF)
 └────────┬─────────┘
          │
 ┌────────▼─────────┐
-│  Monitoring         │  ← Telegram bot alert (entry/exit/circuit breaker)
+│  Monitoring         │  ← Telegram alert (entry/exit/crash) + web dashboard Next.js
 └─────────────────────┘
 ```
 
 ### Stack per Fase
 | Fase | Tools |
 |---|---|
-| Fase 1 (backtest) | Python, `ccxt`, `pandas`, `vectorbt`/`backtrader`, Jupyter/script |
-| Fase 2 (paper trading) | Python (sama seperti fase 1) + scheduler (cron/APScheduler) + SQLite untuk log |
-| Fase 3 (LLM filter) | DeepSeek API, prompt template terpisah dari signal logic |
-| Fase 4 (live) | Node.js + `ccxt` (eksekusi), PostgreSQL (kalau butuh lebih robust dari SQLite), Redis (kalau perlu decouple signal→execution), Telegram Bot API (notifikasi) |
-| Deployment | VPS kecil (Contabo/DigitalOcean, ~$10-20/bulan), Docker untuk isolasi environment |
+| Fase 1 (backtest) | Python, `ccxt`, `pandas` — **aktual: indikator murni pandas**; `vectorbt`/`backtrader` tidak pernah dipakai |
+| Fase 2 (paper trading) | Python (sama seperti fase 1) + scheduler GitHub Actions + SQLite untuk log — **aktif** |
+| Fase 3 (LLM filter) | DeepSeek API, prompt template terpisah dari signal logic — **belum dikerjakan** |
+| Fase 4 (live) | **Python** + `ccxt` (eksekusi — amendemen 2026-09-11 di bawah), SQLite; PostgreSQL via Supabase sudah dipakai produk web; Redis (kalau perlu decouple signal→execution), Telegram Bot API (notifikasi) |
+| Deployment | **Aktual:** Vercel (web) + Supabase cloud (DB) + GitHub Actions (scheduler). **Rencana cutover:** VPS kecil (Contabo/DigitalOcean, ~$10-20/bulan), Docker untuk isolasi environment — file ada di `deploy/`, belum pernah dijalankan (`deploy/RUNBOOK.md`) |
 
 **Amendemen 2026-09-11 (riset stack Fase 4, persetujuan owner):** eksekusi live **tetap Python** (`ccxt` sama, API identik di semua bahasa; rewrite Node/TS menambah runtime + risiko drift sizing/SL tanpa menambah kemampuan). Baris "Node.js" di atas diganti Python. Ini amendemen stack, BUKAN izin implementasi — kode order riil tetap dilarang sebelum gate Fase 2 lolos (AGENTS.md aturan 3–4).
 
@@ -137,34 +151,42 @@ Catatan: parameter ini **tidak boleh diutak-atik berdasarkan feeling** selama fa
 
 ---
 
-## 4. Struktur Folder (usulan)
+## 4. Struktur Folder (AKTUAL — diperbarui 2026-09-22; usulan lama di repo history & `REPO_MAP.md` §12)
 
 ```
-crypto-trend-bot/
-├── PLAN.md
-├── AGENTS.md                 # instruksi eksekusi untuk coding agent
-├── data/
-│   └── historical/           # cache data OHLCV hasil fetch
+TrendSentry/
+├── PLAN.md AGENTS.md RULES.md TASKS.md AUDIT.md          # governance
+├── ARCHITECTURE.md REPO_MAP.md README.md                 # fakta arsitektur & audit
+├── config.yaml                    # SOURCE OF TRUTH parameter strategi + risk + paper
+├── requirements.txt / requirements-engine.txt
+├── cli.py                         # CLI lokal: backtest|paper|live --dry-run|watcher|doctor
 ├── backtest/
-│   ├── strategy.py           # logic Donchian + ATR
-│   ├── run_backtest.py
-│   └── reports/              # output equity curve, metrik
+│   ├── strategy.py                # Donchian/ATR/SMA/RSI + position_size + cluster limit
+│   ├── run_backtest.py            # simulasi portfolio + metrics + report
+│   ├── DESIGN.md                  # desain backtest
+│   ├── research/                  # 7 script riset (manual, di luar CI)
+│   └── reports/                   # metrics.md, decision_log.md, presets/, research/
 ├── paper_trading/
-│   ├── live_signal.py
-│   └── logs/
-├── llm_filter/
-│   ├── deepseek_client.py
-│   └── prompts/
-├── execution/                 # Fase 4, Node.js
-│   ├── src/
-│   └── package.json
+│   └── live_signal.py             # engine paper harian
 ├── risk_manager/
-│   └── position_sizing.py
-├── db/
-│   └── schema.sql
-└── monitoring/
-    └── telegram_bot.py
+│   └── guards.py                  # validate_config + CircuitBreaker (+ re-export sizing)
+├── llm_filter/
+│   └── filter.py                  # kontrak Fase 3 (skeleton, nonaktif)
+├── monitoring/
+│   ├── telegram_alert.py          # alert Telegram (Python)
+│   └── web/                       # produk web Next.js 16 + Supabase (lihat monitoring/web/README.md)
+├── scripts/                       # fetch_bitget_data, sync_paper_to_supabase, compare_live_vs_backtest
+├── presets/                       # 3 preset beku (donchian/sma/rsi)
+├── db/                            # schema.sql + paper_trading.db (di-commit) + backup_db.sh
+├── supabase/                      # config.toml + migrations/ = SOURCE OF TRUTH skema Postgres
+├── deploy/                        # persiapan VPS/Coolify (belum pernah dijalankan)
+├── .github/workflows/             # paper-trading, trendsentry-daily-sync, fetch-bitget-data, test-bitget-api
+├── data/historical/ (10 pair + sisa riset)  data/funding/ (riset)
+└── tests/                         # 8 file pytest, 64 test
 ```
+
+> Struktur lama (`execution/`, `llm_filter/deepseek_client.py`, `risk_manager/position_sizing.py`,
+> `monitoring/telegram_bot.py`) **tidak pernah ada di kode** — jangan dipakai sebagai referensi path.
 
 ---
 
@@ -205,10 +227,22 @@ crypto-trend-bot/
 
 ## 8. Web Monitoring Dashboard (tambahan 2026-08-25, request eksplisit user)
 
-- **Status:** tambahan di luar scope PLAN awal — diminta user untuk monitoring visual. Murni read-only, TIDAK menyentuh signal engine.
-- **Stack:** Next.js 16 static export + Tailwind + Recharts, di `monitoring/web/`, deploy ke Vercel Hobby (gratis).
-- **Data flow:** bot CI commit `db/paper_trading.db` harian → Vercel auto-redeploy → DB dibaca saat build (bukan runtime). Equity curve dari tabel `equity_log` (ditulis engine tiap run, definisi tunggal total=cash+MTM, venue tunggal Bitget — tanpa fetch harga saat build sejak 2026-09-08). Harga realtime & unrealized PnL via Bitget proxy `/api/prices` (polling 3s) dari browser.
+- **Status:** tambahan di luar scope PLAN awal — diminta user untuk monitoring visual.
+  Murni display layer, TIDAK menyentuh signal engine. **Sudah berkembang** menjadi produk
+  web (auth, strategi user, API key read-only, deviasi, discipline score) — lihat amendemen §9.
+- **Stack (AKTUAL, diperbarui 2026-09-22):** Next.js **16 App Router, server-rendered** di
+  Vercel Hobby + Tailwind + Recharts + **Supabase (Auth + Postgres)**, di `monitoring/web/`.
+  **Bukan static export** — tidak ada `output: export`, semua route data `ƒ dynamic`.
+- **Data flow (AKTUAL):** engine CI commit `db/paper_trading.db` (persistensi state +
+  backup off-disk) → `scripts/sync_paper_to_supabase.py` POST inkremental ke
+  `/api/cron/paper-sync` (Bearer CRON_SECRET, watermark) → tabel `paper_*` di Supabase →
+  **web membaca Supabase saat request** (bukan saat build; web tidak pernah membaca SQLite).
+  Equity curve dari `paper_equity_log` (total=cash+MTM, venue tunggal Bitget).
+  Harga realtime & unrealized PnL via proxy Bitget `/api/prices` — **REST polling 3 detik
+  dari browser (bukan WebSocket)**.
 - **Isi:** health/gap detection (kriteria checkpoint), open positions + live PnL, equity curve, trade history, slippage real vs asumsi, win rate/avg R vs referensi backtest (dengan gate "evaluasi setelah ≥10 trade").
+- Detail route & batas keamanan: `monitoring/web/README.md` + `monitoring/web/AGENTS.md`;
+  diagram penuh: `ARCHITECTURE.md` §8-§9.
 
 ---
 

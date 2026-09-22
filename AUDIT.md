@@ -5,6 +5,22 @@ Cakupan: Python engine (backtest, paper, risk, llm, scripts, CLI), web Next.js (
 Metode: pembacaan penuh semua file kode + config + skema + test; verifikasi fix audit sebelumnya; `pytest` (64 passed).
 Status: **Semua P0/P1/P2/P3 dari audit 2026-09-12 sudah di-fix.** Sisa item manual (dashboard-only) tidak berubah.
 
+> **Update status 2026-09-22 (Phase 1 Documentation Reset)** — temuan di bawah tetap
+> sebagai **history**; yang berubah sejak audit:
+> - **P4-4 SELESAI** — `deploy/.env.example` sudah ada (berisi placeholder env web+engine).
+> - **Lint: masih FAIL — 2 errors + 7 warnings** (diverifikasi ulang 2026-09-22):
+>   errors `react-hooks/set-state-in-effect` di `app/app/AppSidebar.tsx:24` dan
+>   `app/app/strategies/new/page.tsx:107` (pola `useEffect → setState` hasil fix W-1/W-2 kini
+>   dilanggar rule React terbaru); warnings = unused vars (`lastRunDate` di `lib/db-supabase.ts:85`,
+>   `fs` & `SUPABASE_URL` di e2e, import `SITE` ×3, `createClient` di `strategies/new:3`).
+>   → Koreksi terhadap kesan "sudah bersih" di bagian Re-Audit: typecheck **0 errors** ✓ dan
+>   build **success** ✓ benar, tetapi **lint tidak bersih**.
+> - Re-verifikasi 2026-09-22: `pytest` **64 passed** ✓, `tsc --noEmit` **exit 0** ✓, `next build` **exit 0** ✓, `npm run lint` **exit 1** ✗.
+> - **P2-8 (angka referensi) punya dua snapshot** — `backtest-reference.json` (dipakai kode) vs
+>   `backtest/reports/metrics.md`/`DESIGN.md` (output runner) sedikit berbeda;
+>   **keputusan canonical masih pending** → `ARCHITECTURE.md` §16. Belum dipilih pemenang.
+> - Audit kebersihan kode lanjutan (inventory, dead code, drift): **`REPO_MAP.md` (Phase 0)**.
+
 Legenda: **P0** = wajib segera (uang/keamanan), **P1** = tinggi, **P2** = sedang, **P3** = rendah/hygiene, **P4** = observasi/baru.
 
 ---
@@ -101,10 +117,10 @@ Proyek ini dalam kondisi sehat. Dari 28 temuan audit sebelumnya (P0-3, P1-7, P2-
 ### P4-3. ~~conftest.py kosong~~ ✅ FIXED
 - **Fix:** Dihapus (commit `52a52f0`).
 
-### P4-4. deploy/docker-compose.yml tidak punya .env.example (P3)
+### P4-4. ~~deploy/docker-compose.yml tidak punya .env.example (P3)~~ ✅ FIXED (2026-09-22)
 - **Lokasi:** `deploy/docker-compose.yml` membutuhkan 10 env vars tapi tidak ada template.
 - **Dampak:** Deploy manual butuh baca docker-compose.yml untuk tahu env apa yang dibutuhkan.
-- **Fix:** Buat `deploy/.env.example` dengan placeholder.
+- **Fix:** `deploy/.env.example` dibuat dengan placeholder (diverifikasi ada saat Phase 1 Documentation Reset).
 
 ### P4-5. ~~Backtest metrics sedikit berbeda dari TASKS.md~~ ✅ FIXED
 - **Fix:** Update referensi di TASKS.md (commit `52a52f0`).
@@ -219,9 +235,11 @@ Coverage area kritis:
 | 1 | ~~P4-5 Update referensi di TASKS.md~~ | ~~Inkonsistensi angka backtest vs aktual~~ | ~~1 menit~~ | ✅ Done |
 | 2 | ~~P4-2 Bersihkan .gitignore duplikat~~ | ~~Hygiene~~ | ~~1 menit~~ | ✅ Done |
 | 3 | ~~P4-3 Hapus conftest.py kosong~~ | ~~Hygiene~~ | ~~1 menit~~ | ✅ Done |
-| 4 | P4-4 Buat deploy/.env.example | Deploy experience | 5 menit | |
+| 4 | ~~P4-4 Buat deploy/.env.example~~ | ~~Deploy experience~~ | ~~5 menit~~ | ✅ Done (2026-09-22) |
 | 5 | P3-6 Rotasi service role (manual) | Higiene kredensial (opsional) | 15 menit | |
 | 6 | P3-6 Rotasi token Telegram (manual) | Higiene kredensial (opsional) | 10 menit | |
+| 7 | Perbaiki 2 error lint `react-hooks/set-state-in-effect` + 7 warning | `npm run lint` exit 1 | 30 menit | ⏳ Terbuka (lihat Update 2026-09-22 di atas) |
+| 8 | Keputusan canonical backtest metric (snapshot A vs B) | Dua snapshot beda angka; butuh owner + re-run | keputusan | ⏳ Pending — `ARCHITECTURE.md` §16 |
 
 ---
 

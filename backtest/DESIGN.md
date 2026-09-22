@@ -11,7 +11,6 @@
 backtest/
 ├── strategy.py              # Single source of truth (reused backtest + paper trading)
 ├── run_backtest.py          # Portfolio simulation engine
-├── fetch_data.py            # Data fetcher (Binance mirror)
 ├── research/                # Research scripts (long-short, capital efficiency)
 ├── reports/                 # Output: equity curve, trades, metrics, charts
 │   ├── metrics.md
@@ -21,7 +20,8 @@ backtest/
 │   └── research/
 │       ├── longshort/
 │       └── capital_efficiency/
-└── tests/                   # Unit tests (position sizing, ATR, Donchian)
+../scripts/fetch_bitget_data.py   # Data fetcher (Bitget) — path/venue lama: backtest/fetch_data.py (Binance), tidak pernah ada
+../tests/                         # Unit tests (position sizing, ATR, Donchian) — di root repo, bukan backtest/tests/
 ```
 
 ---
@@ -173,6 +173,15 @@ def position_size(equity, entry_price, stop_price, risk_pct):
 | Return vs B&H | Delta antara strategy dan benchmark |
 
 ### 6.1 Referensi Backtest (Cluster-A2, 10-pair, 6 tahun)
+
+> ⚠️ **Reference metric discrepancy — see canonical source decision pending.**
+> Tabel di bawah adalah **snapshot A** (keluaran runner `backtest/reports/metrics.md`).
+> Ada **snapshot B** dengan angka sedikit berbeda yang dipakai kode
+> (`monitoring/web/lib/backtest-reference.json`): return +152.0% (vs +149.59%),
+> DD −26.45% (vs −26.19%), avg win +4.35R (vs +4.31), avg loss −0.85 (vs −0.84),
+> PF 2.27 (vs 2.26). Sharpe 0.82, 94 trades, win rate 36.17% sama di keduanya.
+> **Kedua snapshot tidak diubah dan belum dipilih yang canonical** — daftar perbandingan
+> lengkap & keputusan: `ARCHITECTURE.md` §16.
 
 | Metrik | Nilai |
 |---|---|

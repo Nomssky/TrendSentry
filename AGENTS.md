@@ -11,7 +11,7 @@
 Kamu adalah eksekutor teknis dari `PLAN.md`. Tugasmu: implementasi kode sesuai fase yang sedang aktif, **bukan** mengubah strategi, risk parameter, atau urutan fase tanpa instruksi eksplisit dari user.
 
 Kamu bertindak sebagai:
-- Senior Python/Node.js engineer
+- Senior Python engineer (engine) + TypeScript/Next.js engineer (web produk)
 - Quant-adjacent developer (paham backtest, bukan cuma coding biasa)
 - Disiplin terhadap risk management — tidak mengambil shortcut yang melanggar Section 5 di `PLAN.md`
 
@@ -37,27 +37,31 @@ Kamu bertindak sebagai:
 
 | Area | Tools | Konvensi |
 |---|---|---|
-| Backtest & signal engine | Python 3.11+, `ccxt`, `pandas`, `vectorbt` | PEP8, type hints wajib di fungsi publik |
-| Execution (Fase 4) | Node.js + TypeScript, `ccxt` | ESLint + Prettier, async/await (no callback hell) |
-| DB | SQLite (Fase 1-2), PostgreSQL (Fase 4 kalau perlu) | Migration tersimpan di `db/migrations/` |
+| Backtest & signal engine | Python 3.11+, `ccxt`, `pandas`, `numpy` (murni pandas — `vectorbt` tercantum di `requirements.txt` tapi **tidak dipakai** kode mana pun) | PEP8, type hints wajib di fungsi publik |
+| Execution (Fase 4, **belum diimplementasi**) | **Python + `ccxt`** (amendemen PLAN.md §3, 2026-09-11 — BUKAN Node.js) | Masih GATED: dilarang implementasi order riil sebelum gate Fase 2 lolos |
+| Web produk (`monitoring/web/`) | Next.js 16 (App Router), TypeScript, Supabase | Batas frontend/backend: lihat §9 di bawah & `monitoring/web/AGENTS.md` |
+| DB | SQLite (`db/paper_trading.db`, state paper) + PostgreSQL via Supabase (produk web — **aktif sekarang**, bukan "Fase 4 kalau perlu") | Source of truth skema Postgres: **`supabase/migrations/`** (TIDAK ADA `db/migrations/`) |
 | Config | `.env` + `config.yaml` untuk parameter strategi (jangan hardcode di kode) | Semua magic number (period, multiplier) harus di config, bukan inline |
-| Testing | `pytest` untuk Python, `vitest`/`jest` untuk Node.js | Unit test wajib untuk position sizing & stop loss calculation (bagian paling kritis) |
-| Logging | `logging` module Python / `pino` Node.js | Semua signal + eksekusi order wajib ter-log, termasuk timestamp & reasoning |
+| Testing | `pytest` untuk Python (64 test); **Playwright** untuk E2E web (`monitoring/web/e2e/`, 34 test) — **tidak ada vitest/jest** di repo | Unit test wajib untuk position sizing & stop loss calculation (bagian paling kritis) |
+| Logging | `logging` module Python + alert `monitoring/telegram_alert.py` | Semua signal + eksekusi order wajib ter-log, termasuk timestamp & reasoning |
 
 ## 5. Struktur Proyek
 
-Ikuti struktur folder di `PLAN.md` Section 4. Jangan buat struktur baru tanpa alasan kuat — kalau ada kebutuhan restrukturisasi, diskusikan dulu.
+Ikuti struktur aktual yang terdokumentasi di **`ARCHITECTURE.md`** (dan inventaris lengkap di
+`REPO_MAP.md`). Struktur di `PLAN.md` Section 4 adalah **usulan lama yang sudah basi** — jangan
+dipakai sebagai referensi path. Jangan buat struktur baru tanpa alasan kuat — kalau ada
+kebutuhan restrukturisasi, diskusikan dulu.
 
 ## 6. Environment & Setup
 
 ```bash
-# Python
+# Python (engine)
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# Node.js (Fase 4)
-npm install
+# Web (monitoring/web) — untuk kerja di Next.js app
+cd monitoring/web && npm install
 ```
 
 Semua dependency baru harus ditambahkan ke `requirements.txt` / `package.json`, jangan install ad-hoc tanpa dicatat.

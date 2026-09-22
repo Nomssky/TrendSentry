@@ -4,9 +4,9 @@
 
 ## Fase 1 — Backtest Engine
 
-- [x] Setup `venv` + install `ccxt`, `pandas`, `vectorbt` (pandas-ta gagal install di Python 3.14 — numba lama; ATR/Donchian diimplementasikan murni pandas + unit test, lebih transparan)
+- [x] Setup `venv` + install `ccxt`, `pandas`, `vectorbt` (pandas-ta gagal install di Python 3.14 — numba lama; ATR/Donchian diimplementasikan murni pandas + unit test, lebih transparan. **Catatan 2026-09-22:** `vectorbt` akhirnya **tidak dipakai oleh kode mana pun** — tetap tercatat di `requirements.txt` sebagai sisa, lihat `REPO_MAP.md` §13)
 - [x] Buat `config.yaml` (pair, timeframe, Donchian period, ATR multiplier, risk %)
-- [x] Buat script fetch data historis (`backtest/fetch_data.py`) — BTC/USDT & ETH/USDT, 1D, 6 tahun (2020-08..2026-08, diperluas dari 3 tahun atas instruksi user utk cakup bull-bear-bull), simpan ke `data/historical/`
+- [x] Buat script fetch data historis (**aktual: `scripts/fetch_bitget_data.py`** — nama lama `backtest/fetch_data.py` tidak pernah ada di kode, tercantum basi sebelumnya) — BTC/USDT & ETH/USDT, 1D, 6 tahun (2020-08..2026-08, diperluas dari 3 tahun atas instruksi user utk cakup bull-bear-bull), simpan ke `data/historical/`
 - [x] Implementasi `backtest/strategy.py`:
   - [x] Fungsi Donchian channel (highest high / lowest low N-hari, shift 1 = anti look-ahead)
   - [x] Fungsi ATR(14) (Wilder smoothing)
@@ -30,26 +30,36 @@
 > - [ ] **Evaluasi win rate/avg R HANYA setelah ≥ 10 trade tertutup.** Sebelum itu cukup pantau: sistem jalan tanpa crash, logging lengkap, slippage per-signal tercatat
 > - [ ] **Checkpoint:** review di minggu ke-4 (≈ 22 Sep, cek operasional saja) dan minggu ke-8 (≈ 20 Okt, final), lalu tiap 4 minggu selama window diperpanjang
 >
-> Referensi ekspektasi = **statistik backtest 10-pair 6 tahun** (win rate 36.17%, avg win +4.35R, avg loss -0.85R, PF 2.27, ~15.7 trade/tahun; laporan: backtest reports + monitoring/web/lib/reference.ts). **Caveat tercatat:** konfigurasi 10-pair mengandung survivorship bias (SOL/BNB/XRP dipilih sebagai survivor, + 7 pair lainnya) & DD backtest -26.45% — angka referensi adalah expectation atas basis historical data, bukan janji. Perbandingan "periode yang sama" hanya valid untuk window yang overlap dengan backtest; untuk periode baru gunakan referensi di atas.
+> Referensi ekspektasi = **statistik backtest 10-pair 6 tahun** (win rate 36.17%, avg win +4.35R, avg loss -0.85R, PF 2.27, ~15.7 trade/tahun; laporan: backtest reports + monitoring/web/lib/reference.ts). **Catatan 2026-09-22:** angka R-multiple/PF di paragraf ini = snapshot `backtest-reference.json`; ada snapshot kedua yang sedikit berbeda (`backtest/reports/metrics.md`: +4.31/−0.84, PF 2.26, return +149.59% vs +152.0%) — **keputusan canonical metric masih pending** (lihat `ARCHITECTURE.md` §16); jangan "menyamakan" angka tanpa keputusan owner + re-run. **Caveat tercatat:** konfigurasi 10-pair mengandung survivorship bias (SOL/BNB/XRP dipilih sebagai survivor, + 7 pair lainnya) & DD backtest -26.45% (snapshot B; snapshot A: -26.19%) — angka referensi adalah expectation atas basis historical data, bukan janji. Perbandingan "periode yang sama" hanya valid untuk window yang overlap dengan backtest; untuk periode baru gunakan referensi di atas.
+
+> **Snapshot status (2026-09-22, dari `db/paper_trading.db` commit `754e6f7`, `lastRun` 2026-09-22T05:35 UTC):**
+>
+> - Hari ke-28 sejak reset 2026-08-25 (minggu ke-4) — checkpoint review minggu ke-4 jatuh ≈ 22 Sep 2026.
+> - Signal tercatat: **245** (rentang 2026-08-24 .. 2026-09-21). Posisi: 6 (3 open, **3 tertutup = 3/10** gate).
+> - Trade tertutup: SOL/USDT −1.08R (`stop_loss`), HYPE/USDT −0.92R (`donchian_exit`), BNB/USDT −1.08R (`live_stop`) — ketiganya exit 2026-09-10.
+> - Slippage: **245 sampel, avg 0.0126%, max 0.0936%** (masih di bawah batas evaluasi 0.10%).
+> - `equity_log` 30 hari (2026-08-24 .. 2026-09-22), `yield_log` 28 hari, `paper_cash` 723.10.
+>
+> Angka di blok ini adalah **snapshot operasional bertanggal** — perbarui saat snapshot berganti; jangan dianggap gate criteria.
 
 - [x] Buat `paper_trading/live_signal.py` — jalankan signal engine di data real-time (dummy execution, log only)
 - [x] Alerting: Telegram — crash/fetch gagal (setelah retry) **+ ENTER/EXIT** (dimajukan dari Fase 4; `monitoring/telegram_alert.py`, secrets di repo GitHub). HOLD tidak dinotifikasi (anti-spam harian)
-- [x] Web monitoring dashboard (`monitoring/web/`, Next.js static export → Vercel gratis; request eksplisit user 2026-08-25, lihat PLAN.md Section 8): health/gap, live ticker + unrealized PnL realtime (WebSocket), equity curve, trade log, slippage vs asumsi, win rate/avg R vs backtest. **Deploy: import repo di Vercel, Root Directory = `monitoring/web`**
-- [x] Retry fetch Binance 3x (delay 5/10s) sebelum dianggap gagal — hiccup jaringan tidak jadi "missed day"
+- [x] Web monitoring dashboard (`monitoring/web/`, **Next.js 16 App Router server-rendered → Vercel + Supabase** — diperbarui 2026-09-22: **bukan static export**, tidak ada build-time SQLite, data dibaca dari Supabase saat request; request eksplisit user 2026-08-25, lihat PLAN.md Section 8): health/gap, live ticker + unrealized PnL via **REST polling `/api/prices` tiap 3 detik (bukan WebSocket)**, equity curve, trade log, slippage vs asumsi, win rate/avg R vs backtest. **Deploy: import repo di Vercel, Root Directory = `monitoring/web`**
+- [x] Retry fetch 3x (delay 5/10s) sebelum dianggap gagal — hiccup jaringan tidak jadi "missed day" (historis: jalur mirror Binance `data-api.binance.vision` untuk geo-block 451; **sejak venue pindah ke Bitget 2026-08-25 engine memakai API publik Bitget**, jalur Binance tidak dipakai lagi)
 - [x] Backup DB harian (`db/backup_db.sh`, SQLite .backup, simpan 14 hari)
 - [x] Setup scheduler — **GitHub Actions** (`.github/workflows/paper-trading.yml`, cron `0 1 * * *` UTC native, trigger manual tersedia). Crontab lokal dibatalkan: laptop tidak always-on. State DB dipersistenkan via commit balik `db/paper_trading.db` ke repo tiap run = sekaligus backup off-disk harian
 - [x] Fix geo-block 451 (GitHub runner IP US diblokir api.binance.com): live signal pakai mirror `data-api.binance.vision` (data Binance sama persis, endpoint publik) + `fetchMarkets: ['spot']` (fapi futures keblokir terpisah)
 - [x] Buat schema log (`db/schema.sql`) — simpan setiap signal, harga, keputusan, timestamp
 - [x] Equity snapshot harian (`equity_log`, 2026-09-08): engine tulis total=cash+MTM tiap run + backfill dari data lokal — kurva web tanpa fetch harga saat build, venue tunggal Bitget, fix double-count yield di total web
-- [x] Ukur slippage real: log bid-ask spread order book di tiap signal (bandingkan dengan asumsi 0.05%) — **pipeline live 2026-09-10**: 125 sampel tersync ke Supabase, avg 0.011% (dalam batas), tampil di dashboard. Evaluasi final tetap di checkpoint minggu ke-8.
+- [x] Ukur slippage real: log bid-ask spread order book di tiap signal (bandingkan dengan asumsi 0.05%) — **pipeline live 2026-09-10**: 125 sampel tersync, avg 0.011% (dalam batas), tampil di dashboard. **Snapshot 2026-09-22** (lihat blok di atas): 245 sampel, avg 0.0126%. Evaluasi final tetap di checkpoint minggu ke-8.
 - [ ] Jalankan minimal 8 minggu, kumpulkan data
-- [x] Buat script perbandingan performa live vs backtest periode yang sama (`scripts/compare_live_vs_backtest.py`, 2026-09-10 + unit test) — **evaluasi dikunci sampai ≥10 trade tertutup** (sekarang 1/10); script hanya cetak snapshot sebelum itu.
+- [x] Buat script perbandingan performa live vs backtest periode yang sama (`scripts/compare_live_vs_backtest.py`, 2026-09-10 + unit test) — **evaluasi dikunci sampai ≥10 trade tertutup** (snapshot 2026-09-22: **3/10**); script hanya cetak snapshot sebelum itu.
 - [ ] Rangkum hasil ke user, tunggu review sebelum lanjut Fase 3
 
 ## Fase 3 — LLM Filter Layer
 
-- [ ] Setup `llm_filter/deepseek_client.py` (API call ke DeepSeek, pakai `.env` untuk API key)
-- [ ] Desain prompt template (`llm_filter/prompts/`) — fokus ke risk sanity-check, bukan signal generation
+- [ ] Setup `llm_filter/deepseek_client.py` (API call ke DeepSeek, pakai `.env` untuk API key) — **file belum ada** (baru `llm_filter/filter.py` skeleton nonaktif)
+- [ ] Desain prompt template (`llm_filter/prompts/`) — **direktori belum ada** — fokus ke risk sanity-check, bukan signal generation
 - [ ] Integrasi filter ke pipeline signal (hanya dipanggil saat ada signal valid, bukan tiap candle)
 - [ ] Log reasoning LLM per signal
 - [ ] Bandingkan win rate dengan vs tanpa filter LLM (butuh data cukup dari Fase 2 + lanjutan)
@@ -65,7 +75,7 @@
 - [ ] Implementasi circuit breaker (auto-pause kalau drawdown > threshold)
 - [ ] Implementasi `execution/` — koneksi exchange API via `ccxt`, order dengan SL wajib
 - [ ] Unit test untuk risk manager & circuit breaker
-- [ ] Setup `monitoring/telegram_bot.py` — notifikasi entry/exit/circuit breaker
+- [ ] Setup notifikasi circuit breaker — **file yang ada saat ini: `monitoring/telegram_alert.py`** (nama lama `monitoring/telegram_bot.py` tidak pernah ada); tinggal menambah event breaker saat Fase 4
 - [ ] Dry-run mode dulu (paper tapi pakai infra live) sebelum sentuh modal riil
 - [ ] Deploy ke VPS + Docker
 - [ ] Mulai modal kecil sesuai `PLAN.md`, monitoring mingguan
