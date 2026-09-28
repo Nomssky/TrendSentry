@@ -53,7 +53,7 @@ Authoritative or useful as-is — no changes planned in this closure.
 | `monitoring/telegram_alert.py` | The MVP's "one failure alert" (location changes in Wave 1, component does not) |
 | `scripts/compare_live_vs_backtest.py` + `backtest/reference.json` family | Live-vs-backtest comparison gate (dependency *direction* is fragile — see §4) |
 | `backtest/research/` + `backtest/reports/` + `docs/audit/` | Research/thesis track, **separate from the product**, retained as evidence |
-| `tests/` (9 files, 70 tests) | Regression safety for strategy/risk/policy — must keep passing through every wave |
+| `tests/` (10 files, 75 tests) | Regression safety for strategy/risk/policy — must keep passing through every wave |
 | `cli.py`, `deploy/`, `.github/workflows/` | Entrypoints, container images, CI (pins and data workflow need attention — see §4/§5) |
 | `data/historical/` (10 pair CSVs) | Backtest/paper input until the canonical rebuild (tracked by OD-5, not by this plan) |
 
@@ -79,7 +79,7 @@ Only what lands at/before the 2 October closure. Nothing here is a new architect
    references (`paper_trading/live_signal.py` sys.path, `tests/test_live_signal.py` sys.path,
    `deploy/Dockerfile.engine` COPY, `.env` depth lookup, ARCHITECTURE §3 / REPO_MAP / README).
    Result: `monitoring/` stops mixing a Python alert module with the Next.js app.
-4. **Repair documentation/path drift** — stale "64 tests" → 70, `REPO_MAP` "8 test files" → 9,
+4. **Repair documentation/path drift** — stale "64 tests" → 75, `REPO_MAP` "8 test files" → 10,
    `PLAN.md` §4 structure annotation, any path pointing at a moved file.
 5. **Do NOT broadly move Python source.** `backtest/`, `paper_trading/`, `risk_manager/`, `tests/`,
    `scripts/`, `config.yaml`, `data/` stay put. Optional `data/` research/production split waits for
@@ -193,7 +193,7 @@ Smallest concrete list of what is still missing for the first real vertical slic
 - Single import identity test for `backtest.strategy`.
 - Ship-gate isolation test (2 deployments × same pair/date).
 - Deploy-validation tests (bad risk config rejected, entitlement enforced).
-- Existing 70 tests stay green through every wave.
+- Existing 75 tests stay green through every wave.
 
 ---
 
@@ -205,7 +205,7 @@ config or behavior change. Verified by `git diff --diff-filter=M` empty at the t
 **Wave 1 — immediate repository cleanup (this closure):**
 `tests/conftest.py` → unify Python import identity → move `monitoring/telegram_alert.py` to
 `alerting/` → repair affected docs/paths. No broad Python source moves. Optional `data/` split
-deferred to OD-5. Gate: 70 tests pass as a full suite **and** standalone.
+deferred to OD-5. Gate: 75 tests pass as a full suite **and** standalone.
 
 **Wave 2 — MVP integration (bounded by the 2 October slice, then continued after):**
 deployment record + config version → deploy validation → config-bundle runtime → `template_id`
@@ -230,9 +230,9 @@ Each item is testable. "Owner" = needs sign-off, not automatic.
 |---|---|---|
 | 1 | Working tree status is understood | `git status -sb` shows only the known untracked `OD3…OD8` + `TREE_REFACTOR_AUDIT.md`; tracked modifications = only the files this closure intentionally produced; `origin/main` lag documented (`d728ec8`, ahead 2) |
 | 2 | Python import identity is unified | Single test asserting `backtest.strategy` resolves to one module object regardless of import path (no duplicate `sys.modules` entries) |
-| 3 | Tests pass as full suite | `python -m pytest tests/ -q` → 70 passed (or more, never fewer without an explained reason) |
+| 3 | Tests pass as full suite | `python -m pytest tests/ -q` → 75 passed (or more, never fewer without an explained reason) |
 | 4 | Tests pass standalone | `python -m pytest tests/test_strategy.py -q` (and `test_risk`, `test_backtest_cash`) → pass **without** relying on another file having run first |
-| 5 | pytest does not depend on collection order | `tests/conftest.py` exists; no test module mutates `sys.path` during import; reversed/shuffled file order still passes |
+| 5 | pytest does not depend on collection order | Repo-root availability is centralized in `tests/conftest.py`, so pytest collection/import no longer depends on which test file is imported first or on cwd (standalone runs and reversed/shuffled file order pass). Test modules are **not** all free of `sys.path` handling: several intentionally keep local path setup for documented direct script execution (`python tests/test_live_signal.py --real`, `python tests/test_backtest_cash.py`) where pytest's `conftest.py` is never loaded. That direct-script support is explicit and intentional — not a defect |
 | 6 | Alerting location/path is coherent | `alerting/telegram_alert.py` exists; grep shows no stale `monitoring/telegram_alert` import/COPY reference in code, tests, Dockerfile or docs |
 | 7 | No stale documentation points to moved files | Grep docs for every moved path → 0 hits; test counts/paths in README, AGENTS, REPO_MAP, PLAN match reality |
 | 8 | Product docs consistently describe automated trading as the product | README/PLAN/ARCH and web copy describe TrendSentry as automated crypto trading (automation/reliability/convenience), no profit guarantee |
