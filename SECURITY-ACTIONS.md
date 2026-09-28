@@ -114,7 +114,7 @@ Rotasi legacy key = **rotate JWT secret** (kedua key legacy diturunkan dari situ
 
 ## 5. Token Telegram — butuh @BotFather
 
-Dipakai di: `monitoring/telegram_alert.py`, `monitoring/web/lib/telegram.ts`,
+Dipakai di: `alerting/telegram_alert.py`, `monitoring/web/lib/telegram.ts`,
 workflow `paper-trading.yml`, `deploy/docker-compose.yml`, `.env` lokal.
 
 1. Telegram → chat **@BotFather**.
@@ -131,7 +131,7 @@ workflow `paper-trading.yml`, `deploy/docker-compose.yml`, `.env` lokal.
    ```
 5. Verifikasi kirim pesan:
    ```bash
-   ./venv/bin/python monitoring/telegram_alert.py
+   ./venv/bin/python alerting/telegram_alert.py
    ```
    Pesan test harus masuk ke HP, log `telegram alert terkirim`.
 6. `TELEGRAM_CHAT_ID` tidak perlu diubah.

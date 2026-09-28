@@ -11,6 +11,16 @@ import os
 import sys
 from pathlib import Path
 
+# Identitas impor tunggal: engine SELALU diimpor sebagai `backtest.strategy`.
+# ROOT disisipkan DI SINI (bukan setelah import) karena skrip ini juga dijalankan
+# langsung (`python backtest/run_backtest.py` / `cli.py backtest`) — pada mode itu
+# sys.path[0] = folder backtest/, sehingga `from strategy import ...` akan membuat
+# modul `strategy` KEDUA yang berbeda identitas dari `backtest.strategy`
+# (module identity ganda, lihat TREE_REFACTOR_AUDIT #1).
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 try:
     import matplotlib
 
@@ -21,7 +31,7 @@ except ImportError:
 import pandas as pd
 import yaml
 
-from strategy import (
+from backtest.strategy import (
     atr, donchian_high, donchian_low, position_size, cluster_position_count,
     sma, sma_entry_signal, sma_exit_signal, rsi, rsi_entry_signal, rsi_exit_signal,
 )
@@ -29,7 +39,6 @@ from strategy import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("run_backtest")
 
-ROOT = Path(__file__).resolve().parent.parent
 REPORTS = Path(__file__).resolve().parent / "reports"
 
 

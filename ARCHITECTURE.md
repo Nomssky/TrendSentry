@@ -58,7 +58,7 @@ TrendSentry hari ini terdiri dari **dua subsistem dalam satu repository**:
 
 ```
 Repo
-├── engine Python (A)     backtest/ paper_trading/ risk_manager/ monitoring/telegram_alert.py
+├── engine Python (A)     backtest/ paper_trading/ risk_manager/ alerting/telegram_alert.py
 ├── orkestrasi            scripts/ .github/workflows/ cli.py config.yaml
 ├── produk web (B)        monitoring/web/  → Supabase (schema: supabase/migrations/)
 ├── masa depan            llm_filter/ (disabled) deploy/ (belum dijalankan)
@@ -75,7 +75,7 @@ Repo
 | `backtest/run_backtest.py` | Simulasi portfolio, `compute_metrics`, `save_report` |
 | `paper_trading/live_signal.py` | Engine harian: fetch → indikator → exit/entry → SQLite → alert (595 baris, 1 file) |
 | `risk_manager/guards.py` | `validate_config` (guardrail startup), `CircuitBreaker` (belum diintegrasikan ke loop — by design, Fase 4), re-export `position_size` |
-| `monitoring/telegram_alert.py` | Alert ENTER/EXIT/STOP/CRASH |
+| `alerting/telegram_alert.py` | Alert ENTER/EXIT/STOP/CRASH |
 | `llm_filter/filter.py` | Kontrak filter Fase 3 — **skeleton, nonaktif** (`llm_filter.enabled: false`) |
 | `config.yaml` | Semua parameter (strategy, risk, paper, backtest, llm, execution) |
 

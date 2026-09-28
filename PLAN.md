@@ -172,8 +172,9 @@ TrendSentry/
 │   └── guards.py                  # validate_config + CircuitBreaker (+ re-export sizing)
 ├── llm_filter/
 │   └── filter.py                  # kontrak Fase 3 (skeleton, nonaktif)
+├── alerting/
+│   └── telegram_alert.py          # alert Telegram (Python)
 ├── monitoring/
-│   ├── telegram_alert.py          # alert Telegram (Python)
 │   └── web/                       # produk web Next.js 16 + Supabase (lihat monitoring/web/README.md)
 ├── scripts/                       # fetch_bitget_data, sync_paper_to_supabase, compare_live_vs_backtest
 ├── presets/                       # 3 preset beku (donchian/sma/rsi)
@@ -182,7 +183,7 @@ TrendSentry/
 ├── deploy/                        # persiapan VPS/Coolify (belum pernah dijalankan)
 ├── .github/workflows/             # paper-trading, trendsentry-daily-sync, fetch-bitget-data, test-bitget-api
 ├── data/historical/ (10 pair + sisa riset)  data/funding/ (riset)
-└── tests/                         # 8 file pytest, 64 test
+└── tests/                         # 10 file pytest + conftest.py, 75 test
 ```
 
 > Struktur lama (`execution/`, `llm_filter/deepseek_client.py`, `risk_manager/position_sizing.py`,

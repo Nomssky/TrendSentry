@@ -29,10 +29,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "backtest"))
-sys.path.insert(0, str(ROOT / "monitoring"))
-from strategy import atr, donchian_high, donchian_low, position_size, cluster_position_count  # noqa: E402
-from telegram_alert import send_alert  # noqa: E402
+from backtest.strategy import atr, donchian_high, donchian_low, position_size, cluster_position_count  # noqa: E402
+from alerting.telegram_alert import send_alert  # noqa: E402
 
 DB_PATH = ROOT / "db" / "paper_trading.db"
 SCHEMA_PATH = ROOT / "db" / "schema.sql"
@@ -321,7 +319,7 @@ def main() -> int:
     # ponytail: config check di awal — misconfig telegram (mis. CHAT_ID salah
     # di GitHub Secrets) harus terlihat di log TIAP run, bukan cuma di hari
     # ada ENTER/EXIT. Tanpa ini kegagalan notif silent berhari-hari.
-    from telegram_alert import load_env as _load_env
+    from alerting.telegram_alert import load_env as _load_env
 
     _load_env()
     if not (os.environ.get("TELEGRAM_BOT_TOKEN") and os.environ.get("TELEGRAM_CHAT_ID")):

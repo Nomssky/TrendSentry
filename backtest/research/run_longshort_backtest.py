@@ -21,8 +21,9 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT / "backtest"))
+sys.path.insert(0, str(ROOT))  # repo root: `backtest.strategy` = satu identitas modul
 from run_backtest import compute_metrics, load_config, load_ohlcv  # noqa: E402
-from strategy import position_size  # noqa: E402
+from backtest.strategy import position_size  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("longshort")

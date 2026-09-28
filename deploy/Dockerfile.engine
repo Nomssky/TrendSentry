@@ -6,7 +6,7 @@ COPY requirements-engine.txt ./
 RUN pip install --no-cache-dir -r requirements-engine.txt
 COPY backtest/ ./backtest/
 COPY paper_trading/ ./paper_trading/
-COPY monitoring/telegram_alert.py ./monitoring/telegram_alert.py
+COPY alerting/ ./alerting/
 COPY config.yaml db/schema.sql ./
 # DB SQLite + .env dimount dari host saat run (lihat docker-compose.yml).
 CMD ["python", "paper_trading/live_signal.py"]

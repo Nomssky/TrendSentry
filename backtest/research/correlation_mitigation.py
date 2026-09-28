@@ -11,6 +11,7 @@ import pandas as pd
 import yfinance as yf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))  # repo root: `backtest.strategy` = satu identitas modul
 from run_backtest import run_backtest, compute_metrics
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
@@ -35,7 +36,7 @@ BASE_CFG = {
 def load_ohlcv(symbol: str) -> pd.DataFrame:
     csv = DATA / f"{symbol.replace('/', '_')}_{TIMEFRAME}.csv"
     df = pd.read_csv(csv, parse_dates=["date"]).set_index("date")
-    from strategy import atr, donchian_high, donchian_low
+    from backtest.strategy import atr, donchian_high, donchian_low
     df["atr"] = atr(df, 14); df["don_hi"] = donchian_high(df, 20); df["don_lo"] = donchian_low(df, 10)
     return df
 
@@ -88,7 +89,7 @@ def run_corr_aware(dfs, cfg, max_per_cluster=1, risk_reduction_if_cluster_confli
                 actual_rp = risk["risk_per_trade_pct"]
                 if risk_reduction_if_cluster_conflict and sym_cluster and cluster_count > 0:
                     actual_rp = risk["risk_per_trade_pct"] * 0.5  # halve risk if same cluster already occupied
-                from strategy import position_size
+                from backtest.strategy import position_size
                 units = position_size(equity, entry_price, stop, actual_rp)
                 cost = units * entry_price * (1 + fee)
                 if cost > cash:

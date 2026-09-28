@@ -56,10 +56,10 @@ Angka audit:
 | File di-track di git | 198 |
 | Baris inventory di dokumen ini (§10) | 150 baris — mencakup seluruh 201 file; file serupa (mis. 13 CSV data) dikelompokkan jadi satu baris |
 | File Python sumber (non-test) | 19 |
-| File Python test | 8 (64 test) |
+| File Python test | 10 (75 test) + `conftest.py` |
 | File TS/TSX | 72 (37 `.ts` + 35 `.tsx`) |
 | File test E2E | 34 test Playwright + 1 smoke script `.mjs` |
-| Python test | **64 passed** (9.70s) |
+| Python test | **75 passed** |
 | Web typecheck | **exit 0** |
 | Web lint | **exit 1 — 2 error, 7 warning** |
 | Web build | **exit 0** |
@@ -90,8 +90,9 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 │   └── guards.py                # validate_config + CircuitBreaker + re-export position_size
 ├── llm_filter/
 │   └── filter.py                # kontrak filter Fase 3 (skeleton, disabled)
+├── alerting/
+│   └── telegram_alert.py        # alert Telegram (Python, dipakai engine)
 ├── monitoring/
-│   ├── telegram_alert.py        # alert Telegram (Python, dipakai engine)
 │   └── web/                     # Next.js 16 app (produk SaaS + dashboard publik)
 │       ├── app/                 # routes: marketing, /app (auth), /auth, /api (14 route)
 │       ├── lib/                 # supabase, deviation, encryption, bitget, validations, dll
@@ -116,12 +117,13 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 ├── data/
 │   ├── historical/              # 13 CSV OHLCV (10 pair config + BCH/LTC/PAXG sisa riset)
 │   └── funding/                 # 2 CSV funding (riset long-short)
-└── tests/                       # 8 file pytest
+└── tests/                       # 10 file pytest + conftest.py
 ```
 
 Tidak ada: `execution/`, `llm_filter/deepseek_client.py`, `llm_filter/prompts/`,
 `risk_manager/position_sizing.py`, `monitoring/telegram_bot.py`, `backtest/fetch_data.py`,
-`db/migrations/`, `conftest.py`, `monitoring/web/out/` — semuanya pernah disebut dokumentasi
+`db/migrations/`, `conftest.py` (root — yang ada `tests/conftest.py`, bootstrap import, Wave 1),
+`monitoring/web/out/` — semuanya pernah disebut dokumentasi
 (§12) tetapi **tidak ada di kode**.
 
 ---
@@ -136,7 +138,7 @@ Tidak ada: `execution/`, `llm_filter/deepseek_client.py`, `llm_filter/prompts/`,
 │          → backtest/strategy.py (Donchian/ATR/position_size/cluster — dipakai BERSAMA backtest)   │
 │          → llm_filter.filter.evaluate (HANYA jika llm_filter.enabled=true — saat ini false)      │
 │          → SQLite db/paper_trading.db (signals, positions, slippage_log, yield_log, equity_log)   │
-│          → monitoring/telegram_alert.py (ENTER/EXIT/STOP/CRASH)                                  │
+│          → alerting/telegram_alert.py (ENTER/EXIT/STOP/CRASH)                                    │
 │      → scripts/sync_paper_to_supabase.py ──POST + Bearer CRON_SECRET──┐                          │
 │      → git commit db/paper_trading.db (persist state + backup)        │                          │
 └───────────────────────────────────────────────────────────────────────┼──────────────────────────┘
@@ -405,14 +407,14 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | Path | Purpose | Rujuk | Impor | Runtime | Status |
 |---|---|---|---|---|---|
 | backtest/strategy.py | indikator Donchian/ATR/SMA/RSI, position_size, cluster limit | run_backtest.py, live_signal.py, guards.py, run_longshort_backtest.py, tests | pandas | dipanggil backtest & paper | CORE |
-| backtest/run_backtest.py | simulasi portfolio + metrics + report | cli.py, research/*.py (5), tests/test_backtest_cash.py | strategy, pandas, yaml, matplotlib (opsional) | manual / cli / riset | CORE |
+| backtest/run_backtest.py | simulasi portfolio + metrics + report | cli.py, research/*.py (5), tests/test_backtest_cash.py | backtest.strategy, pandas, yaml, matplotlib (opsional) | manual / cli / riset | CORE |
 | backtest/__init__.py | penanda paket | import path tests | — | — | SUPPORT |
-| paper_trading/live_signal.py | engine paper harian (signal→risk→SQLite→alert) | paper-trading.yml, cli.py, tests/test_live_signal.py | strategy, telegram_alert, guards, llm_filter (kondisional), ccxt, pandas, yaml | CI 01:00 UTC / cli paper | CORE |
+| paper_trading/live_signal.py | engine paper harian (signal→risk→SQLite→alert) | paper-trading.yml, cli.py, tests/test_live_signal.py | backtest.strategy, alerting.telegram_alert, guards, llm_filter (kondisional), ccxt, pandas, yaml | CI 01:00 UTC / cli paper | CORE |
 | risk_manager/guards.py | validate_config, CircuitBreaker, re-export position_size | live_signal.py, cli.py doctor, tests | backtest.strategy | tiap start paper & doctor | CORE |
 | risk_manager/__init__.py | penanda paket | — | — | — | SUPPORT |
 | cli.py | CLI gratis (backtest/paper/live/watcher/doctor) | PLAN §9, TASKS, tests/test_cli.py | rich, yaml, sqlite3 | manual lokal | SUPPORT |
 | llm_filter/filter.py | kontrak filter Fase 3 (pass-through skeleton) | live_signal (bila enabled), tests/test_filter.py | dataclasses | **tidak aktif** (config false) | FUTURE |
-| monitoring/telegram_alert.py | kirim alert Telegram | live_signal.py, SECURITY-ACTIONS.md | urllib | tiap run paper | CORE |
+| alerting/telegram_alert.py | kirim alert Telegram | live_signal.py, SECURITY-ACTIONS.md | urllib | tiap run paper | CORE |
 | scripts/sync_paper_to_supabase.py | SQLite → /api/cron/paper-sync inkremental | paper-trading.yml, RUNBOOK | urllib, sqlite3 | CI setelah engine | CORE |
 | scripts/fetch_bitget_data.py | fetch OHLCV Bitget → CSV | fetch-bitget-data.yml, DESIGN.md | ccxt, pandas, yaml | manual/dispatch | SUPPORT |
 | scripts/compare_live_vs_backtest.py | gate evaluasi Fase 2 (locked <10) | tests/test_compare.py, TASKS | backtest-reference.json, sqlite3 | manual | SUPPORT |
@@ -424,11 +426,13 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | backtest/research/run_longshort_backtest.py | long-short vs long-only vs short-only (riset, "tidak dipakai paper") | reports/research/longshort/ | run_backtest, strategy, matplotlib | manual | RESEARCH |
 | backtest/research/sharpe_benchmark.py | Sharpe identik formula vs B&H | reports/sharpe_benchmark_comparison.md | run_backtest, **scipy (tidak di requirements)** | manual | RESEARCH |
 
-### 10.3 Python — tests (8 file, 64 test)
+### 10.3 Python — tests (10 file, 75 test + `tests/conftest.py` bootstrap path)
 
 | Path | Test | Melindungi | Status |
 |---|---|---|---|
+| tests/conftest.py | — | bootstrap `sys.path` repo-root (hilangkan ketergantungan urutan koleksi) | SUPPORT |
 | tests/test_strategy.py | 24 | position_size, ATR Wilder, Donchian anti look-ahead, cluster, SMA, RSI | CORE |
+| tests/test_module_identity.py | 5 | identitas modul `backtest.strategy` (jalur impor tunggal, anti-duplikasi) | CORE |
 | tests/test_risk.py | 13 | guards: sizing reuse anti-drift, CircuitBreaker, validate_config | CORE |
 | tests/test_live_signal.py | 11 | engine paper e2e (FakeExchange): enter/exit/idempoten/yield/snapshot/backfill/gap | CORE |
 | tests/test_compare.py | 5 | gate `compare_live_vs_backtest.evaluate` | CORE |
@@ -436,6 +440,7 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | tests/test_cli.py | 4 | cli: help, live refused, doctor, watcher | CORE |
 | tests/test_filter.py | 2 | kontrak LLM filter (verdict sempit, skeleton pass) | CORE |
 | tests/test_backtest_cash.py | 1 | regresi P0-3 (kas negatif saat clamp) | CORE |
+| tests/test_strategy_templates_seed.py | 6 | seed template anti-drift (forward-only INSERT, urutan migrasi) | CORE |
 
 ### 10.4 Config, data, presets, DB
 
@@ -444,7 +449,7 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | config.yaml | parameter strategi/risk/paper/backtest/llm/execution | live_signal, run_backtest, fetch_bitget_data, cli doctor, tests/test_presets | tiap run | CORE |
 | requirements.txt | dep full (ccxt, pandas, numpy, matplotlib, **vectorbt**, pytest, PyYAML, **requests**, rich) | README, CI (sebagian) | install | CORE |
 | requirements-engine.txt | dep ramping image engine | Dockerfile.engine | build image | SUPPORT |
-| .env.example | template secret (exchange, deepseek, telegram, RUN_MODE) | telegram_alert.load_env, README | runtime lokal | SUPPORT |
+| .env.example | template secret (exchange, deepseek, telegram, RUN_MODE) | alerting.telegram_alert.load_env, README | runtime lokal | SUPPORT |
 | .gitignore | ignore venv/.env/report csv/db/node_modules | — | git | CORE |
 | .dockerignore | jangan bawa secret/venv/node_modules ke image | Docker builds | build | SUPPORT |
 | db/schema.sql | DDL SQLite 7 tabel | live_signal (`executescript`), cli | tiap start paper | CORE |
@@ -636,7 +641,7 @@ Entri DEAD/SUSPICIOUS dengan bukti lengkap → §13.
 Klasifikasi per domain (ringkas):
 
 - **A. Production/core engine**: `backtest/{strategy,run_backtest}.py`, `paper_trading/live_signal.py`,
-  `risk_manager/guards.py`, `monitoring/telegram_alert.py`, `config.yaml`, `db/schema.sql`,
+  `risk_manager/guards.py`, `alerting/telegram_alert.py`, `config.yaml`, `db/schema.sql`,
   `scripts/sync_paper_to_supabase.py`, `paper-trading.yml`, `trendsentry-daily-sync.yml`,
   seluruh `monitoring/web/app|lib` + `supabase/migrations`, `lib/backtest-reference.json`,
   `backtest/reports/{metrics.md,decision_log.md,presets/}`.
@@ -684,7 +689,7 @@ Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan.
   `llm_filter/prompts/`, `execution/` (Node.js), `risk_manager/position_sizing.py`,
   `monitoring/telegram_bot.py`.
 - Realitas: keempat path itu **tidak ada** (dicek `[ -e ]`). Yang ada: `risk_manager/guards.py`,
-  `monitoring/telegram_alert.py`, `llm_filter/filter.py`, plus direktori yang tidak pernah
+  `alerting/telegram_alert.py`, `llm_filter/filter.py`, plus direktori yang tidak pernah
   disebut: `monitoring/web/`, `scripts/`, `presets/`, `supabase/`, `tests/`, `deploy/`, `cli.py`.
 - `AGENTS.md:42` "Migration tersimpan di `db/migrations/`" → **tidak ada**; aktual
   `supabase/migrations/` (10 file).
@@ -696,10 +701,10 @@ Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan.
 |---|---|---|
 | `backtest/fetch_data.py` | TASKS.md:9 (dicentang `[x]`!) | tidak ada; aktual `scripts/fetch_bitget_data.py` |
 | `fetch_data.py # Data fetcher (Binance mirror)` | DESIGN.md:14 | tidak ada + venue sudah Bitget |
-| `monitoring/telegram_bot.py` | TASKS.md:68, PLAN.md:166 | tidak ada; aktual `monitoring/telegram_alert.py` |
+| `monitoring/telegram_bot.py` | TASKS.md:68, PLAN.md:166 | tidak ada; aktual `alerting/telegram_alert.py` (sebelumnya `monitoring/telegram_alert.py`) |
 | `llm_filter/deepseek_client.py` + `prompts/` | TASKS.md:51-52, PLAN.md:156-157 | tidak ada (Fase 3 belum dikerjakan) |
 | `risk_manager/position_sizing.py` | PLAN.md:162 | tidak ada; aktual `risk_manager/guards.py` (re-export) |
-| `conftest.py` | AUDIT.md menyebut sudah dihapus | benar sudah tidak ada (klaim AUDIT valid) |
+| `conftest.py` (root) | AUDIT.md menyebut sudah dihapus | benar masih tidak ada di root (klaim AUDIT valid); `tests/conftest.py` BARU ditambahkan Wave 1 (bootstrap import, bukan file yang sama) |
 
 ### 12.5 Klaim "file sudah dihapus/mati" yang ternyata masih ada atau sebaliknya
 - `AUDIT.md:222` daftar perbaikan masih mencantumkan **"P4-4 Buat deploy/.env.example" sebagai
@@ -786,7 +791,7 @@ Metode: grep referensi lintas repo (Python/TS/TSX/YAML/MD) + penelusuran runtime
 | 4 | Perhitungan Sharpe/MDD **tiga implementasi** | `run_backtest.compute_metrics` (Python), `app/papertrading/page.tsx:41-62` (TS, single-pass), `research/sharpe_benchmark.py` | hasil web vs backtest bisa berbeda definisi (web pakai equity curve harian paper) | documented? belum ada komentar hubungan |
 | 5 | Rumus discipline score **dua implementasi wajib sinkron** | `lib/deviation.ts:196-199` vs trigger SQL `20260912130000` | drift diam-diam mengubah skor | sudah diberi komentar "HARUS sama" — kandidat untuk satu test paritas |
 | 6 | Guardrail **tiga lokasi** | `risk_manager/guards.validate_config` (Python), `lib/validations.ts GUARDRAILS` (TS), seed `20260911120000` (SQL) | perubahan salah satu = inkonsistensi | semua membatasi long_only/risk≤1%/max≤5 — kandidat kontrak tunggal |
-| 7 | Alert Telegram **dua implementasi** | `monitoring/telegram_alert.py` vs `lib/telegram.ts` | format/telemetri berbeda | beda runtime (CI vs Vercel) — dapat diterima, catat saja |
+| 7 | Alert Telegram **dua implementasi** | `alerting/telegram_alert.py` vs `lib/telegram.ts` | format/telemetri berbeda | beda runtime (CI vs Vercel) — dapat diterima, catat saja |
 | 8 | Pasangan pair & modal **duplikat** | `config.yaml strategy.pairs` vs `lib/constants.ts PAIRS`; `backtest.initial_capital_usd` vs `STARTING_CASH` | web menghardcode 10 pair (daily-sync, prices) — ubah pair = wajib ubah 2 tempat | kandidat: generate/sync dari satu sumber |
 | 9 | Backup **tiga mekanisme** | commit CI `db/paper_trading.db`, `db/backup_db.sh` (lokal, mati), `deploy/backup.sh` (pg, VPS) |Operasional membingungkan | dokumentasikan mana yang aktif |
 | 10 | Klien Supabase **empat pembangunan** | `lib/supabase/{server,client,admin}.ts` + inline `createServerClient` di `proxy.ts` | proxy tidak memakai helper bersama | dapat diterima (middleware beda runtime), catat |
@@ -797,11 +802,11 @@ Metode: grep referensi lintas repo (Python/TS/TSX/YAML/MD) + penelusuran runtime
 
 ## 15. Test Coverage Map
 
-### 15.1 Python (pytest) — 8 file, **64 test, semua PASS (9.70s)**
+### 15.1 Python (pytest) — 10 file, **75 test, semua PASS**
 
 | Implementasi | Test yang melindungi | Status |
 |---|---|---|
-| `backtest/strategy.py:position_size` | test_strategy.TestPositionSize + test_risk.sizing reuse | terlindungi (ganda, disengaja anti-drift) |
+| `backtest/strategy.py:position_size` | test_strategy.TestPositionSize + test_risk.sizing reuse + test_module_identity (objek fungsi identik lintas importer) | terlindungi (ganda, disengaja anti-drift) |
 | `backtest/strategy.py:atr` (Wilder) | test_strategy.TestATR | terlindungi |
 | `backtest/strategy.py:donchian_*` (anti look-ahead) | test_strategy.TestDonchian | terlindungi |
 | `backtest/strategy.py:cluster_*` | test_strategy.TestClusterLimit | terlindungi |
@@ -817,9 +822,9 @@ Metode: grep referensi lintas repo (Python/TS/TSX/YAML/MD) + penelusuran runtime
 | `presets/*.yaml` | test_presets (4) termasuk `test_parameter_beku` | terlindungi |
 | `scripts/sync_paper_to_supabase.py` (watermark) | — | **TIDAK diuji** |
 | `scripts/fetch_bitget_data.py` | — | tidak diuji (butuh network) |
-| `monitoring/telegram_alert.py` | — | tidak diuji |
+| `alerting/telegram_alert.py` | — | tidak diuji (wiring alert teruji lewat test_live_signal) |
 
-**Test tanpa implementasi:** tidak ada — semua 64 test menunjuk file yang ada.
+**Test tanpa implementasi:** tidak ada — semua 75 test menunjuk file yang ada.
 **Duplicate coverage:** `position_size` sengaja diuji 2× (anti-drift, ada test khusus
 `position_size is strat_size`).
 **Test perilaku lama/deprecated:** tidak ditemukan.

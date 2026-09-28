@@ -16,7 +16,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "paper_trading"))
-sys.path.insert(0, str(ROOT / "monitoring"))
+sys.path.insert(0, str(ROOT))
 import live_signal as ls  # noqa: E402
 
 DAY_MS = 86_400_000

@@ -113,7 +113,7 @@
 | DB | SQLite `db/paper_trading.db` (state paper) + PostgreSQL via Supabase (produk web, aktif) | Migrasi Postgres: **`supabase/migrations/`** (tidak ada `db/migrations/`) |
 | Config | `.env` + `config.yaml` | Semua magic number di config |
 | Testing | pytest (unit engine) + **Playwright** (E2E web) — tidak ada vitest/jest | Unit test wajib untuk position sizing & SL |
-| Logging | Python logging + `monitoring/telegram_alert.py` | Semua signal + eksekusi wajib ter-log |
+| Logging | Python logging + `alerting/telegram_alert.py` | Semua signal + eksekusi wajib ter-log |
 
 ---
 

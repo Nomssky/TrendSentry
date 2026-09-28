@@ -114,7 +114,7 @@ cd TrendSentry
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env            # Telegram token etc. — never commit .env
-python -m pytest tests/         # 64 tests
+python -m pytest tests/         # 75 tests
 
 # Backtest
 python backtest/run_backtest.py
