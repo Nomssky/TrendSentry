@@ -66,6 +66,14 @@ export const StrategyDeleteSchema = z.object({
   id: z.number().int().positive(),
 })
 
+// Phase A: input pembuatan deployment. Params strategi TIDAK dikirim user —
+// bundle config disusun server dari baris user_strategies (lihat
+// lib/deployment-config.ts), jadi user tidak bisa menyuntik config mentah.
+export const DeploymentPostSchema = z.object({
+  name: z.string().min(1).max(100),
+  user_strategy_id: z.number().int().positive(),
+})
+
 export const ApiKeyPostSchema = z.object({
   // Batas panjang: kunci exchange realistis < 256 char. Cegah simpan string raksasa.
   api_key: z.string().min(1).max(256),

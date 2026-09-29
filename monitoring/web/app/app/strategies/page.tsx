@@ -17,7 +17,10 @@ export default async function StrategiesPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-white sm:text-3xl">Strategies</h1>
-        <Link href="/app/strategies/new" className="rounded-full bg-[#ccff00] px-5 py-2 text-sm font-semibold text-black hover:bg-[#aadd00]">+ New</Link>
+        <div className="flex gap-2">
+          <Link href="/app/deployments" className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/60 hover:text-white">Deployments</Link>
+          <Link href="/app/strategies/new" className="rounded-full bg-[#ccff00] px-5 py-2 text-sm font-semibold text-black hover:bg-[#aadd00]">+ New</Link>
+        </div>
       </div>
 
       {!strategies?.length ? (
