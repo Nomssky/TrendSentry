@@ -1,10 +1,10 @@
 "use client"
 
-// Halaman minimal Phase A: hanya memaparkan konsep deployment supaya alur
-// kontrol-eksekusi bisa diverifikasi (buat -> config version 1 -> daftar).
-// Dashboard deployment (status detail, riwayat versi, grafik) = tahap lanjut;
-// jangan tambah panel/visual di sini tanpa keputusan produk.
+// Halaman daftar deployment + token sekali-pakai (Phase A/B). Dashboard
+// per-deployment (status detail, config, data paper ter-scope) ada di
+// /app/deployments/<id> — halaman ini hanya memberi tautan ke sana.
 
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -177,6 +177,7 @@ export default function DeploymentsPage() {
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Config</th>
                 <th className="px-4 py-3">Heartbeat</th>
+                <th className="px-4 py-3"> </th>
               </tr>
             </thead>
             <tbody>
@@ -191,6 +192,11 @@ export default function DeploymentsPage() {
                   </td>
                   <td className="px-4 py-3 text-white/60">v{d.current_config_version}</td>
                   <td className="px-4 py-3 text-white/40">{d.last_heartbeat ? new Date(d.last_heartbeat).toLocaleString() : "—"}</td>
+                  <td className="px-4 py-3 text-right">
+                    <Link href={`/app/deployments/${d.id}`} className="text-xs font-medium text-[#ccff00] hover:underline">
+                      Open →
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

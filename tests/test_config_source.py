@@ -280,6 +280,93 @@ def test_cache_milik_deployment_lain_diabaikan(server, tmp_path):
         src.load()
 
 
+def _write_cache(tmp_path: Path, deployment_id: int, config: dict, version: int) -> Path:
+    """Tulis cache last-known-good valid dengan bentuk yang sama seperti tulisan
+    ConfigSource._write_cache (deployment_id, config_version, config, fetched_at)."""
+    path = tmp_path / f"config-{deployment_id}.json"
+    path.write_text(
+        json.dumps(
+            {
+                "deployment_id": deployment_id,
+                "config_version": version,
+                "config": config,
+                "fetched_at": "2026-01-01T00:00:00+00:00",
+            }
+        )
+    )
+    return path
+
+
+# ── 1b. D1: matriks startup A..G — TIDAK ADA yang jatuh ke config.yaml ─────
+#
+#   A remote valid, tanpa cache        -> test_valid_token_returns_current_config_version
+#   B remote mati, cache valid         -> test_last_known_good_cache_used_during_outage
+#   C remote mati, tanpa cache         -> test_first_startup_fails_closed_when_remote_unreachable
+#   D remote rusak, cache valid        -> test_startup_D_remote_malformed_cache_valid
+#   E remote = config deployment lain  -> test_startup_E_... + ..._fail_closed tanpa cache
+#   F cache = deployment lain          -> test_cache_milik_deployment_lain_diabaikan
+#   G cache ditolak engine             -> test_startup_G_cache_ditolak_engine
+
+
+def test_startup_D_remote_malformed_cache_valid(server, tmp_path):
+    """D: remote membalas bukan-JSON + cache valid -> lanjut dari cache,
+    dan cache yang gagal tidak ditimpa oleh payload sampah."""
+    cache = _write_cache(
+        tmp_path,
+        DEPLOYMENT_ID,
+        _valid_bundle(deployment_id=DEPLOYMENT_ID, config_version=7),
+        7,
+    )
+    server.raw_body = b"<html>halaman filter ISP</html>"
+    snap = ConfigSource(DEPLOYMENT_ID, _url(server), TOKEN_OK, cache_file=cache, timeout=5.0).load()
+    assert snap.origin == "cache"
+    assert snap.config_version == 7
+    assert json.loads(cache.read_text())["config_version"] == 7
+
+
+def test_startup_E_remote_config_deployment_lain_cache_valid(server, tmp_path):
+    """E: remote membawa config milik deployment 999 -> DITOLAK, cache milik
+    sendiri yang dipakai. Tanpa cache, kasus yang sama fail closed (lihat
+    test_wrong_deployment_id_in_payload_fails_closed)."""
+    cache = _write_cache(
+        tmp_path,
+        DEPLOYMENT_ID,
+        _valid_bundle(deployment_id=DEPLOYMENT_ID, config_version=7),
+        7,
+    )
+    server.payload = {
+        "deployment_id": 999,
+        "config_version": 2,
+        "config": _valid_bundle(deployment_id=999, config_version=2),
+    }
+    snap = ConfigSource(DEPLOYMENT_ID, _url(server), TOKEN_OK, cache_file=cache, timeout=5.0).load()
+    assert snap.origin == "cache"
+    assert snap.deployment_id == DEPLOYMENT_ID
+    assert snap.config_version == 7
+    assert snap.config["deployment_id"] == DEPLOYMENT_ID
+    assert json.loads(cache.read_text())["config_version"] == 7
+
+
+def test_startup_G_cache_ditolak_engine(tmp_path):
+    """G: cache berisi config yang ditolak engine (mode=live) -> DIBUANG, bukan
+    dipakai; tanpa remote valid -> fail closed."""
+    cache = _write_cache(
+        tmp_path,
+        DEPLOYMENT_ID,
+        _valid_bundle(
+            deployment_id=DEPLOYMENT_ID,
+            config_version=7,
+            execution={"mode": "live", "exchange": "bitget"},
+        ),
+        7,
+    )
+    src = ConfigSource(DEPLOYMENT_ID, _dead_url(), TOKEN_OK, cache_file=cache, timeout=2.0)
+    with pytest.raises(ConfigUnavailable):
+        src.load()
+    # File ditolak tetap ada di disk (bukan cache yang menulis), tapi tidak pernah dipakai.
+    assert cache.exists()
+
+
 def test_malformed_response_fails_closed(server, tmp_path):
     server.raw_body = b"<html>halaman filter ISP</html>"
     with pytest.raises(ConfigUnavailable):

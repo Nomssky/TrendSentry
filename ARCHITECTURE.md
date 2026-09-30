@@ -176,6 +176,46 @@ python paper_trading/run_deployment.py            (self-hosted, satu proses / de
   kedua DB dan kedua payload sync. Config, file, sinyal, posisi/fill, state runtime,
   dan identitas sync terpisah walau pasangan (tanggal, pair) sama persis.
 
+#### Startup & kegagalan (deterministik, dikunci `tests/test_runtime_hardening.py`)
+
+Matriks startup `ConfigSource.load()` — **tidak ada satu pun yang jatuh ke `config.yaml`**:
+
+| # | Kondisi | Hasil |
+|---|---|---|
+| A | remote valid, tanpa cache | sukses (origin `remote`) |
+| B | remote mati, cache valid | lanjut dari cache (origin `cache`) |
+| C | remote mati, tanpa cache | **FAIL CLOSED**, exit 1 |
+| D | remote balas non-JSON, cache valid | lanjut dari cache; cache tidak ditimpa |
+| E | remote membawa config milik deployment lain | ditolak; cache sendiri dipakai, tanpa cache = fail closed |
+| F | cache milik deployment lain | diabaikan → fail closed |
+| G | cache ditolak `validate_config()` | dibuang → fail closed |
+
+Klasifikasi kegagalan runtime (satu aturan, diuji):
+
+- **FATAL** — run berhenti, status `failed` / exit ≠ 0, alert terkirim:
+  config tidak tersedia/valid saat start; sumber market data total putus
+  (`load_markets`); SQLite tidak bisa dibuka; kode engine ≠ 0.
+- **NON-FATAL** — data trading tetap utuh di SQLite:
+  OHLCV satu pair putus (skip + `log.warning`); endpoint status/heartbeat putus
+  (warning + alert, run tetap sukses); Telegram putus (`send_alert` → `False`);
+  sinkron Supabase putus (exit 1 **tanpa** memajukan watermark → kirim ulang).
+
+Aturan operasional lain:
+
+- **Atribusi run**: `meta.deployment_id` + `meta.config_version` ditulis sekali di
+  awal run dari bundle (jalur legacy `config.yaml` tidak menulisnya), jadi satu file
+  SQLite selalu bisa ditelusuri ke deployment + versi config yang benar-benar dipakai.
+- **Refresh config hanya di run boundary** — satu `load()` per run, tanpa polling
+  per tick. Config baru baru dipakai pada run berikutnya; proses berjalan tidak pernah
+  dimutasi diam-diam.
+- **Idempotensi restart**: run ke-2 pada candle yang sama tidak menghasilkan sinyal,
+  posisi, fill, equity, maupun cash baru — berasal dari `UNIQUE(candle_date,pair)`,
+  upsert harian `equity_log`/`yield_log`, **bukan** dari penghapusan data. `collect_payload`
+  read-only; watermark hanya maju setelah server menjawab 200.
+- **Alerting**: hanya `alerting/telegram_alert.py`. Satu run sukses = nol alert level
+  control plane; kegagalan heartbeat maksimal ≤3 per run; stack trace crash dibatasi
+  1200 karakter; setiap alert menyebut `deployment <id>` + kategori, tanpa token.
+
 ---
 
 ## 6. SQLite Persistence
@@ -187,7 +227,7 @@ python paper_trading/run_deployment.py            (self-hosted, satu proses / de
 
 | Tabel | Isi | Kunci |
 |---|---|---|
-| `meta` | `paper_cash`, `lastRun`, `last_yield_date` | `key` |
+| `meta` | `paper_cash`, `lastRun`, `last_yield_date`; jalur deployment juga `deployment_id` + `config_version` (atribusi run) | `key` |
 | `signals` | semua sinyal/hari/pair termasuk HOLD | `UNIQUE(candle_date,pair)` = idempotensi |
 | `positions` | posisi paper (entry/exit/stop/r_multiple/exit_reason) | `id` |
 | `slippage_log` | spread order book per signal | dedupe 1/pair/hari |
@@ -276,6 +316,7 @@ Kategori route (App Router):
 /papertrading , /papertrading/log                          Data paper publik (force-dynamic)
 /auth/signup , /auth/login , /auth/callback , /auth/signout
 /app/dashboard , /app/strategies(+new) , /app/deviation-log , /app/settings
+/app/deployments , /app/deployments/[id]                    Kontrol deployment (list + dashboard per id)
                                                           Aplikasi user (server component + RLS)
 /api/* (17)                                                Backend (bukan halaman)
 ```
@@ -283,6 +324,18 @@ Kategori route (App Router):
 - Render: **server components dinamis** (semua route data `ƒ dynamic`) — **bukan static export.**
 - Data publik: Supabase **admin client** (service role) saat request.
 - Data user: session cookie + **RLS** (server client biasa).
+- **Dashboard per-deployment** (`/app/deployments/<id>`): selector di halaman hanya
+  memilih id lalu menavigasi — semua pembacaan data dilakukan server-side oleh
+  `getDashboardData(id)` yang mengunci keenam tabel `paper_*` dengan `deployment_id`
+  (tidak pernah fallback ke 0 saat id dipilih). Kepemilikan dicek dua lapis — RLS
+  `deployments_select_self` + `eq("user_id", …)` — **sebelum** data diambil; deployment
+  yang tidak ada dan milik user lain dijawab **404 yang sama**, jadi keberadaan id tidak
+  bisa ditebak. `id ≤ 0` (stream legacy) tidak pernah menjadi dashboard deployment:
+  `/papertrading` tetap memakai stream 0.
+- Yang terlihat: status lifecycle (4 state), umur `last_heartbeat` + flag stale (>30 jam
+  saat `running`) — angka timestamp apa adanya, bukan skor kesehatan — versi config
+  aktif, serta metadata config aman (strategy, pairs, timeframe, risk, max concurrent,
+  mode). **Token, hash, dan credential tidak pernah ikut** ke HTML/JSON halaman ini.
 - Realtime harga: **REST polling `/api/prices` tiap 3 detik** dari client —
   **tidak ada WebSocket.**
 - Charts: Recharts (`EquityChart`, `ScoreTrendChart`, `LiveSection`).

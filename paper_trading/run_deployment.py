@@ -115,12 +115,16 @@ def report_status(
     *,
     timeout: float = 10.0,
     alert=None,
+    deployment_id: int | None = None,
 ) -> bool:
     """POST heartbeat (dan status opsional) ke control plane.
 
     Selalu best-effort: kegagalan jaringan/logic control plane TIDAK mematikan
     paper run — data trading sudah lengkap di SQLite. Gagal = warning + alert,
     bukan exception. Token hanya dikirim di header.
+
+    `deployment_id` hanya dipakai supaya pesan alert bisa menunjuk deployment
+    yang benar (D4) — angka, bukan kredensial.
     """
     if status_url is None:
         return False
@@ -139,6 +143,7 @@ def report_status(
         },
         method="POST",
     )
+    kind = ""
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             ok = (getattr(response, "status", None) or response.getcode()) == 200
@@ -150,11 +155,17 @@ def report_status(
         # (status tak dikenal = bug pemanggil, harus keras).
         # Pesan exception dari urlopen tidak memuat isi header -> token aman.
         ok = False
+        kind = type(exc).__name__
         log.warning("status '%s' gagal dikirim: %s", status, exc)
 
     if not ok and alert is not None:
         try:
-            alert(f"[deployment] status '{status}' gagal dilaporkan ke control plane")
+            # Satu alert per kegagalan (bukan per percobaan) -> tanpa storm.
+            alert(
+                f"[deployment {deployment_id if deployment_id is not None else '?'}] "
+                f"status '{status}' gagal dilaporkan ke control plane"
+                + (f" ({kind})" if kind else "")
+            )
         except Exception:  # noqa: BLE001 - notifikasi tidak boleh menjatuhkan run
             log.exception("alert status gagal terkirim")
     return ok
@@ -196,7 +207,9 @@ def main() -> int:
         db_path,
     )
 
-    report_status(status_url, env["config_token"], "running", alert=send_alert)
+    report_status(
+        status_url, env["config_token"], "running", alert=send_alert, deployment_id=deployment_id
+    )
 
     try:
         rc = live_signal.main(cfg=snapshot.config, db_path=db_path)
@@ -205,15 +218,21 @@ def main() -> int:
         send_alert(
             f"[deployment {deployment_id}] runtime CRASH\n" + traceback.format_exc()[-1200:]
         )
-        report_status(status_url, env["config_token"], "failed", alert=send_alert)
+        report_status(
+            status_url, env["config_token"], "failed", alert=send_alert, deployment_id=deployment_id
+        )
         return 1
 
     if rc != 0:
         send_alert(f"[deployment {deployment_id}] run selesai dengan kode {rc}")
-        report_status(status_url, env["config_token"], "failed", alert=send_alert)
+        report_status(
+            status_url, env["config_token"], "failed", alert=send_alert, deployment_id=deployment_id
+        )
         return rc if isinstance(rc, int) and rc != 0 else 1
 
-    report_status(status_url, env["config_token"], "stopped", alert=send_alert)
+    report_status(
+        status_url, env["config_token"], "stopped", alert=send_alert, deployment_id=deployment_id
+    )
     log.info("deployment %s: selesai bersih", deployment_id)
     return 0
 

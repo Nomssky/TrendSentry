@@ -358,6 +358,19 @@ def main(cfg: dict | None = None, db_path: Path | str | None = None) -> int:
     # Satu tanggal acuan UTC untuk seluruh run (live_stop, insert sinyal, snapshot).
     today_str = str(datetime.now(timezone.utc).date())
     conn = connect(db_path)
+    # Atribusi run (D6): SQLite = runtime truth, jadi satu run bisa ditelusuri ke
+    # deployment + versi config yang BENAR-BENAR dipakai, bukan hanya baris log.
+    # Dua kunci ini hanya ada di bundle control-plane — config.yaml tidak
+    # memilikinya, jadi jalur legacy TIDAK menulis apa-apa.
+    dep_id, cfg_ver = cfg.get("deployment_id"), cfg.get("config_version")
+    if isinstance(dep_id, int) and dep_id > 0 and isinstance(cfg_ver, int) and cfg_ver >= 1:
+        for key, val in (("deployment_id", dep_id), ("config_version", cfg_ver)):
+            conn.execute(
+                "INSERT INTO meta (key, value) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (key, str(val)),
+            )
+        conn.commit()
     cash = get_cash(conn, cfg)
     exchange = make_exchange(cfg)
     exchange.load_markets()
