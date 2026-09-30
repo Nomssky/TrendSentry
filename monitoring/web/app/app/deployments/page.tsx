@@ -20,6 +20,10 @@ type Deployment = {
 
 type Strategy = { id: number; name: string; template_id: number | null }
 
+/** Token config hanya hidup di state React ini — tidak localStorage/sessionStorage,
+ *  tidak URL, tidak log. Ditutup = hilang permanen (tidak bisa dibaca ulang). */
+type IssuedToken = { id: number; token: string; configUrl: string }
+
 const STATUS_STYLES: Record<Deployment["status"], string> = {
   created: "bg-white/10 text-white/60",
   running: "bg-emerald-500/20 text-emerald-400",
@@ -39,6 +43,15 @@ async function fetchDeployments(): Promise<Deployment[]> {
   }
 }
 
+/** Blok env yang di-copy user untuk runtime self-hosted (paper_trading/run_deployment.py). */
+function runtimeEnvBlock(issued: IssuedToken): string {
+  return [
+    `TREND_SENTRY_DEPLOYMENT_ID=${issued.id}`,
+    `TREND_SENTRY_CONFIG_URL=${issued.configUrl}`,
+    `TREND_SENTRY_CONFIG_TOKEN=${issued.token}`,
+  ].join("\n")
+}
+
 export default function DeploymentsPage() {
   const router = useRouter()
   const [deployments, setDeployments] = useState<Deployment[]>([])
@@ -48,6 +61,8 @@ export default function DeploymentsPage() {
   const [strategyId, setStrategyId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [issued, setIssued] = useState<IssuedToken | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     fetchDeployments().then(setDeployments)
@@ -79,7 +94,18 @@ export default function DeploymentsPage() {
         setError(msg)
         return
       }
+      // Token plaintext hanya hidup di sini — sekali panel ditutup/halaman
+      // ditinggalkan, ia hilang dari memori browser dan tidak bisa dibaca lagi.
+      const created = (await res.json()) as { id: number; config_token?: string }
       setName("")
+      setCopied(false)
+      if (created.config_token) {
+        setIssued({
+          id: created.id,
+          token: created.config_token,
+          configUrl: `${window.location.origin}/api/deployments/${created.id}/config`,
+        })
+      }
       setDeployments(await fetchDeployments())
     } finally {
       setBusy(false)
@@ -96,6 +122,46 @@ export default function DeploymentsPage() {
       </div>
 
       {error && <p className="text-sm text-rose-400">{error}</p>}
+
+      {issued && (
+        <section className="space-y-3 rounded-2xl border border-[#ccff00]/40 bg-[#ccff00]/[0.06] p-5">
+          <h2 className="font-medium text-[#ccff00]">Config token — tampil sekali saja</h2>
+          <p className="text-sm text-white/70">
+            Simpan sekarang. Token ini <span className="text-white">tidak akan pernah ditampilkan lagi</span> —
+            hash-nya saja yang tersimpan di server, jadi tidak ada API yang bisa mengembalikannya.
+            Panel ini hilang begitu Anda menutupnya atau meninggalkan halaman.
+          </p>
+          <pre className="overflow-x-auto rounded-lg border border-white/10 bg-black/40 p-4 text-xs text-white/80">
+            {runtimeEnvBlock(issued)}
+          </pre>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(runtimeEnvBlock(issued))
+                  setCopied(true)
+                } catch {
+                  setCopied(false)
+                }
+              }}
+              className="rounded-full border border-[#ccff00]/50 px-5 py-2 text-sm text-[#ccff00] hover:bg-[#ccff00]/10"
+            >
+              {copied ? "Copied ✓" : "Copy env block"}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIssued(null)
+                setCopied(false)
+              }}
+              className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/60 hover:text-white"
+            >
+              Saya sudah menyimpannya — tutup
+            </button>
+          </div>
+        </section>
+      )}
 
       {!deployments.length ? (
         <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-8 text-center">

@@ -12,6 +12,12 @@ Sinyal identik dengan backtest (reuse backtest/strategy.py — satu source of tr
 - Exit: close <= stop (entry - 2x ATR14) ATAU close < lowest low 10 hari sebelumnya
 - Eksekusi dummy di harga pasar saat ini (open candle baru), size = risk 1% dari paper equity,
   fee + slippage asumsi dari config.yaml, slippage real (spread order book) di-log terpisah.
+
+Dua entry point memakai modul ini (satu engine, satu perilaku):
+- `python paper_trading/live_signal.py`     -> jalur legacy/global: config.yaml + db/paper_trading.db
+- `python paper_trading/run_deployment.py`  -> runtime deployment (Phase B): config bundle versioned
+                                               dari control plane + SQLite per deployment
+                                               (db/deployments/<id>.db). Lihat run_deployment.py.
 """
 
 import logging
@@ -49,8 +55,17 @@ def load_config() -> dict:
         return yaml.safe_load(f)
 
 
-def connect() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+def connect(db_path: Path | str | None = None) -> sqlite3.Connection:
+    """Buka SQLite.
+
+    Default = `DB_PATH` global (db/paper_trading.db) — jalur legacy yang selama
+    ini dipakai cron dan tests (mereka meng-override `ls.DB_PATH`).
+    Runtime deployment mengoper path miliknya sendiri (db/deployments/<id>.db),
+    jadi SATU file per deployment dan tidak ada kolom deployment_id di skema.
+    """
+    path = Path(db_path) if db_path is not None else Path(DB_PATH)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.executescript(SCHEMA_PATH.read_text())
     return conn
@@ -305,8 +320,22 @@ def backfill_equity(conn: sqlite3.Connection, cfg: dict, today_str: str) -> int:
     return filled
 
 
-def main() -> int:
-    cfg = load_config()
+def main(cfg: dict | None = None, db_path: Path | str | None = None) -> int:
+    """Jalankan satu siklus paper-trading (satu candle close per pair).
+
+    cfg     : config bundle. None -> baca config.yaml (jalur legacy/cron).
+              Runtime deployment mengoper bundle hasil fetch control-plane,
+              sehingga SEMUA perilaku engine (pairs, timeframe, Donchian/ATR,
+              risk, fee/slip/capital, mode, yield, llm_filter) ikut bundle itu —
+              bukan fallback ke config.yaml.
+    db_path : SQLite target. None -> DB_PATH global (db/paper_trading.db).
+
+    validate_config() tetap dijalankan di awal untuk KEDUA jalur: bundle dari
+    control-plane pun harus lolos guard engine (mode=live, exchange≠bitget,
+    direction≠long_only, risk>1%, max_concurrent>5, ATR stop<=0 semua ditolak).
+    """
+    if cfg is None:
+        cfg = load_config()
     from risk_manager.guards import validate_config
 
     errs = validate_config(cfg)
@@ -328,7 +357,7 @@ def main() -> int:
     fee, slip = bt["fee_pct"] / 100.0, bt["slippage_pct"] / 100.0
     # Satu tanggal acuan UTC untuk seluruh run (live_stop, insert sinyal, snapshot).
     today_str = str(datetime.now(timezone.utc).date())
-    conn = connect()
+    conn = connect(db_path)
     cash = get_cash(conn, cfg)
     exchange = make_exchange(cfg)
     exchange.load_markets()

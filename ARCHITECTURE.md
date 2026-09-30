@@ -138,10 +138,52 @@ Sifat: **dummy execution** — tidak pernah mengirim order; exit dihitung dari h
 
 ---
 
+### 5b. Deployment Runtime (Phase B) — engine yang sama, state terpisah
+
+Jalur kedua di atas tetap jadi jalur global legacy. Runtime per-deployment:
+
+```
+python paper_trading/run_deployment.py            (self-hosted, satu proses / deployment)
+  env  TREND_SENTRY_DEPLOYMENT_ID · _CONFIG_URL · _CONFIG_TOKEN
+   │
+   ├─ config_source.ConfigSource.load()
+   │    GET  <host>/api/deployments/<id>/config     Authorization: Bearer <token>
+   │      sukses            → validate_config() → cache atomik db/deployments/<id>/config.json
+   │      gagal + cache OK  → pakai cache + alert Telegram → lanjut (bukan fatal)
+   │      gagal + tanpa cache → FAIL CLOSED, exit 1   (config.yaml TIDAK dipakai)
+   ├─ POST <host>/api/deployments/<id>/status  {"status":"running"|"stopped"|"failed"}
+   │      heartbeat: hanya last_heartbeat + status, best-effort (gagal = warning)
+   ├─ live_signal.main(cfg=bundle, db_path=db/deployments/<id>.db)
+   │      validate_config() diulang di engine → SEMUA perilaku datang dari bundle
+   └─ status akhir: stopped (bersih) | failed (crash / rc != 0)
+```
+
+- **Isolasi berkas, bukan kolom**: satu `db/deployments/<id>.db` per deployment
+  (gitignored, tidak di-commit) + `db/deployments/<id>/config.json` sebagai cache.
+  Tidak ada `deployment_id` di skema SQLite — dua runtime tidak mungkin menulis DB
+  milik runtime lain.
+- **Config versioned**: satu-satunya sumber konfigurasi adalah endpoint Phase A;
+  versi terbaru saja yang disajikan, validasi ulang sebelum dipakai, ditulis atomik
+  (tmp → `os.replace`), tanpa token di dalamnya.
+- **Lifecycle 4 state** (`created → running → stopped | failed`) — tidak ada state
+  tambahan; `created` ditetapkan control plane, runtime hanya melapor tiga di atas.
+  `last_heartbeat` = tanda hidup, bukan sistem monitoring.
+- **PAPER ONLY**: tidak ada jalur order, tidak ada credential exchange, tidak ada
+  klien Supabase di engine. Dua panggilan jaringan per run (config + status),
+  keduanya Bearer token per-deployment di header — tidak pernah di URL/log/cache.
+- **Ship gate**: `tests/test_two_deployments_isolation.py` menjalankan engine dua
+  kali pada candle identik dengan `risk_per_trade_pct` 0.5 vs 1.0, lalu membandingkan
+  kedua DB dan kedua payload sync. Config, file, sinyal, posisi/fill, state runtime,
+  dan identitas sync terpisah walau pasangan (tanggal, pair) sama persis.
+
+---
+
 ## 6. SQLite Persistence
 
 - DDL: `db/schema.sql` (dijalankan `executescript` tiap start engine, idempoten).
 - State: `db/paper_trading.db` (di-commit ke repo tiap run = backup off-disk; accepted risk).
+- Runtime deployment memakai DDL yang sama tapi file terpisah: `db/deployments/<id>.db`
+  (`gitignored`, tidak pernah di-commit). Watermark `sync_state` juga per-file.
 
 | Tabel | Isi | Kunci |
 |---|---|---|
@@ -173,13 +215,17 @@ live_signal.py ──► SQLite ──► scripts/sync_paper_to_supabase.py
                                 ▼
                    Validasi PaperSyncSchema (cap 5000, pick kolom allowlist)
                                 ▼
-                   Supabase upsert per tabel (onConflict: signals=candle_date,pair,
-                   positions=id, equity_log=date, yield_log=date, meta=key)
+                   Supabase upsert per tabel — key SELALU memuat deployment_id
+                   (0 = stream global legacy db/paper_trading.db):
+                     signals=(deployment_id,candle_date,pair)
+                     positions=(deployment_id,fill_key)   fill_key = pair|entry_date
+                     equity_log / yield_log=(deployment_id,date)
+                     slippage=(deployment_id,timestamp,pair)   meta=(deployment_id,key)
                                 ▼
                    watermark dimaju HANYA setelah HTTP 200
 ```
 
-- **Skema Postgres: `supabase/migrations/*.sql` (10 file) = source of truth.**
+- **Skema Postgres: `supabase/migrations/*.sql` (12 file) = source of truth.**
   (Bukan `db/migrations/` — path itu tidak pernah ada.)
 - **Seed 8 `strategy_templates` built-in** = migration `20260922120000_insert_builtin_strategy_templates.sql`
   (`INSERT … ON CONFLICT (name) DO NOTHING`, ID 1–8 eksplisit + sinkron sequence).
@@ -187,18 +233,26 @@ live_signal.py ──► SQLite ──► scripts/sync_paper_to_supabase.py
   (no-op, tanpa overwrite). `supabase/seed.sql` & blok `[db.seed]` di `config.toml` **dihapus**
   (file tak pernah ada; payload tidak diduplikasi). Ubah template = migration baru, forward-only.
 - Tabel `paper_*` = mirror dashboard; tabel `user_*`/`profiles` = domain produk.
+- **Identitas sinkronisasi**: `deployment_id` diturunkan dari path file SQLite
+  (`db/deployments/<id>.db` → id, selain itu → 0 = stream legacy), lalu ditanamkan
+  route ke setiap baris. Migration `20260929120000` menambah kolom + mengganti semua
+  key unique (forward-only, ada blok verifikasi yang melempar kalau key lama masih
+  berdiri). `id` SQLite tidak pernah dipakai sebagai identitas global.
 - RLS aktif di semua tabel + event trigger auto-enable tabel baru.
 
 ---
 
 ## 8. Next.js Backend / API
 
-Next.js **16 (App Router)** di Vercel, 14 API route di `monitoring/web/app/api/`:
+Next.js **16 (App Router)** di Vercel, 17 API route di `monitoring/web/app/api/`:
 
 | Kategori | Route | Auth |
 |---|---|---|
 | Sinkron paper | `cron/paper-sync` (POST) | Bearer `CRON_SECRET` |
 | Ingest harian user | `cron/daily-sync` (GET) | Bearer `CRON_SECRET` |
+| Deployment (control plane) | `deployments` (GET/POST) | session + CSRF; POST menghasilkan token config sekali |
+| Config execution plane | `deployments/[id]/config` (GET) | **Bearer token per-deployment** (timing-safe, session-free) |
+| Lifecycle runtime | `deployments/[id]/status` (POST) | **Bearer token per-deployment** |
 | Produk user (CRUD) | `strategies`, `trades`, `deviation-log`, `discipline`, `templates` | session + CSRF |
 | API key user | `api-keys` (GET/POST) | session + CSRF; POST verifikasi **read-only** via Bitget |
 | Market proxy | `prices` (GET) | rate limit 60/mnt/IP, cache 30s |
@@ -223,7 +277,7 @@ Kategori route (App Router):
 /auth/signup , /auth/login , /auth/callback , /auth/signout
 /app/dashboard , /app/strategies(+new) , /app/deviation-log , /app/settings
                                                           Aplikasi user (server component + RLS)
-/api/* (14)                                                Backend (bukan halaman)
+/api/* (17)                                                Backend (bukan halaman)
 ```
 
 - Render: **server components dinamis** (semua route data `ƒ dynamic`) — **bukan static export.**
@@ -306,6 +360,7 @@ deviation_log berubah
 | Area | Mekanisme (terverifikasi di kode) |
 |---|---|
 | Cron endpoints | `CRON_SECRET` timing-safe compare + **fail-fast 500** bila secret kosong |
+| Token config deployment | per-deployment; disimpan hanya sebagai **SHA-256 hash**, plaintext keluar **sekali** di response POST, Bearer-only (tidak di URL/query/log/localStorage), timing-safe compare — **bukan** `CRON_SECRET` |
 | API key user | hanya endpoint **read** (`/api/v2/spot/account/assets`, `/api/v2/spot/trade/fills`) — allowlist tertutup di `lib/bitget.ts` |
 | Enkripsi key | AES-GCM + IV acak; PBKDF2 100k (path legacy dipertahankan) |
 | CSRF | `validateOrigin` allowlist (`ALLOWED_ORIGINS`) di semua route mutasi |
@@ -338,6 +393,10 @@ Tidak ada di repo:                 Penjaga yang memastikan:
   dry-run, modal $50-100) ada di `PLAN.md` §3 — **rencana, belum implementasi.**
 - Perilaku yang **tidak ada & tidak boleh ditambah implisit**: martingale/averaging-down,
   auto-increase risk, auto-top-up, order dari server.
+- **Runtime deployment Phase B (§5b) ikut batas ini**: `execution.mode = 'paper'`
+  dikunci skema config (`z.literal("paper")`) dan `validate_config()`, dan tidak ada
+  pemanggilan order/credential di `paper_trading/*.py`
+  (diuji `tests/test_deployment_runtime.py`).
 
 ---
 
@@ -387,6 +446,8 @@ Tidak ada di repo:                 Penjaga yang memastikan:
 |---|---|---|
 | Backtest engine | ✅ manual + riset | — |
 | Paper trading engine | ✅ harian via GitHub Actions | — |
+| Control plane deployment (Phase A) | ✅ migration + endpoint config + `/app/deployments` | dashboard deployment lanjutan |
+| Runtime per-deployment (Phase B) | ✅ paper-only, config versioned, SQLite per deployment (§5b) | penjadwalan/orkestrasi di mesin user (di luar scope) |
 | SQLite state | ✅ | — |
 | Sinkron Supabase | ✅ inkremental + watermark | — |
 | Web produk (auth, strategi, key, deviasi, skor) | ✅ Vercel + Supabase | — |

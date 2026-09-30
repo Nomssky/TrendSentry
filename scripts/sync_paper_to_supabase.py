@@ -8,6 +8,11 @@ Ini mencegah payload tumbuh melewati cap PaperSyncSchema seiring waktu.
 positions: SEMUA baris (upsert by id, dibutuhkan agar status open->closed ikut).
 equity_log: semua (upsert by date, kecil).
 meta: semua (key-value kecil).
+
+Deployment-aware (Phase B): `DB_PATH` menentukan deployment_id (db/deployments/<id>.db
+-> id; selain itu -> 0 = stream global legacy). Payload membawa deployment_id dan
+fill_key, dan key unique di cloud ikut memuat deployment_id — dua deployment yang
+entry di pair/tanggal yang sama tetap dua baris terpisah.
 """
 
 import json
@@ -16,6 +21,7 @@ import sqlite3
 import sys
 import urllib.request
 import urllib.error
+from pathlib import Path
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://ypkdnvwlekxmmotxsvrm.supabase.co")
 VERCEL_URL = os.environ.get("VERCEL_URL", "https://trendsentry.vercel.app")
@@ -24,6 +30,35 @@ DB_PATH = os.environ.get("DB_PATH", "db/paper_trading.db")
 
 # tabel -> tabel sumber sama; watermark disimpan per tabel.
 INCREMENTAL_TABLES = ("signals", "slippage_log", "yield_log")
+
+
+def deployment_id_for(db_path) -> int:
+    """Identitas deployment yang dimiliki sebuah file SQLite.
+
+    Diturunkan dari PATH, bukan dari env terpisah: `db/deployments/<id>.db`
+    adalah satu-satunya runtime path yang sah untuk deployment (lihat
+    paper_trading/run_deployment.py::db_path_for), jadi payload tidak mungkin
+    pernah salah-tagging walau environment salah set. Selain itu
+    (mis. db/paper_trading.db) = 0, stream global legacy — tetap ditulis, tetap
+    dipisahkan dari baris deployment di cloud.
+    """
+    path = Path(db_path)
+    if path.parent.name == "deployments" and path.stem.isdigit() and int(path.stem) > 0:
+        return int(path.stem)
+    return 0
+
+
+def fill_key_for(pair: str, entry_date: str) -> str:
+    """Identitas fill deterministik untuk sinkronisasi.
+
+    Satu deployment + satu pair + satu tanggal entry = SATU fill, apa pun
+    urutan/retry sync-nya, dan id-nya tidak bergantung pada autoincrement SQLite
+    (yang di-reset kalau file DB dibuat ulang). Dua deployment yang entry di
+    pair/tanggal yang sama tetap berbeda karena key cloud =
+    (deployment_id, fill_key). Ekspresinya HARUS identik dengan backfill di
+    migration supabase (pair || '|' || entry_date).
+    """
+    return f"{pair}|{entry_date}"
 
 
 def table_exists(db, table) -> bool:
@@ -85,17 +120,20 @@ def fetch_all(db, table, keep_id=False):
     return rows
 
 
-def main():
-    if not CRON_SECRET:
-        print("ERROR: CRON_SECRET not set")
-        sys.exit(1)
+def collect_payload(db, db_path):
+    """Kumpulkan payload sinkron untuk SATU file SQLite.
 
-    if not os.path.exists(DB_PATH):
-        print(f"ERROR: Database not found at {DB_PATH}")
-        sys.exit(1)
+    Return (payload, watermarks, eq_rows). Watermark sengaja dipisah: ia hanya
+    boleh dimajukan SETELAH server menerima payload dengan 200 (lihat main),
+    supaya run yang gagal mengirim ulang baris yang sama.
 
-    db = sqlite3.connect(DB_PATH)
-    db.row_factory = sqlite3.Row
+    Payload selalu membawa `deployment_id` di level atas — route menanamkannya ke
+    setiap baris, jadi identitas sync tidak mungkin beda antar tabel dalam satu
+    kiriman. Tabel cloud memakai key (deployment_id, ...) sehingga dua deployment
+    yang entry di pair/tanggal yang sama menghasilkan dua baris berbeda.
+    """
+    deployment_id = deployment_id_for(db_path)
+    db.row_factory = sqlite3.Row  # dict(r) di fetch_all/fetch_incremental butuh ini
 
     data = {}
     watermarks = {}
@@ -105,9 +143,11 @@ def main():
         if last_id is not None:
             watermarks[table] = last_id
 
-    # positions WAJIB bawa id SQLite — route upsert onConflict=id (dedupe lintas sync).
-    # Kirim: open + baris baru (id > watermark) + yang baru ditutup (30 hari),
-    # agar perubahan status ikut terkirim tanpa mengirim seluruh tabel selamanya.
+    # positions: kirim open + baris baru (id > watermark) + yang baru ditutup
+    # (30 hari), agar perubahan status ikut terkirim tanpa mengirim seluruh
+    # tabel selamanya. `id` SQLite TIDAK dikirim: id autoincrement per-file,
+    # jadi id=1 milik deployment A dan B sama dan akan saling menimpa. Identitas
+    # sync-nya (deployment_id, fill_key).
     position_rows = fetch_all(db, "positions", keep_id=True)
     pos_wm = get_watermark(db, "positions")
     open_ids = {r["id"] for r in position_rows if r.get("status") == "open"}
@@ -120,6 +160,11 @@ def main():
     }
     keep_ids = open_ids | new_ids | recent_closed
     positions = [r for r in position_rows if r.get("id") in keep_ids]
+    for row in positions:
+        # SQLite tidak menyimpan kolom side (arah dibekukan long_only di
+        # validate_config) — diisi di sini supaya mirror cloud punya field-nya.
+        row["side"] = "buy"
+        row["fill_key"] = fill_key_for(str(row.get("pair")), str(row.get("entry_date")))
     data["positions"] = positions
     # equity_log: inkremental per tanggal (cloud menyimpan histori lama).
     eq_wm = get_date_watermark(db, "equity_log")
@@ -134,10 +179,28 @@ def main():
         row["key"]: row["value"]
         for row in db.execute("SELECT key, value FROM meta").fetchall()
     }
+    data["deployment_id"] = deployment_id
+
+    return data, watermarks, eq_rows
+
+
+def main():
+    if not CRON_SECRET:
+        print("ERROR: CRON_SECRET not set")
+        sys.exit(1)
+
+    if not os.path.exists(DB_PATH):
+        print(f"ERROR: Database not found at {DB_PATH}")
+        sys.exit(1)
+
+    db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
+
+    data, watermarks, eq_rows = collect_payload(db, DB_PATH)
 
     total = sum(len(v) if isinstance(v, (list, dict)) else 1 for v in data.values())
     print(
-        f"Syncing {total} records "
+        f"Syncing {total} records (deployment {data['deployment_id']}) "
         f"(signals:{len(data.get('signals', []))} positions:{len(data.get('positions', []))} "
         f"equity_log:{len(data.get('equity_log', []))})..."
     )
@@ -163,6 +226,7 @@ def main():
 
     # Watermark hanya dimajukan SETELAH server menerima (200). Kalau gagal,
     # baris yang sama dikirim ulang pada run berikutnya.
+    positions = data["positions"]
     for table, last_id in watermarks.items():
         set_watermark(db, table, last_id)
     if positions:

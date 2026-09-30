@@ -56,16 +56,24 @@ export type DashboardData = {
   hasSnapshots: boolean
 }
 
-export async function getDashboardData(): Promise<DashboardData> {
+/**
+ * Baca mirror `paper_*` dari Supabase.
+ *
+ * `deploymentId` menentukan stream mana yang dibaca: 0 = data legacy global
+ * (db/paper_trading.db), N > 0 = hasil satu deployment (db/deployments/N.db).
+ * Default 0 supaya perilaku dashboard hari ini tidak berubah sama sekali —
+ * pemilihan deployment di UI = tahap lanjut, bukan Phase B (tanpa redesign).
+ */
+export async function getDashboardData(deploymentId = 0): Promise<DashboardData> {
   const supabase = createAdminClient()
 
   const [signalsRes, positionsRes, equityRes, metaRes, slippageRes, yieldRes] = await Promise.all([
-    supabase.from("paper_signals").select("*").order("candle_date", { ascending: false }),
-    supabase.from("paper_positions").select("*").order("id", { ascending: false }),
-    supabase.from("paper_equity_log").select("*").order("date"),
-    supabase.from("paper_meta").select("*"),
-    supabase.from("paper_slippage_log").select("spread_pct"),
-    supabase.from("paper_yield_log").select("*").order("date"),
+    supabase.from("paper_signals").select("*").eq("deployment_id", deploymentId).order("candle_date", { ascending: false }),
+    supabase.from("paper_positions").select("*").eq("deployment_id", deploymentId).order("id", { ascending: false }),
+    supabase.from("paper_equity_log").select("*").eq("deployment_id", deploymentId).order("date"),
+    supabase.from("paper_meta").select("*").eq("deployment_id", deploymentId),
+    supabase.from("paper_slippage_log").select("spread_pct").eq("deployment_id", deploymentId),
+    supabase.from("paper_yield_log").select("*").eq("deployment_id", deploymentId).order("date"),
   ])
 
   if (signalsRes.error) console.error("paper_signals query error:", signalsRes.error)

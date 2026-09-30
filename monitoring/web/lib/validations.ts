@@ -86,6 +86,10 @@ export const CheckoutPostSchema = z.object({
 })
 
 export const PaperSyncSchema = z.object({
+  // Identitas deployment pemilik payload (0 = stream global legacy db/paper_trading.db).
+  // Dikirim SEKALI per kiriman, bukan per baris, dan ditanamkan route ke setiap
+  // baris supaya identitas sync tidak mungkin beda antar tabel dalam satu run.
+  deployment_id: z.number().int().min(0).optional(),
   // Sync mengirim inkremental untuk tabel append-only (signals/slippage/yield),
   // dan union (open + baru + baru-ditutup) untuk positions. Cap di sini hanya
   // jaring pengaman payload; angka besar agar sync tidak mati permanen saat
