@@ -25,7 +25,7 @@ pure pandas). An LLM filter exists only as a disabled skeleton for a future phas
 | **SQLite persistence** (`db/paper_trading.db`) | ✅ | State committed back to the repo every run (off-disk backup) |
 | **Supabase sync** | ✅ | Incremental watermark sync SQLite → `/api/cron/paper-sync` → Postgres `paper_*` tables |
 | **Web product** (`monitoring/web/`) | ✅ | Next.js 16 App Router on Vercel: auth, user strategies, read-only Bitget key (encrypted), daily fill ingest, deviation detection, discipline score |
-| **Public paper dashboard** | ✅ | [trendsentry.vercel.app](https://trendsentry.vercel.app/papertrading) — equity curve, positions, slippage vs assumption, live ticker (REST polling 3s) |
+| **Public paper dashboard** | ✅ | [trendsentry.xyz](https://trendsentry.xyz/papertrading) — equity curve, positions, slippage vs assumption, live ticker (REST polling 3s) |
 | **Telegram alerts** | ✅ | entry / exit / stop / crash from the paper engine |
 | **Guardrails** | ✅ | config validation at every entry point, risk ≤ 1%/trade, SL mandatory, max 5 positions + 2/correlation-cluster, no martingale |
 
@@ -137,7 +137,7 @@ npm run test:e2e                # Playwright (needs local server + fixtures)
 Waiting for the Phase 2 gate (≥ 10 closed trades, 8 weeks) before any Fase 3/Fase 4 work.
 See `TASKS.md` for gate criteria and `PLAN.md` for the roadmap.
 
-Web: [trendsentry.vercel.app](https://trendsentry.vercel.app)
+Web: [trendsentry.xyz](https://trendsentry.xyz)
 
 ## License
 

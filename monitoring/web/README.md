@@ -3,7 +3,7 @@
 The TrendSentry web product: marketing site, public paper-trading dashboard, and the
 logged-in discipline app (strategies, read-only API key, deviation log, discipline score).
 
-Deployed at [trendsentry.vercel.app](https://trendsentry.vercel.app) (Vercel, Root Directory
+Deployed at [trendsentry.xyz](https://trendsentry.xyz) (Vercel, Root Directory
 = `monitoring/web`).
 
 > **Runtime data, not build-time data.** This is a server-rendered Next.js app. There is no
