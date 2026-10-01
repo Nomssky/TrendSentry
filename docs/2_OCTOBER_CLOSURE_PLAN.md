@@ -7,6 +7,11 @@
 > `9791707`), OD-2…OD-7 decision records, `ARCHITECTURE.md`.
 > **This document changes nothing by itself.** No code, config, test, data, schema or audit file was
 > modified to produce it, and nothing is committed by it.
+>
+> > **Update 2026-10-01 (keputusan owner, public-ready cleanup):** §9.C dieksekusi —
+> > 9 file OD/TREE dipindah root → `docs/decisions/` dan di-commit (isi byte-identik,
+> > SHA 7/7 cocok). Larangan "not movable" di §4/§5.6/§5.7 berlaku untuk scope closure
+> > dan dioverride oleh keputusan ini. Detail: `CLOSURE_NOTES_2026-10-01.md` §3.
 
 ---
 

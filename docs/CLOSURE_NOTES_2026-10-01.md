@@ -114,6 +114,14 @@ Sedangkan `OD2_ENTRY_EXECUTION_STOP_DECISION.md` dan `OD7_REPRODUCIBILITY_DECISI
 Kecacatan ini sengaja ditulis di sini supaya keputusan §9.C nanti diambil **dengan sadar**,
 bukan baru ketahuan saat orang lain meng-clone.
 
+> **Update 2026-10-01 (pasca-closure, keputusan owner untuk repo publik):** §9.C
+> DIEKSEKUSI — 9 file dipindah root → `docs/decisions/` (2 via `git mv`, 7 via `mv`
+> + `git add`), lalu di-commit. Isi byte-identik (SHA 7/7 cocok dengan §4).
+> Split-brain selesai: semua 9 file kini ter-track di satu direktori, referensi
+> bare-filename antar-file tetap valid. Aturan "tidak dipindah" di §5.6/§5.7/§9.C
+> berlaku untuk scope closure 2026-10-01 dan secara eksplisit dioverride oleh
+> keputusan ini.
+
 ---
 
 ## 4. SHA-256 7 FILE AUDIT (wajib tetap sama setiap langkah)

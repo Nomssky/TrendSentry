@@ -417,9 +417,9 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | AUDIT.md | audit 2026-09-21 (P0–P4) — **log bertanggal, riwayat tidak ditulis ulang** | — | — | — | SUPPORT |
 | SECURITY-ACTIONS.md | status rotasi secret manual | — | — | — | SUPPORT |
 | LICENSE | AGPL-3.0 + clause SaaS | README.md | — | — | SUPPORT |
-| OD2_ENTRY_EXECUTION_STOP_DECISION.md | catatan keputusan OD-2 (stop anchor, eksekusi) | OD7_REPRODUCIBILITY_DECISION.md | — | — | DECISION (tracked) |
-| OD7_REPRODUCIBILITY_DECISION.md | catatan keputusan OD-7 — **merujuk 4 file OD3–OD8/TREE yang UNTRACKED** | `docs/2_OCTOBER_CLOSURE_PLAN.md` | — | — | DECISION (tracked) |
-| OD3…OD8 + TREE_REFACTOR_AUDIT.md (7 file, **UNTRACKED**) | catatan riwayat audit/dekision — **immutable: tidak dimodifikasi, dipindahkan, di-commit, atau dihapus** sampai seri OD ditutup (`docs/2_OCTOBER_CLOSURE_PLAN.md` §5.7 + §9.C) | `docs/2_OCTOBER_CLOSURE_PLAN.md` | — | — | DECISION (untracked) |
+| `docs/decisions/OD2_ENTRY_EXECUTION_STOP_DECISION.md` | catatan keputusan OD-2 (stop anchor, eksekusi) | OD7_REPRODUCIBILITY_DECISION.md | — | — | DECISION (tracked) |
+| `docs/decisions/OD7_REPRODUCIBILITY_DECISION.md` | catatan keputusan OD-7 — 4 file OD3–OD8/TREE yang dirujuk kini ter-track di direktori yang sama | `docs/2_OCTOBER_CLOSURE_PLAN.md` | — | — | DECISION (tracked) |
+| `docs/decisions/` OD3…OD8 + TREE_REFACTOR_AUDIT.md (7 file) | catatan riwayat audit/decision — dipindah dari root 2026-10-01 (keputusan owner, override §9.C); isi byte-identik (SHA §4 CLOSURE_NOTES cocok 7/7) | `docs/2_OCTOBER_CLOSURE_PLAN.md` | — | — | DECISION (tracked) |
 
 ### 10.2 Python — engine & tooling (22 file sumber)
 
@@ -671,14 +671,14 @@ Rekap status (dihitung dari tabel §10):
 | RESEARCH | reproducible research / artefak riset | 17 |
 | FUTURE | disengaja untuk fase mendatang (LLM filter Fase 3, deploy VPS) | 10 |
 | SUSPICIOUS | ada bukti tidak terjadwal/tidak terpakai, perlu keputusan owner | 5 |
-| DECISION (tracked) | catatan keputusan OD yang **sudah** ter-commit | 2 |
-| DECISION (untracked) | catatan keputusan/audit yang **belum** ter-commit — immutable, lihat `docs/CLOSURE_NOTES_2026-10-01.md` §3 | 1 baris = **7 file** (OD3–OD8 + `TREE_REFACTOR_AUDIT.md`) |
+| DECISION (tracked) | catatan keputusan OD di `docs/decisions/` (dipindah dari root 2026-10-01, keputusan owner) | 3 baris = **9 file** |
+| DECISION (untracked) | — (kategori dikosongkan 2026-10-01: 7 file OD kini ter-track di `docs/decisions/`) | 0 |
 | DEAD | bukti kuat tidak direferensikan & tidak ada runtime path | 0 — kedua barisnya dihapus 2026-10-01 (`EquityCurveChart.tsx`, `app/public/*.svg` sudah tidak ada di repo; riwayatnya dicatat di §10.12) |
 | UNKNOWN | tidak berhasil diklasifikasi | 0 |
 | **Total** | | **174 baris** |
 
-Catatan hitungan: 174 baris inventory memetakan **seluruh 239 file repo** (232 ter-track git +
-7 file untracked), **ditambah** ±15 artefak lokal ter-`.gitignore` yang ikut didokumentasikan
+Catatan hitungan: 174 baris inventory memetakan **seluruh 240 file repo, semua ter-track git**
+(sejak 2026-10-01: 7 file OD yang dulu untracked kini ter-track di `docs/decisions/`), **ditambah** ±15 artefak lokal ter-`.gitignore` yang ikut didokumentasikan
 dengan jelas (file `.env` lokal, `db/backups/`, `db/deployments/`, CSV/PNG run terakhir,
 `.temp/` Supabase). Beberapa baris sengaja mengelompokkan banyak file serupa (13 CSV historis,
 2 CSV funding, 11 file laporan riset) — perinciannya tertulis di kolom Path.
@@ -983,7 +983,7 @@ Tabel di atas adalah **bukti eksekusi Phase 0** pada `3a4dae8` — dibiarkan seb
 | Build | `npm run build` | **PASS (exit 0)**, 34 static pages generated |
 | Python | `venv/bin/python -m pytest tests/ -q` | **PASS (224 passed, 35.50s)** |
 | `git diff --check` | — | **bersih** |
-| sha256 7 file audit | `sha256sum OD3*…TREE_REFACTOR_AUDIT.md` | **7/7 cocok** |
+| sha256 7 file audit | `sha256sum docs/decisions/OD3*…TREE_REFACTOR_AUDIT.md` | **7/7 cocok** (byte-identik pasca-pindah 2026-10-01) |
 
 ---
 
@@ -1160,8 +1160,9 @@ npm run build                        → exit 0 (34 static pages; route aplikasi
 git diff --check                     → bersih
 sha256 7 file audit                  → 7/7 cocok (d48a985b eba974bc 7ed1ffbe d6f9a9a4
                                       9c6e7972 f89d821a 22d00ca8)
-git status                           → untracked: tepat 7 file audit (OD3–OD8 +
-                                      TREE_REFACTOR_AUDIT.md), setelah catatan closure ikut di-commit
+git status                           → bersih dari file audit lepas: 9 file OD ter-track di
+                                      `docs/decisions/` (dipindah dari root 2026-10-01,
+                                      keputusan owner; SHA 7/7 cocok)
 sqlite3 db/paper_trading.db         → signals 325, positions 6 (4 closed), slippage 325 (avg 0.0129%),
                                       equity 38 hari (cash 621.39), yield 36 hari,
                                       rentang 2026-08-24..2026-09-29, lastRun 2026-09-30T06:08:59Z
