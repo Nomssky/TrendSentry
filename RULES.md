@@ -107,7 +107,7 @@
 
 | Area | Tools | Konvensi |
 |---|---|---|
-| Backtest | Python 3.11+, ccxt, pandas, numpy (murni pandas; **`vectorbt` tidak dipakai sebagai runtime dependency** — hanya sisa entri di `requirements.txt`, lihat `REPO_MAP.md` §13) | PEP8, type hints wajib |
+| Backtest | Python 3.11+, ccxt, pandas, numpy (murni pandas; `vectorbt` dikeluarkan 2026-10-01 — tidak pernah dipakai; dep riset di `requirements-research.txt`) | PEP8, type hints wajib |
 | Execution (Fase 4, **belum ada implementasi**) | **Python + ccxt** (amendemen `PLAN.md` §3 2026-09-11 — bukan Node.js; tetap GATED sebelum gate Fase 2 lolos) | Dilarang `createOrder` sebelum gate lolos |
 | Web produk | Next.js 16 (App Router) + TypeScript + Supabase — server-rendered, **bukan static export** | aturan di `monitoring/web/AGENTS.md` |
 | DB | SQLite `db/paper_trading.db` (state paper) + PostgreSQL via Supabase (produk web, aktif) | Migrasi Postgres: **`supabase/migrations/`** (tidak ada `db/migrations/`) |

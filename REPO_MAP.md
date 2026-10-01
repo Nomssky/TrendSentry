@@ -84,7 +84,7 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 ├── REPO_MAP.md                  ← dokumen ini (baru, Phase 0)
 ├── cli.py                       # CLI lokal: backtest|paper|live --dry-run|watcher|doctor
 ├── config.yaml                  # SOURCE OF TRUTH parameter strategi + risk + paper + execution
-├── requirements.txt             # dep full (termasuk vectorbt yang tidak pernah dipakai)
+├── requirements.txt             # dep runtime/CI (ccxt, pandas, numpy, matplotlib, pytest, PyYAML, rich)
 ├── requirements-engine.txt      # dep ramping utk image Docker engine
 ├── backtest/
 │   ├── strategy.py              # Donchian/ATR/SMA/RSI + position_size + cluster limit
@@ -124,7 +124,7 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 │   ├── config.toml              # config Supabase CLI (local dev)
 │   └── migrations/              # 13 file .sql — SOURCE OF TRUTH skema Postgres
 ├── deploy/                      # persiapan VPS/Coolify (belum pernah dibuild — RUNBOOK)
-├── .github/workflows/           # 4 workflow: paper-trading, daily-sync, fetch-data, test-api
+├── .github/workflows/           # 3 workflow: paper-trading, daily-sync, fetch-data
 ├── data/
 │   ├── historical/              # 13 CSV OHLCV (10 pair config + BCH/LTC/PAXG sisa riset)
 │   └── funding/                 # 2 CSV funding (riset long-short)
@@ -387,9 +387,8 @@ Histori bug yang sudah tercatat: duplikat `paper_positions` karena sync tanpa id
 | 1 | `paper-trading.yml` — cron `0 1 * * *` UTC + dispatch | pytest → `live_signal.py` → `sync_paper_to_supabase.py` → commit `db/paper_trading.db` → failure alert Telegram | file workflow, ada `concurrency: paper-trading` |
 | 2 | `trendsentry-daily-sync.yml` — cron `30 1 * * *` UTC + dispatch | `curl` `GET /api/cron/daily-sync` dgn Bearer CRON_SECRET → ingest fill user + deviasi + skor | file workflow |
 | 3 | `fetch-bitget-data.yml` — **dispatch saja** | `scripts/fetch_bitget_data.py` → commit `data/historical/` | file workflow |
-| 4 | `test-bitget-api.yml` — **dispatch saja** | probe API Bitget (one-off, keputusan venue sudah diambil 2026-08-25) | file workflow |
-| 5 | ~~crontab lokal~~ | **dibatalkan** (laptop tidak always-on) — disebut `TASKS.md:40` | tidak ada file crontab di repo |
-| 6 | `db/backup_db.sh` via cron lokal `5 1 * * *` | backup SQLite 14 hari | hanya disebut di header skrip; **tidak ada scheduler yang menjalankannya sekarang** (SUSPICIOUS, §13) |
+| 4 | ~~crontab lokal~~ | **dibatalkan** (laptop tidak always-on) — disebut `TASKS.md:40` | tidak ada file crontab di repo |
+| 5 | `db/backup_db.sh` **manual-only** | backup SQLite on-demand 14 hari (cron `5 1 * * *` tidak aktif; header skrip + REPO_MAP §10 ditandai) | tidak ada scheduler yang menjalankannya — by design |
 
 Tidak ada Vercel Cron di repo (`.vercel/` hanya project id) — daily-sync dipicu GitHub Actions,
 bukan Vercel cron. `deploy/RUNBOOK.md` menjelaskan rencana pemindahan scheduler ke systemd timer
@@ -476,7 +475,7 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | Path | Purpose | Rujuk | Runtime | Status |
 |---|---|---|---|---|
 | config.yaml | parameter strategi/risk/paper/backtest/llm/execution | live_signal, run_backtest, fetch_bitget_data, cli doctor, tests/test_presets | tiap run | CORE |
-| requirements.txt | dep full (ccxt, pandas, numpy, matplotlib, **vectorbt**, pytest, PyYAML, **requests**, rich) | README, CI (sebagian) | install | CORE |
+| requirements.txt + requirements-research.txt | runtime/CI (ccxt, pandas, numpy, matplotlib, pytest, PyYAML, rich) + riset saja (`requests`/`scipy`/`yfinance`; `vectorbt` dikeluarkan 2026-10-01 — 0 import) | README, CI (sebagian) | install | CORE |
 | requirements-engine.txt | dep ramping image engine | Dockerfile.engine | build image | SUPPORT |
 | .env.example | template secret (exchange, deepseek, telegram, RUN_MODE) | alerting.telegram_alert.load_env, README | runtime lokal | SUPPORT |
 | .gitignore | ignore venv/.env/report csv/db/node_modules | — | git | CORE |
@@ -484,7 +483,7 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | db/schema.sql | DDL SQLite 7 tabel | live_signal (`executescript`), cli | tiap start paper | CORE |
 | db/paper_trading.db | state paper — snapshot bertanggal **per 2026-09-30** (4 closed trade, 325 signal, `lastRun` 2026-09-30; DB maju harian via CI, jangan dikutip tanpa tanggal) | semua pembaca SQLite; **di-commit ke git** oleh CI harian | CI harian | CORE |
 | db/deployments/ | **runtime output Phase A–E**: satu SQLite per deployment (`<id>.db`), **gitignored** — tidak boleh di-commit | `paper_trading/run_deployment.py` | tiap run per deployment | SUPPORT |
-| db/backup_db.sh | backup SQLite harian 14 hari | TASKS.md; cron lokal **dibatalkan** | tidak terjadwal | SUSPICIOUS |
+| db/backup_db.sh | backup SQLite **manual-only** (on-demand, 14 hari) — cron lokal dibatalkan; jalur resmi = commit CI | header skrip + TASKS.md | manual | SUPPORT |
 | db/backups/paper_trading_2026-08-14.db | artefak backup lokal (ignored) | — | — | SUSPICIOUS |
 | presets/donchian_cluster_a2.yaml | preset 1 (gate passed) | run_backtest (PRESET env), tests | manual | CORE |
 | presets/sma_crossover.yaml | preset 2 (gate failed, frozen) | tests | manual | CORE |
@@ -500,7 +499,6 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | .github/workflows/paper-trading.yml | cron 01:00 UTC + dispatch | pytest → `paper_trading/live_signal.py` (**jalur legacy `config.yaml`** — `run_deployment.py` / `TREND_SENTRY_*` tidak dipanggil workflow mana pun) → `sync_paper_to_supabase.py` → commit DB → failure alert | CORE |
 | .github/workflows/trendsentry-daily-sync.yml | cron 01:30 UTC + dispatch | panggil /api/cron/daily-sync | CORE |
 | .github/workflows/fetch-bitget-data.yml | dispatch | refresh CSV historis + commit | SUPPORT |
-| .github/workflows/test-bitget-api.yml | dispatch | probe konektivitas Bitget (one-off) | SUSPICIOUS |
 
 ### 10.6 Deploy / Docker (9)
 
@@ -667,17 +665,17 @@ Rekap status (dihitung dari tabel §10):
 | Status | Definisi | Jumlah baris inventory |
 |---|---|---|
 | CORE | masuk execution path produksi (CI harian, runtime web, SoT) | 108 |
-| SUPPORT | dibutuhkan operasi/docs/tests tapi bukan execution path langsung | 31 |
+| SUPPORT | dibutuhkan operasi/docs/tests tapi bukan execution path langsung | 32 |
 | RESEARCH | reproducible research / artefak riset | 17 |
 | FUTURE | disengaja untuk fase mendatang (LLM filter Fase 3, deploy VPS) | 10 |
-| SUSPICIOUS | ada bukti tidak terjadwal/tidak terpakai, perlu keputusan owner | 5 |
+| SUSPICIOUS | ada bukti tidak terjadwal/tidak terpakai, perlu keputusan owner | 3 |
 | DECISION (tracked) | catatan keputusan OD di `docs/decisions/` (dipindah dari root 2026-10-01, keputusan owner) | 3 baris = **9 file** |
 | DECISION (untracked) | — (kategori dikosongkan 2026-10-01: 7 file OD kini ter-track di `docs/decisions/`) | 0 |
 | DEAD | bukti kuat tidak direferensikan & tidak ada runtime path | 0 — kedua barisnya dihapus 2026-10-01 (`EquityCurveChart.tsx`, `app/public/*.svg` sudah tidak ada di repo; riwayatnya dicatat di §10.12) |
 | UNKNOWN | tidak berhasil diklasifikasi | 0 |
-| **Total** | | **174 baris** |
+| **Total** | | **173 baris** |
 
-Catatan hitungan: 174 baris inventory memetakan **seluruh 240 file repo, semua ter-track git**
+Catatan hitungan: 173 baris inventory memetakan **seluruh 240 file repo, semua ter-track git**
 (sejak 2026-10-01: 7 file OD yang dulu untracked kini ter-track di `docs/decisions/`), **ditambah** ±15 artefak lokal ter-`.gitignore` yang ikut didokumentasikan
 dengan jelas (file `.env` lokal, `db/backups/`, `db/deployments/`, CSV/PNG run terakhir,
 `.temp/` Supabase). Beberapa baris sengaja mengelompokkan banyak file serupa (13 CSV historis,
@@ -699,8 +697,8 @@ Klasifikasi per domain (ringkas):
 - **C. Historical experiment artifacts**: `sharpe_discrepancy_report.md` (snapshot 2026-09-05,
   angka 0.53 sudah digantikan), `bh_*.md` (untracked), CSV/PNG artefak run, `data/historical`
   pair non-config (BCH/LTC/PAXG).
-- **D. Obsolete experiments**: belum ada yang bisa dinyatakan obsolete tanpa keputusan owner;
-  kandidat terkuat hanya `test-bitget-api.yml` (keputusan venue sudah diambil).
+- **D. Obsolete experiments**: `test-bitget-api.yml` sudah dihapus 2026-10-01 (keputusan venue
+  sudah diambil); tidak ada sisa lain yang bisa dinyatakan obsolete tanpa keputusan owner.
 
 ---
 
@@ -870,12 +868,12 @@ Metode: grep referensi lintas repo (Python/TS/TSX/YAML/MD) + penelusuran runtime
 |---|---|---|---|---|---|
 | 1 | `monitoring/web/app/app/dashboard/EquityCurveChart.tsx` | komponen export tanpa importer | **hanya deklarasinya sendiri** (grep seluruh repo: 1 match) | `/app/dashboard` memakai `ScoreTrendChart`; kurva equity ditampilkan di `/papertrading` via `components/EquityChart` (komponen berbeda) | **HIGH** → ✅ **DIHAPUS** (file tidak ada di disk maupun git; riwayat di §10.12) |
 | 2 | `monitoring/web/public/{file,globe,next,window,vercel}.svg` (5) | aset default create-next-app | 0 referensi di `app/` maupun `next.config.ts` | tidak ada route yang merujuk | MEDIUM (dead, tapi dampak nol) → ✅ **DIHAPUS** (direktori `public/` tidak ada di disk maupun git) |
-| 3 | `db/backup_db.sh` | fungsi backup yang kehilangan scheduler | hanya `TASKS.md:39` + komentar dirinya sendiri | crontab lokal **dibatalkan** (TASKS:40); jalur backup resmi kini = commit `db/paper_trading.db` di CI | MEDIUM (masih berguna manual) |
-| 4 | `.github/workflows/test-bitget-api.yml` | probe one-off untuk keputusan yang sudah diambil | tidak direferensikan workflow lain | `workflow_dispatch` saja; venue Bitget sudah dipakai produksi | MEDIUM (obsolete sebagai prosedur) |
+| 3 | `db/backup_db.sh` | fungsi backup yang kehilangan scheduler | hanya `TASKS.md:39` + komentar dirinya sendiri | crontab lokal **dibatalkan** (TASKS:40); jalur backup resmi kini = commit `db/paper_trading.db` di CI | ✅ **SELESAI 2026-10-01** — didokumentasikan manual-only (header skrip + §10 SUPPORT) |
+| 4 | `.github/workflows/test-bitget-api.yml` | probe one-off untuk keputusan yang sudah diambil | tidak direferensikan workflow lain | `workflow_dispatch` saja; venue Bitget sudah dipakai produksi | ✅ **DIHAPUS 2026-10-01** (keputusan owner; riwayat di git) |
 | 5 | `backtest/research/correlation_mitigation.py` | import `yfinance` — **tidak ada di requirements** | hanya dirujuk laporan riset | manual; dari install bersih akan ImportError | MEDIUM (reproducibility, bukan dead) |
 | 6 | `backtest/research/sharpe_benchmark.py` | import `scipy` — **tidak ada di requirements** | hanya dirujuk laporannya | manual; ImportError dari install bersih | MEDIUM (reproducibility) |
-| 7 | `requirements.txt` → `vectorbt` | tidak pernah di-import di kode repo | 0 import (grep `vectorbt` hanya requirements) | — | **HIGH** (unused dependency) |
-| 8 | `requirements.txt` → `requests` | hanya dipakai riset `fetch_funding.py` | 1 import (research) | bukan dep runtime engine | LOW-MEDIUM (keputusan: pisahkan ke research requirements) |
+| 7 | `requirements.txt` → `vectorbt` | tidak pernah di-import di kode repo | 0 import (grep `vectorbt` hanya requirements) | — | ✅ **DIHAPUS 2026-10-01** (keputusan owner) |
+| 8 | `requirements.txt` → `requests` | hanya dipakai riset `fetch_funding.py` | 1 import (research) | bukan dep runtime engine | ✅ **SELESAI 2026-10-01** — pindah ke `requirements-research.txt` bersama `scipy`/`yfinance` |
 | 9 | Unused vars hasil lint | `lib/db-supabase.ts:93 lastRunDate`, `e2e/free-tier-flow.spec.ts:12 fs`, `e2e/api-smoke-test.mjs:12 SUPABASE_URL`, import `SITE` di `Hero.tsx`/`PricingTeaser.tsx`/`start/page.tsx`, import `createClient` di `strategies/new:3` | lint | dead local | HIGH (kecil) — **catatan:** `e2e/**` dilarang disentuh (§18 #16) |
 | 10 | `db/backups/paper_trading_2026-08-14.db` | artefak backup lokal (ignored, bukan bagian repo) | tidak ada | — | LOW (bukan repo content) |
 | 11 | `monitoring/web/e2e/.auth/user.json` (untracked) | storage state login tes di working tree | dipakai Playwright storageState? **spec tidak menyetel `storageState`** — auth.spec memakai redirect-only, free-tier login via form | berpotensi membawa session tes; tidak di-ignore | MEDIUM (hygiene) → ✅ **SELESAI** (direktori tidak ada; sudah di-`.gitignore:36`) |
@@ -1049,14 +1047,15 @@ Urutan yang disarankan — masing-masing butuh konfirmasi owner sesuai aturan AG
 - **Item 10** — ⛔ **GATED (§18 #15)**: re-run backtest + satukan keluarga angka
   (`metrics.md` vs `backtest-reference.json`). Sentuh angka publik → wajib persetujuan owner
   + catat di `PLAN.md` (AGENTS #2). **Sengaja dikeluarkan dari scope penyesuaian ini.**
-- **Item 12** — `test-bitget-api.yml` (arsipkan?) dan `db/backup_db.sh` (aktifkan kembali
-  atau dokumentasikan sebagai manual-only?).
+- **Item 12** — ✅ **SELESAI 2026-10-01**: `test-bitget-api.yml` dihapus (keputusan owner);
+  `db/backup_db.sh` didokumentasikan manual-only (header skrip + §10 SUPPORT).
 - **Item 13** — 7 warning unused vars; 2 error `set-state-in-effect` butuh pola alternatif
   (bukan sekadar hapus). **Catatan:** `e2e/**` dilarang disentuh (§18 #16).
-- **Item 14** — `requirements.txt`: keluarkan `vectorbt`; pisahkan `requests`/`scipy`/
-  `yfinance` ke `requirements-research.txt`. (Efek samping: catatan di `TASKS.md:7` dan
-  `RULES.md:110` yang menyebut sisa ini jadi basi — putuskan sepaket.)
-- **Item 15** — (opsional) tandai `run_longshort_backtest.py` sebagai arsip eksperimen.
+- **Item 14** — ✅ **SELESAI 2026-10-01**: `vectorbt` dikeluarkan dari `requirements.txt`;
+  `requests`/`scipy`/`yfinance` pindah ke `requirements-research.txt`;
+  `TASKS.md:7` + `RULES.md:110` diselaraskan sepaket.
+- **Item 15** — ✅ **SELESAI tanpa perubahan file**: header `run_longshort_backtest.py`
+  sudah menandai "RISET (tidak dipakai paper trading)" — tag arsip dianggap cukup.
 - **Item 16** — struktur: kesimpulan Phase 0 tetap berlaku — **tidak perlu restructure besar**
   (lihat §18). Yang kurang hanya pemisahan artefak data non-config
   (`data/historical/{BCH,LTC,PAXG}`, `data/funding`) ke `research/data/`, dan keputusan

@@ -4,7 +4,7 @@
 
 ## Fase 1 — Backtest Engine
 
-- [x] Setup `venv` + install `ccxt`, `pandas`, `vectorbt` (pandas-ta gagal install di Python 3.14 — numba lama; ATR/Donchian diimplementasikan murni pandas + unit test, lebih transparan. **Catatan 2026-09-22:** `vectorbt` akhirnya **tidak dipakai oleh kode mana pun** — tetap tercatat di `requirements.txt` sebagai sisa, lihat `REPO_MAP.md` §13)
+- [x] Setup `venv` + install `ccxt`, `pandas` (pandas-ta gagal install di Python 3.14 — numba lama; ATR/Donchian diimplementasikan murni pandas + unit test, lebih transparan. **Catatan 2026-10-01:** `vectorbt` dikeluarkan dari `requirements.txt` (tidak dipakai kode mana pun); `requests`/`scipy`/`yfinance` pindah ke `requirements-research.txt` — hanya untuk `backtest/research/`)
 - [x] Buat `config.yaml` (pair, timeframe, Donchian period, ATR multiplier, risk %)
 - [x] Buat script fetch data historis (**aktual: `scripts/fetch_bitget_data.py`** — nama lama `backtest/fetch_data.py` tidak pernah ada di kode, tercantum basi sebelumnya) — BTC/USDT & ETH/USDT, 1D, 6 tahun (2020-08..2026-08, diperluas dari 3 tahun atas instruksi user utk cakup bull-bear-bull), simpan ke `data/historical/`
 - [x] Implementasi `backtest/strategy.py`:

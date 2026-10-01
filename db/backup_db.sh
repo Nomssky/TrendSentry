@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# Backup harian DB paper trading via SQLite online backup (aman walau DB sedang dipakai).
+# Backup MANUAL-ONLY DB paper trading via SQLite online backup (aman walau DB sedang dipakai).
 # Simpan 14 hari terakhir di db/backups/, hapus yang lebih tua.
-# Cron: 5 1 * * * (UTC, 5 menit setelah live_signal) bash /home/kresna/project/db/backup_db.sh
+# MANUAL-ONLY: cron lokal DIBATALKAN (lihat TASKS.md) — jangan baca baris Cron di bawah sebagai jadwal aktif.
+# Jalur backup resmi = commit db/paper_trading.db oleh CI harian (paper-trading.yml).
+# Cron dulu: 5 1 * * * (UTC) — tidak aktif.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p db/backups

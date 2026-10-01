@@ -37,7 +37,7 @@ Kamu bertindak sebagai:
 
 | Area | Tools | Konvensi |
 |---|---|---|
-| Backtest & signal engine | Python 3.11+, `ccxt`, `pandas`, `numpy` (murni pandas — `vectorbt` tercantum di `requirements.txt` tapi **tidak dipakai** kode mana pun) | PEP8, type hints wajib di fungsi publik |
+| Backtest & signal engine | Python 3.11+, `ccxt`, `pandas`, `numpy` (murni pandas — dep riset terpisah di `requirements-research.txt`) | PEP8, type hints wajib di fungsi publik |
 | Execution (Fase 4, **belum diimplementasi**) | **Python + `ccxt`** (amendemen PLAN.md §3, 2026-09-11 — BUKAN Node.js) | Masih GATED: dilarang implementasi order riil sebelum gate Fase 2 lolos |
 | Web produk (`monitoring/web/`) | Next.js 16 (App Router), TypeScript, Supabase | Batas frontend/backend: lihat §9 di bawah & `monitoring/web/AGENTS.md` |
 | DB | SQLite (`db/paper_trading.db`, state paper) + PostgreSQL via Supabase (produk web — **aktif sekarang**, bukan "Fase 4 kalau perlu") | Source of truth skema Postgres: **`supabase/migrations/`** (TIDAK ADA `db/migrations/`) |

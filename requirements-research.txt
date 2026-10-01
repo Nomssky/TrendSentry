@@ -1,0 +1,9 @@
+# Dependensi KHUSUS riset — bukan runtime engine/paper/CI.
+# Dipakai hanya oleh backtest/research/*:
+#   fetch_funding.py      -> requests
+#   sharpe_benchmark.py   -> scipy
+#   correlation_mitigation.py -> yfinance
+# Install manual bila menjalankan riset: pip install -r requirements-research.txt
+requests>=2.28,<3
+scipy>=1.10,<2
+yfinance>=0.2,<1
