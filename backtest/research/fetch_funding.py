@@ -1,6 +1,6 @@
 """Fetch funding rate historis futures Binance (dump resmi data.binance.vision).
 
-Output: data/funding/{SYMBOL}_daily.csv (kolom date, daily_rate).
+Output: research/data/funding/{SYMBOL}_daily.csv (kolom date, daily_rate).
 daily_rate = jumlah 3 rate per-8-jam dalam sehari (fraksi dari notional; positif = long bayar short).
 Bulan yang dump-nya belum tersedia diisi trailing average (dicatat di log).
 """
@@ -20,7 +20,7 @@ log = logging.getLogger("fetch_funding")
 
 SYMBOLS = ["BTCUSDT", "ETHUSDT"]
 START = (2020, 8)  # sinkron dengan window backtest 6 tahun
-OUT_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "funding"
+OUT_DIR = Path(__file__).resolve().parent.parent.parent / "research" / "data" / "funding"
 BASE = "https://data.binance.vision/data/futures/um/monthly/fundingRate/{sym}/{sym}-fundingRate-{ym}.zip"
 
 

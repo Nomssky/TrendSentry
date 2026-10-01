@@ -440,7 +440,7 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | scripts/fetch_bitget_data.py | fetch OHLCV Bitget → CSV | fetch-bitget-data.yml, DESIGN.md | ccxt, pandas, yaml | manual/dispatch | SUPPORT |
 | scripts/compare_live_vs_backtest.py | gate evaluasi Fase 2 (locked <10) | tests/test_compare.py, TASKS | backtest-reference.json, sqlite3 | manual | SUPPORT |
 | backtest/research/correlation_mitigation.py | eksperimen mitigasi korelasi → laporan | reports/correlation_mitigation_experiment.md | run_backtest, **yfinance (tidak di requirements)** | manual | RESEARCH |
-| backtest/research/fetch_funding.py | dump funding rate Binance → data/funding | run_longshort_backtest.py | requests | manual | RESEARCH |
+| backtest/research/fetch_funding.py | dump funding rate Binance → research/data/funding | run_longshort_backtest.py | requests | manual | RESEARCH |
 | backtest/research/portfolio_size_experiment.py | 2/4/6/8/10 pair + matriks korelasi → laporan | reports/portfolio_size_experiment.md | run_backtest, yaml | manual | RESEARCH |
 | backtest/research/regime_segmentation.py | performa per rezim bull/bear/sideways | reports/regime_segmentation_analysis.md | run_backtest, matplotlib | manual | RESEARCH |
 | backtest/research/run_capital_efficiency.py | deployment, yield, multi-pair → laporan | reports/research/capital_efficiency/ | run_backtest, matplotlib | manual | RESEARCH |
@@ -488,9 +488,9 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | presets/donchian_cluster_a2.yaml | preset 1 (gate passed) | run_backtest (PRESET env), tests | manual | CORE |
 | presets/sma_crossover.yaml | preset 2 (gate failed, frozen) | tests | manual | CORE |
 | presets/rsi_mean_reversion.yaml | preset 3 (gate failed, frozen) | tests | manual | CORE |
-| data/historical/*.csv (13 file) | OHLCV 1D: 10 pair config + BCH/LTC/PAXG | run_backtest (10 pair saja) | backtest | CORE |
-| data/historical/{BCH,LTC,PAXG}_USDT_1d.csv (3) | sisa riset, tidak di config | tidak ada konsumen aktif | — | RESEARCH |
-| data/funding/{BTC,ETH}USDT_daily.csv (2) | funding rate utk riset long-short | run_longshort_backtest | riset | RESEARCH |
+| data/historical/*.csv (11 file) | OHLCV 1D: 10 pair config + PAXG (PAXG dibaca `correlation_mitigation.py`, sisanya config) | run_backtest (10 pair saja) | backtest | CORE |
+| research/data/historical/{BCH,LTC}_USDT_1d.csv (2) | sisa riset tanpa konsumen kode — dipindah dari `data/historical/` 2026-10-01 | tidak ada | — | RESEARCH |
+| research/data/funding/{BTC,ETH}USDT_daily.csv (2) | funding rate utk riset long-short — dipindah dari `data/funding/` 2026-10-01 | run_longshort_backtest | riset | RESEARCH |
 
 ### 10.5 GitHub Actions (4)
 
@@ -678,8 +678,8 @@ Rekap status (dihitung dari tabel §10):
 Catatan hitungan: 173 baris inventory memetakan **seluruh 240 file repo, semua ter-track git**
 (sejak 2026-10-01: 7 file OD yang dulu untracked kini ter-track di `docs/decisions/`), **ditambah** ±15 artefak lokal ter-`.gitignore` yang ikut didokumentasikan
 dengan jelas (file `.env` lokal, `db/backups/`, `db/deployments/`, CSV/PNG run terakhir,
-`.temp/` Supabase). Beberapa baris sengaja mengelompokkan banyak file serupa (13 CSV historis,
-2 CSV funding, 11 file laporan riset) — perinciannya tertulis di kolom Path.
+`.temp/` Supabase). Beberapa baris sengaja mengelompokkan banyak file serupa (11 CSV historis
+di `data/historical/` + 2 di `research/data/historical/`, 2 CSV funding, 11 file laporan riset) — perinciannya tertulis di kolom Path.
 
 Entri DEAD/SUSPICIOUS dengan bukti lengkap → §13.
 **Tidak ada file yang disimpulkan DEAD hanya dari nama** — semua punya hasil grep + runtime path check.
@@ -692,11 +692,12 @@ Klasifikasi per domain (ringkas):
   seluruh `monitoring/web/app|lib` + `supabase/migrations`, `lib/backtest-reference.json`,
   `backtest/reports/{metrics.md,decision_log.md,presets/}`.
 - **B. Reproducible research**: `backtest/research/*.py` + `backtest/reports/research/` +
-  `*_experiment.md` + `data/funding` + preset reports (dijalankan manual, dependensi
-  sebagian tidak ada di requirements — lihat §13).
+  `*_experiment.md` + `research/data/` + preset reports (dijalankan manual, dependensi
+  di `requirements-research.txt`).
 - **C. Historical experiment artifacts**: `sharpe_discrepancy_report.md` (snapshot 2026-09-05,
   angka 0.53 sudah digantikan), `bh_*.md` (untracked), CSV/PNG artefak run, `data/historical`
-  pair non-config (BCH/LTC/PAXG).
+  pair non-config (BCH/LTC dipindah ke `research/data/` 2026-10-01; PAXG tetap karena
+  dibaca `correlation_mitigation.py`).
 - **D. Obsolete experiments**: `test-bitget-api.yml` sudah dihapus 2026-10-01 (keputusan venue
   sudah diambil); tidak ada sisa lain yang bisa dinyatakan obsolete tanpa keputusan owner.
 
@@ -1056,9 +1057,9 @@ Urutan yang disarankan — masing-masing butuh konfirmasi owner sesuai aturan AG
   `TASKS.md:7` + `RULES.md:110` diselaraskan sepaket.
 - **Item 15** — ✅ **SELESAI tanpa perubahan file**: header `run_longshort_backtest.py`
   sudah menandai "RISET (tidak dipakai paper trading)" — tag arsip dianggap cukup.
-- **Item 16** — struktur: kesimpulan Phase 0 tetap berlaku — **tidak perlu restructure besar**
-  (lihat §18). Yang kurang hanya pemisahan artefak data non-config
-  (`data/historical/{BCH,LTC,PAXG}`, `data/funding`) ke `research/data/`, dan keputusan
+- **Item 16** — ✅ **SELESAI sebagian 2026-10-01**: artefak data non-config dipisah
+  (`research/data/funding/` + `research/data/historical/{BCH,LTC}`; PAXG tetap di
+  `data/historical/` karena dibaca `correlation_mitigation.py`). Terbuka: keputusan
   apakah `monitoring/web` dipisah (monorepo kecil, tidak mendesak).
 
 ---
@@ -1092,7 +1093,7 @@ Dalam Phase 0 dan sampai owner memberi instruksi lain, **dilarang** mengubah/men
 12. Seluruh dokumen root (README/PLAN/AGENTS/RULES/TASKS/AUDIT) — Phase 0 tidak me-rewrite
     dokumentasi; koreksi dilakukan di phase terpisah dengan catatan.
 13. `backtest/reports/**` termasuk `decision_log.md` dan laporan riset (artefak bukti gate).
-14. `backtest/research/*.py` + `data/funding` + CSV pair non-config (artefak riset; jangan
+14. `backtest/research/*.py` + `research/data/` + CSV pair non-config (artefak riset; jangan
     dihapus hanya karena tidak dipakai engine).
 15. Angka di `backtest-reference.json` — perubahan = re-backtest + catatan di PLAN.md (AGENTS #2).
 

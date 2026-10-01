@@ -19,6 +19,7 @@ log = logging.getLogger("correlation_mitigation")
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 DATA = ROOT / "data" / "historical"
+RESEARCH_HIST = ROOT / "research" / "data" / "historical"  # sisa riset (BCH/LTC) pindah 2026-10-01
 
 ALL_ORIG = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT",
             "AVAX/USDT", "LINK/USDT", "DOGE/USDT", "ADA/USDT", "HYPE/USDT"]
@@ -256,6 +257,9 @@ def main():
     cand_closes = {}
     for label in ["PAXG", "LTC", "BCH"]:
         f = DATA / f"{label}_USDT_1d.csv"
+        if not f.exists():
+            # Sisa riset pindah ke research/data (2026-10-01); PAXG tetap di DATA.
+            f = RESEARCH_HIST / f"{label}_USDT_1d.csv"
         if f.exists():
             df = pd.read_csv(f, parse_dates=["date"]).set_index("date")
             cand_closes[label] = df["close"]

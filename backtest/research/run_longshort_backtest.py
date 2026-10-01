@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("longshort")
 
 OUT = Path(__file__).resolve().parent.parent / "reports" / "research" / "longshort"
-FUNDING_DIR = ROOT / "data" / "funding"
+FUNDING_DIR = ROOT / "research" / "data" / "funding"
 
 
 def position_size_short(equity: float, entry_price: float, stop_price: float, risk_pct: float) -> float:
