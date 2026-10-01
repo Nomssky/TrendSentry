@@ -28,7 +28,7 @@ TrendSentry/
 │   ├── decisions/       # Catatan keputusan OD2–OD8 + audit refactor (riwayat, byte-identik)
 │   └── CLOSURE_NOTES_2026-10-01.md  # Berita acara closure + temuan terverifikasi
 ├── tests/               # 224 pytest (sizing & stop-loss = paling kritis)
-└── .github/workflows/   # paper-trading (01:00 UTC), daily-sync (01:30), fetch-data (manual)
+└── .github/workflows/   # paper-trading (01:00 UTC), daily-sync (01:30), run-deployment (02:30), fetch-data (manual)
 ```
 
 Yang TIDAK ada di repo (sengaja): folder `execution/` / order live (Fase 4, gated),

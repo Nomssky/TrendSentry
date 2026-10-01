@@ -116,6 +116,6 @@
 - [x] **E7** — ship gate `tests/test_mvp_ship_gate.py`
 - [x] Migrasi Phase A + B **diterapkan ke Supabase live** dan diverifikasi (constraint, index, RLS, trigger, jumlah baris tidak berubah)
 - [x] Endpoint `/config` + `/status` + dashboard + scoping ownership **diverifikasi terhadap produksi**; engine menerima bundle live; token tampil 1× lalu hanya hash SHA-256
-- [ ] **Kaki data market untuk runtime deployment — TERTUNDA (lingkungan, bukan kode):** jalur legacy `config.yaml` **sudah jalan harian di GitHub Actions** (`paper-trading.yml`, run 2026-09-30 sukses: +10 signal → 325), tapi `run_deployment.py` **tidak dipanggil workflow mana pun** dan percobaan dari mesin ini berhenti di `ssl.SSLCertVerificationError` (filter ISP). Butuh **keputusan owner**: jalankan di runner CI (menambah workflow = fitur baru di luar `PLAN.md`) atau dari host lain yang legal terjangkau Bitget — sebelum menyatakan verifikasi operasional penuh.
+- [x] **Kaki data market untuk runtime deployment — DIJADWALKAN 2026-10-01 (keputusan owner: workflow CI baru):** `.github/workflows/run-deployment.yml` (cron 02:30 UTC + dispatch) menjalankan `run_deployment.py` per deployment (fail-closed) + sync deployment-aware + artifact DB 14 hari. **Butuh setup sekali:** vars `TREND_SENTRY_DEPLOYMENT_IDS` (+opsional `TREND_SENTRY_HOST`), secrets `TREND_SENTRY_CONFIG_TOKENS` (JSON) — tanpa ini job gagal dengan pesan jelas (bukan diam-diam sukses). Verifikasi operasional penuh setelah schedule pertama jalan.
 
 **Jumlah test saat ini: 224 (17 file + `tests/conftest.py`).**

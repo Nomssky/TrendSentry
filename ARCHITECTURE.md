@@ -143,7 +143,8 @@ Sifat: **dummy execution** — tidak pernah mengirim order; exit dihitung dari h
 Jalur kedua di atas tetap jadi jalur global legacy. Runtime per-deployment:
 
 ```
-python paper_trading/run_deployment.py            (self-hosted, satu proses / deployment)
+python paper_trading/run_deployment.py            (satu proses / deployment;
+  dijadwalkan .github/workflows/run-deployment.yml 02:30 UTC, atau self-hosted manual)
   env  TREND_SENTRY_DEPLOYMENT_ID · _CONFIG_URL · _CONFIG_TOKEN
    │
    ├─ config_source.ConfigSource.load()

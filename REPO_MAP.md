@@ -124,7 +124,7 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 │   ├── config.toml              # config Supabase CLI (local dev)
 │   └── migrations/              # 13 file .sql — SOURCE OF TRUTH skema Postgres
 ├── deploy/                      # persiapan VPS/Coolify (belum pernah dibuild — RUNBOOK)
-├── .github/workflows/           # 3 workflow: paper-trading, daily-sync, fetch-data
+├── .github/workflows/           # 4 workflow: paper-trading, daily-sync, fetch-data, run-deployment
 ├── data/
 │   ├── historical/              # 13 CSV OHLCV (10 pair config + BCH/LTC/PAXG sisa riset)
 │   └── funding/                 # 2 CSV funding (riset long-short)
@@ -387,8 +387,9 @@ Histori bug yang sudah tercatat: duplikat `paper_positions` karena sync tanpa id
 | 1 | `paper-trading.yml` — cron `0 1 * * *` UTC + dispatch | pytest → `live_signal.py` → `sync_paper_to_supabase.py` → commit `db/paper_trading.db` → failure alert Telegram | file workflow, ada `concurrency: paper-trading` |
 | 2 | `trendsentry-daily-sync.yml` — cron `30 1 * * *` UTC + dispatch | `curl` `GET /api/cron/daily-sync` dgn Bearer CRON_SECRET → ingest fill user + deviasi + skor | file workflow |
 | 3 | `fetch-bitget-data.yml` — **dispatch saja** | `scripts/fetch_bitget_data.py` → commit `data/historical/` | file workflow |
-| 4 | ~~crontab lokal~~ | **dibatalkan** (laptop tidak always-on) — disebut `TASKS.md:40` | tidak ada file crontab di repo |
-| 5 | `db/backup_db.sh` **manual-only** | backup SQLite on-demand 14 hari (cron `5 1 * * *` tidak aktif; header skrip + REPO_MAP §10 ditandai) | tidak ada scheduler yang menjalankannya — by design |
+| 4 | `run-deployment.yml` — cron `30 2 * * *` UTC + dispatch | pytest → `run_deployment.py` per deployment → sync deployment-aware → artifact DB | file workflow, ada `concurrency: run-deployment` |
+| 5 | ~~crontab lokal~~ | **dibatalkan** (laptop tidak always-on) — disebut `TASKS.md:40` | tidak ada file crontab di repo |
+| 6 | `db/backup_db.sh` **manual-only** | backup SQLite on-demand 14 hari (cron `5 1 * * *` tidak aktif; header skrip + REPO_MAP §10 ditandai) | tidak ada scheduler yang menjalankannya — by design |
 
 Tidak ada Vercel Cron di repo (`.vercel/` hanya project id) — daily-sync dipicu GitHub Actions,
 bukan Vercel cron. `deploy/RUNBOOK.md` menjelaskan rencana pemindahan scheduler ke systemd timer
@@ -496,7 +497,8 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 
 | Path | Trigger | Fungsi | Status |
 |---|---|---|---|
-| .github/workflows/paper-trading.yml | cron 01:00 UTC + dispatch | pytest → `paper_trading/live_signal.py` (**jalur legacy `config.yaml`** — `run_deployment.py` / `TREND_SENTRY_*` tidak dipanggil workflow mana pun) → `sync_paper_to_supabase.py` → commit DB → failure alert | CORE |
+| .github/workflows/paper-trading.yml | cron 01:00 UTC + dispatch | pytest → `paper_trading/live_signal.py` (jalur legacy `config.yaml`) → `sync_paper_to_supabase.py` → commit DB → failure alert | CORE |
+| .github/workflows/run-deployment.yml | cron 02:30 UTC + dispatch | pytest → `paper_trading/run_deployment.py` per deployment (fail-closed) → sync deployment-aware → artifact DB 14 hari → failure alert | CORE |
 | .github/workflows/trendsentry-daily-sync.yml | cron 01:30 UTC + dispatch | panggil /api/cron/daily-sync | CORE |
 | .github/workflows/fetch-bitget-data.yml | dispatch | refresh CSV historis + commit | SUPPORT |
 
@@ -664,7 +666,7 @@ Rekap status (dihitung dari tabel §10):
 
 | Status | Definisi | Jumlah baris inventory |
 |---|---|---|
-| CORE | masuk execution path produksi (CI harian, runtime web, SoT) | 108 |
+| CORE | masuk execution path produksi (CI harian, runtime web, SoT) | 109 |
 | SUPPORT | dibutuhkan operasi/docs/tests tapi bukan execution path langsung | 32 |
 | RESEARCH | reproducible research / artefak riset | 17 |
 | FUTURE | disengaja untuk fase mendatang (LLM filter Fase 3, deploy VPS) | 10 |
@@ -673,9 +675,9 @@ Rekap status (dihitung dari tabel §10):
 | DECISION (untracked) | — (kategori dikosongkan 2026-10-01: 7 file OD kini ter-track di `docs/decisions/`) | 0 |
 | DEAD | bukti kuat tidak direferensikan & tidak ada runtime path | 0 — kedua barisnya dihapus 2026-10-01 (`EquityCurveChart.tsx`, `app/public/*.svg` sudah tidak ada di repo; riwayatnya dicatat di §10.12) |
 | UNKNOWN | tidak berhasil diklasifikasi | 0 |
-| **Total** | | **173 baris** |
+| **Total** | | **174 baris** |
 
-Catatan hitungan: 173 baris inventory memetakan **seluruh 240 file repo, semua ter-track git**
+Catatan hitungan: 174 baris inventory memetakan **seluruh 241 file repo, semua ter-track git**
 (sejak 2026-10-01: 7 file OD yang dulu untracked kini ter-track di `docs/decisions/`), **ditambah** ±15 artefak lokal ter-`.gitignore` yang ikut didokumentasikan
 dengan jelas (file `.env` lokal, `db/backups/`, `db/deployments/`, CSV/PNG run terakhir,
 `.temp/` Supabase). Beberapa baris sengaja mengelompokkan banyak file serupa (11 CSV historis
@@ -1172,9 +1174,10 @@ sqlite3 db/paper_trading.db         → signals 325, positions 6 (4 closed), sli
 
 > **Catatan:** +10 signal (315 → 325) berasal dari workflow CI `paper-trading.yml` yang berjalan
 > harian di `ubuntu-latest` dan **berhasil menjangkau Bitget** — commit `36c9f5c` (2026-09-30).
-> Artinya jalur `config.yaml` legacy sudah tervalidasi environment-nya. Yang **belum**
-> tervalidasi adalah runtime deployment `run_deployment.py` (tidak dipanggil workflow mana pun);
-> percobaan dari mesin lokal berhenti di blokir ISP. Lihat `docs/CLOSURE_NOTES_2026-10-01.md` §6.
+> Artinya jalur `config.yaml` legacy sudah tervalidasi environment-nya. Runtime deployment
+> `run_deployment.py` dijadwalkan via `run-deployment.yml` 2026-10-01 (keputusan owner);
+> verifikasi operasional penuh setelah schedule pertama jalan.
+> Lihat `docs/CLOSURE_NOTES_2026-10-01.md` §6.
 
 *Dokumen ini dibuat tanpa mengubah file sumber mana pun selain menambahkan `REPO_MAP.md` itu sendiri.*
 *Penyesuaian 2026-10-01 mengubah **dokumentasi saja** — tidak ada kode, config, test, atau schema

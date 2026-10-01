@@ -207,6 +207,13 @@ Runner GitHub Actions sudah terbukti terjangkau Bitget, jadi jalur runtime deplo
 dijalankan di sana. **Menambah workflow baru = menambah fitur di luar `PLAN.md`**, jadi tidak
 dikerjakan tanpa konfirmasi. Alternatif: jalankan dari host lain yang legal terjangkau Bitget.
 
+> **Update 2026-10-01 (keputusan owner: workflow CI baru):** `.github/workflows/run-deployment.yml`
+> dibuat (cron 02:30 UTC + dispatch) — pytest → engine per deployment (fail-closed, lanjut
+> walau satu gagal) → sync deployment-aware → artifact DB 14 hari → alert Telegram saat gagal.
+> Setup sekali: vars `TREND_SENTRY_DEPLOYMENT_IDS` (+opsional `TREND_SENTRY_HOST`), secrets
+> `TREND_SENTRY_CONFIG_TOKENS` (JSON id→token). Verifikasi operasional penuh setelah schedule
+> pertama jalan.
+
 **Jangan pernah menyiasati filter ISP secara diam-diam.** Selama ini jalur legacy tetap
 berjalan tiap hari lewat CI, jadi tidak ada kekosongan data — yang belum ada hanyalah
 verifikasi *runtime deployment* terhadap data pasar nyata.

@@ -79,7 +79,7 @@ One-screen directory map: **[`TREE.md`](TREE.md)**.
 
 - **Engine:** Python 3.11+, `ccxt`, `pandas`, SQLite, Telegram Bot API
 - **Web:** Next.js 16 (App Router), TypeScript, Tailwind, Recharts, Supabase (Auth + Postgres), Stripe (gated)
-- **Jobs:** GitHub Actions (daily paper run, daily user-sync, manual data fetch)
+- **Jobs:** GitHub Actions (daily paper run, daily user-sync, daily deployment run, manual data fetch)
 
 ### Deployment (current)
 
@@ -88,6 +88,7 @@ One-screen directory map: **[`TREE.md`](TREE.md)**.
 | Web app | Vercel — Root Directory `monitoring/web`, runtime SSR + Supabase (**not** a static export) |
 | Database | Supabase (Postgres) — schema in `supabase/migrations/` |
 | Paper engine | GitHub Actions `paper-trading.yml` (01:00 UTC) + SQLite committed back to the repo |
+| Deployment runtime | GitHub Actions `run-deployment.yml` (02:30 UTC) — per-deployment config bundle → engine → heartbeat → sync; DB per deployment = CI artifact, not committed |
 | User fill ingest | GitHub Actions `trendsentry-daily-sync.yml` (01:30 UTC) → `/api/cron/daily-sync` |
 | VPS / Docker | `deploy/` prepared for a future cutover — **not active** |
 

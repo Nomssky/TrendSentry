@@ -1,0 +1,108 @@
+# Deployment runtime (Phase B) — SATU proses per deployment, paper/simulated only.
+# Menutup kaki market-data untuk runtime deployment: tiap deployment mengambil
+# config bundle versioned (fail-closed), menjalankan engine Donchian vs data
+# publik Bitget, menulis SQLite per-deployment, heartbeat via /status, lalu
+# sync deployment-aware ke Supabase (paper-sync menanam deployment_id).
+#
+# Jadwal 02:30 UTC = setelah candle 1d close + setelah engine legacy (01:00)
+# dan daily-sync (01:30), supaya tidak berebut dan data mentah sudah siap.
+#
+# Setup yang HARUS ada sebelum schedule pertama jalan (sekali saja):
+#   Vars:    TREND_SENTRY_DEPLOYMENT_IDS = "1,2" (daftar id, koma-dipisah)
+#            TREND_SENTRY_HOST (opsional, default https://trendsentry.xyz)
+#   Secrets: TREND_SENTRY_CONFIG_TOKENS = {"1":"<token deployment 1>",...}
+#            (satu JSON — token tampil SEKALI saat POST /api/deployments)
+#            TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, CRON_SECRET (sudah ada)
+# Tanpa IDS/token yang cocok, deployment DILEWATI fail-closed (bukan diam-diam
+# sukses): job gagal -> alert Telegram. DB per-deployment (db/deployments/*.db)
+# TIDAK di-commit (gitignored by design) — diunggah sebagai artifact 14 hari.
+name: run-deployment
+
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+    inputs:
+      deployment_ids:
+        description: 'Override daftar deployment (mis. "1"). Kosong = pakai vars.'
+        required: false
+        default: ""
+
+permissions: {} # tidak commit balik: DB per-deployment = artifact, bukan git
+
+concurrency:
+  group: run-deployment
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DEPLOYMENT_IDS: ${{ inputs.deployment_ids != '' && inputs.deployment_ids || vars.TREND_SENTRY_DEPLOYMENT_IDS }}
+      DEPLOY_HOST: ${{ vars.TREND_SENTRY_HOST }}
+      TOKENS_JSON: ${{ secrets.TREND_SENTRY_CONFIG_TOKENS }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps (minimal — sama seperti paper-trading.yml)
+        run: pip install ccxt pandas pyyaml pytest rich
+
+      - name: Run tests
+        run: python -m pytest tests/ -v
+
+      - name: Run deployment engine + sync (per deployment, lanjut walau satu gagal)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          IDS="${DEPLOYMENT_IDS:-}"
+          [ -n "$IDS" ] || { echo "::error::TREND_SENTRY_DEPLOYMENT_IDS kosong (vars) dan tidak ada override dispatch — tidak ada yang dijalankan"; exit 1; }
+          [ -n "$TOKENS_JSON" ] || { echo "::error::TREND_SENTRY_CONFIG_TOKENS belum diset — tidak ada yang dijalankan"; exit 1; }
+          HOST="${DEPLOY_HOST:-https://trendsentry.xyz}"
+          FAILED=""
+          for ID in $(echo "$IDS" | tr ',' ' '); do
+            TOKEN=$(TOKENS_JSON="$TOKENS_JSON" DEPLOYMENT_ID="$ID" python3 -c "import json,os; print(json.loads(os.environ['TOKENS_JSON']).get(os.environ['DEPLOYMENT_ID'],''))")
+            if [ -z "$TOKEN" ]; then echo "::error::deployment $ID: token tidak ada di TREND_SENTRY_CONFIG_TOKENS (fail-closed, dilewati)"; FAILED="$FAILED $ID"; continue; fi
+            echo "::add-mask::$TOKEN"
+            echo "=== deployment $ID: engine ==="
+            if TREND_SENTRY_DEPLOYMENT_ID="$ID" \
+               TREND_SENTRY_CONFIG_URL="$HOST/api/deployments/$ID/config" \
+               TREND_SENTRY_CONFIG_TOKEN="$TOKEN" \
+               python paper_trading/run_deployment.py; then
+              echo "=== deployment $ID: sync ==="
+              DB_PATH="db/deployments/$ID.db" python scripts/sync_paper_to_supabase.py \
+                || { echo "::error::deployment $ID: sync gagal"; FAILED="$FAILED $ID"; continue; }
+            else
+              echo "::error::deployment $ID: engine gagal"; FAILED="$FAILED $ID"
+            fi
+          done
+          [ -z "$FAILED" ] || { echo "FAILED deployments:$FAILED"; exit 1; }
+          echo "semua deployment sukses: $IDS"
+
+      - name: Upload per-deployment DBs (debug, 14 hari — bukan commit)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-dbs
+          path: db/deployments/*.db
+          if-no-files-found: warn
+          retention-days: 14
+
+      # ponytail: crash alert di run_deployment.py hanya mencakup exception engine.
+      # Step gagal lain (tests merah, sync gagal, token hilang) sebelumnya SILENT —
+      # pola yang sama menutupnya di paper-trading.yml. Step ini menutup itu.
+      - name: Notify Telegram on failure
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d text="[run-deployment] workflow FAILED (run ${{ github.run_id }}) — engine/sync deployment TIDAK jalan. Cek Actions log." > /dev/null

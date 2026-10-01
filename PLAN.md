@@ -181,7 +181,7 @@ TrendSentry/
 ├── db/                            # schema.sql + paper_trading.db (di-commit) + backup_db.sh
 ├── supabase/                      # config.toml + migrations/ = SOURCE OF TRUTH skema Postgres
 ├── deploy/                        # persiapan VPS/Coolify (belum pernah dijalankan)
-├── .github/workflows/             # paper-trading, trendsentry-daily-sync, fetch-bitget-data
+├── .github/workflows/             # paper-trading, trendsentry-daily-sync, fetch-bitget-data, run-deployment
 ├── data/historical/ (10 pair + sisa riset)  data/funding/ (riset)
 └── tests/                         # 17 file pytest + conftest.py, 224 test
 ```
