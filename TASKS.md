@@ -117,5 +117,6 @@
 - [x] Migrasi Phase A + B **diterapkan ke Supabase live** dan diverifikasi (constraint, index, RLS, trigger, jumlah baris tidak berubah)
 - [x] Endpoint `/config` + `/status` + dashboard + scoping ownership **diverifikasi terhadap produksi**; engine menerima bundle live; token tampil 1× lalu hanya hash SHA-256
 - [x] **Kaki data market untuk runtime deployment — DIJADWALKAN 2026-10-01 (keputusan owner: workflow CI baru):** `.github/workflows/run-deployment.yml` (cron 02:30 UTC + dispatch) menjalankan `run_deployment.py` per deployment (fail-closed) + sync deployment-aware + artifact DB 14 hari. **Butuh setup sekali:** vars `TREND_SENTRY_DEPLOYMENT_IDS` (+opsional `TREND_SENTRY_HOST`), secrets `TREND_SENTRY_CONFIG_TOKENS` (JSON) — tanpa ini job gagal dengan pesan jelas (bukan diam-diam sukses). Verifikasi operasional penuh setelah schedule pertama jalan.
+> **Terverifikasi 2026-10-01 (dispatch manual run 36856966129):** `config v1 (remote)` → `selesai bersih` (status `stopped`, heartbeat 11:42:38Z) → sync 30 records (`signals:10`, `equity_log:2`, deployment_id=2 di Supabase). Slice deployment end-to-end terhadap market nyata: LENGKAP.
 
 **Jumlah test saat ini: 224 (17 file + `tests/conftest.py`).**
