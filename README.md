@@ -73,6 +73,7 @@ Bitget public data (ccxt)                    Browser → Next.js 16 (proxy.ts au
 
 Full detail with diagrams: **[`ARCHITECTURE.md`](ARCHITECTURE.md)**.
 Repository inventory & audit evidence: **[`REPO_MAP.md`](REPO_MAP.md)**.
+One-screen directory map: **[`TREE.md`](TREE.md)**.
 
 ### Stack
 
