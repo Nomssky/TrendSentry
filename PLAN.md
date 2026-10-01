@@ -183,7 +183,7 @@ TrendSentry/
 ├── deploy/                        # persiapan VPS/Coolify (belum pernah dijalankan)
 ├── .github/workflows/             # paper-trading, trendsentry-daily-sync, fetch-bitget-data, test-bitget-api
 ├── data/historical/ (10 pair + sisa riset)  data/funding/ (riset)
-└── tests/                         # 10 file pytest + conftest.py, 75 test
+└── tests/                         # 17 file pytest + conftest.py, 224 test
 ```
 
 > Struktur lama (`execution/`, `llm_filter/deepseek_client.py`, `risk_manager/position_sizing.py`,

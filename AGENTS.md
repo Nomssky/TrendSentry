@@ -42,7 +42,7 @@ Kamu bertindak sebagai:
 | Web produk (`monitoring/web/`) | Next.js 16 (App Router), TypeScript, Supabase | Batas frontend/backend: lihat §9 di bawah & `monitoring/web/AGENTS.md` |
 | DB | SQLite (`db/paper_trading.db`, state paper) + PostgreSQL via Supabase (produk web — **aktif sekarang**, bukan "Fase 4 kalau perlu") | Source of truth skema Postgres: **`supabase/migrations/`** (TIDAK ADA `db/migrations/`) |
 | Config | `.env` + `config.yaml` untuk parameter strategi (jangan hardcode di kode) | Semua magic number (period, multiplier) harus di config, bukan inline |
-| Testing | `pytest` untuk Python (75 test; bootstrap path di `tests/conftest.py`); **Playwright** untuk E2E web (`monitoring/web/e2e/`, 34 test) — **tidak ada vitest/jest** di repo | Unit test wajib untuk position sizing & stop loss calculation (bagian paling kritis) |
+| Testing | `pytest` untuk Python (224 test di 17 file; bootstrap path di `tests/conftest.py`); **Playwright** untuk E2E web (`monitoring/web/e2e/`, 34 test) — **tidak ada vitest/jest** di repo | Unit test wajib untuk position sizing & stop loss calculation (bagian paling kritis) |
 | Logging | `logging` module Python + alert `alerting/telegram_alert.py` | Semua signal + eksekusi order wajib ter-log, termasuk timestamp & reasoning |
 
 ## 5. Struktur Proyek

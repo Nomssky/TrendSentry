@@ -100,3 +100,22 @@
 - [x] Audit loop watcher web selesai 2026-09-11: daily-sync pakai fills user (bukan market trades) + kabel deviasi + skor; verifikasi read-only saat submit key; guardrail 8 template dikunci; metrik M4 (beacon + referral) terpasang
 - [x] Verifikasi kontaminasi data 2026-09-11: tabel user kosong (0 profiles/key/strategy/trade) — bug market-trades tidak pernah menyentuh data user nyata, tidak ada yang perlu dihapus
 - [ ] Nyalakan API key berbayar verdict-live HANYA setelah Fase 3 terbukti (trial 5 verdict, harga = median 1R dihindari ÷ 10)
+
+## MVP Vertical Slice — Phase A–E (SELESAI · 2026-10-01 · commit `24c3ac4`)
+
+> Seksi ini **di luar Fase 1–4**: bukan bagian dari decision gate `PLAN.md` §2, dan tidak
+> mengubah parameter strategi maupun risk. Keputusan & temuan tercatat di
+> `docs/CLOSURE_NOTES_2026-10-01.md`.
+
+- [x] **Phase A** — control plane: tabel `deployments` + `deployment_config_versions`, trigger immutable, RLS owner-only (`supabase/migrations/20260928120000_add_deployments_and_config_versions.sql`)
+- [x] **Phase B** — identitas deployment menjadi bagian sync identity: `deployment_id NOT NULL DEFAULT 0` di 6 tabel `paper_*` + kolom `side`/`fill_key`, unique key dimigrasi forward-only (`supabase/migrations/20260929120000_add_deployment_id_to_paper_tables.sql`)
+- [x] **Phase C** — dashboard `/app/deployments/[id]` (server component: session → id → `.eq("user_id", …)` → `notFound()`; jawaban 404 **identik** untuk "tidak ada" dan "bukan milikmu")
+- [x] **D6** — `live_signal.main()` menulis `meta.deployment_id` / `meta.config_version`; jalur legacy `config.yaml` tidak menulis atribusi
+- [x] **E1 / E2** — runtime loopback `ControlPlane` + `FakeExchange`, artefak per-deployment di `tmp_path`
+- [x] **E3 / E4** — jalur legacy `config.yaml` tetap utuh; hanya `mode=paper` yang bisa dikonfigurasi (`z.literal("paper")`)
+- [x] **E7** — ship gate `tests/test_mvp_ship_gate.py`
+- [x] Migrasi Phase A + B **diterapkan ke Supabase live** dan diverifikasi (constraint, index, RLS, trigger, jumlah baris tidak berubah)
+- [x] Endpoint `/config` + `/status` + dashboard + scoping ownership **diverifikasi terhadap produksi**; engine menerima bundle live; token tampil 1× lalu hanya hash SHA-256
+- [ ] **Kaki data market untuk runtime deployment — TERTUNDA (lingkungan, bukan kode):** jalur legacy `config.yaml` **sudah jalan harian di GitHub Actions** (`paper-trading.yml`, run 2026-09-30 sukses: +10 signal → 325), tapi `run_deployment.py` **tidak dipanggil workflow mana pun** dan percobaan dari mesin ini berhenti di `ssl.SSLCertVerificationError` (filter ISP). Butuh **keputusan owner**: jalankan di runner CI (menambah workflow = fitur baru di luar `PLAN.md`) atau dari host lain yang legal terjangkau Bitget — sebelum menyatakan verifikasi operasional penuh.
+
+**Jumlah test saat ini: 224 (17 file + `tests/conftest.py`).**

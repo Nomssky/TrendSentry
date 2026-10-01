@@ -63,7 +63,7 @@ pure pandas). An LLM filter exists only as a disabled skeleton for a future phas
 Python engine                                Web product (Vercel)
 ──────────────                               ────────────────────
 Bitget public data (ccxt)                    Browser → Next.js 16 (proxy.ts auth gate)
-  → backtest/strategy.py                       → server components + 14 API routes
+  → backtest/strategy.py                       → server components + 17 API routes
   → paper_trading/live_signal.py                 → Supabase Postgres (RLS, service role)
   → SQLite db/paper_trading.db                 → Bitget REST (user's read-only key:
   → Telegram alerts                               fills + assets only)
@@ -114,7 +114,7 @@ cd TrendSentry
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env            # Telegram token etc. — never commit .env
-python -m pytest tests/         # 75 tests
+python -m pytest tests/         # 224 tests
 
 # Backtest
 python backtest/run_backtest.py

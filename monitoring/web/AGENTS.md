@@ -22,13 +22,18 @@ Repo-specific rules for working in this directory. The block at the bottom of th
 - Server logic lives in `app/api/**/route.ts` and `lib/`.
 - Needed a new metric or data point? Add it on the backend first, then display it.
 
-## 3. API routes (14)
+## 3. API routes (17)
 
 - Cron/sync: `cron/paper-sync`, `cron/daily-sync` — auth via `CRON_SECRET`, timing-safe
   compare, fail-fast if the secret is unset.
 - Mutating routes (`strategies`, `trades`, `api-keys`, `account/*`, `events`, `checkout`)
   **must** call `validateOrigin` (CSRF) and, where user input applies, Zod schemas from
   `lib/validations.ts`.
+- Control plane (`deployments`, `deployments/[id]/config`, `deployments/[id]/status`) —
+  **session-free**: auth via `Authorization: Bearer <per-deployment token>`, SHA-256 hash
+  compared timing-safe against `deployments.config_token_hash`. Plaintext token returned
+  exactly once by `POST /api/deployments`; unknown id answers **401** (never 404) so
+  existence does not leak; `id <= 0` or non-integer answers 404.
 - Rate limits: `lib/rate-limit.ts` (in-memory per IP — known limitation, documented in file).
 
 ## 4. Supabase

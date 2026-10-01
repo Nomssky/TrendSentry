@@ -44,6 +44,10 @@ Browser
   `GET /api/cron/daily-sync` (per-user fill ingest → deviation → discipline score, `CRON_SECRET`)
 - **Product:** `/api/strategies` (CRUD + guardrails), `/api/trades`, `/api/deviation-log`,
   `/api/discipline`, `/api/templates`, `/api/api-keys` (read-only key verification + AES-GCM)
+- **Control plane:** `GET/POST /api/deployments` (create + list, session, CSRF — the
+  response returns the config token **exactly once**), `GET /api/deployments/[id]/config`
+  and `POST /api/deployments/[id]/status` (Bearer token, timing-safe SHA-256 compare;
+  status carries the runtime heartbeat).
 - **Infra:** `/api/prices` (Bitget proxy, rate limit), `/api/events` (analytics beacon, CSRF + rate limit)
 - **Billing:** `/api/checkout`, `/api/webhooks/stripe` (gated by `PAYMENTS_ENABLED`)
 - **Account:** `/api/account/password`, `/api/account/delete` (both require re-auth)

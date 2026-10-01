@@ -5,6 +5,13 @@
 > Metode: pembacaan penuh semua source/config/skema/workflow, reference search lintas repo,
 > eksekusi `pytest` (64 passed), `tsc --noEmit` (exit 0), `eslint` (exit 1: 2 error),
 > `next build` (exit 0), query SQLite `db/paper_trading.db`.
+>
+> **Re-verifikasi 2026-10-01 (HEAD `24c3ac4`):** `pytest` **224 passed**, `tsc --noEmit` **exit 0**,
+> `eslint` **2 error / 7 warning**, `next build` **exit 0**. Angka `64 passed` pada baris metode
+> di atas adalah hasil verifikasi Phase 0 pada `3a4dae8` — dibiarkan sebagai catatan riwayat,
+> bukan status sekarang. Angka di seluruh isi dokumen (§10 inventaris, §15 coverage, Lampiran B)
+> sudah diselaraskan ke status 2026-10-01, kecuali bagian yang ditandai sebagai riwayat.
+>
 > **Tidak ada file yang dihapus, tidak ada kode yang diubah, tidak ada perilaku runtime yang diubah
 > dalam phase ini.** Setiap klaim dokumen lama diverifikasi terhadap kode sebelum dilaporkan.
 
@@ -39,7 +46,8 @@ Temuan utama:
 - **Kontradiksi dokumentasi terverifikasi: 28 butir** (dihitung per klaim di §12, tersebar di
   9 sub-bagian), termasuk Node.js-vs-Python untuk
   Fase 4, path migrasi yang salah, nama file yang tidak ada, klaim WebSocket yang tidak ada.
-- **Test**: 64 Python test (semua pass), 34 Playwright E2E + 1 API smoke script.
+- **Test** (status saat Phase 0, `3a4dae8`): 64 Python test (semua pass) — kini **224 Python test**;
+  34 Playwright E2E + 1 API smoke script (angka E2E tetap).
   Typecheck bersih; **lint gagal dengan 2 error** (`react-hooks/set-state-in-effect`) —
   berbeda dari kesan "sudah bersih" di `AUDIT.md`.
 - **Tidak ada kode order/live execution di repo** — terverifikasi: `execution/` tidak ada,
@@ -52,14 +60,14 @@ Angka audit:
 
 | Metrik | Nilai |
 |---|---|
-| File di-repo (di-track + untracked, di luar venv/node_modules/.git) | 201 |
-| File di-track di git | 198 |
-| Baris inventory di dokumen ini (§10) | 150 baris — mencakup seluruh 201 file; file serupa (mis. 13 CSV data) dikelompokkan jadi satu baris |
-| File Python sumber (non-test) | 19 |
-| File Python test | 10 (75 test) + `conftest.py` |
-| File TS/TSX | 72 (37 `.ts` + 35 `.tsx`) |
+| File di-repo (di-track + untracked, di luar venv/node_modules/.git) | 239 |
+| File di-track di git | 232 |
+| Baris inventory di dokumen ini (§10) | 174 baris — mencakup seluruh 239 file; file serupa (mis. 13 CSV data) dikelompokkan jadi satu baris |
+| File Python sumber (non-test) | 22 |
+| File Python test | 17 (224 test) + `conftest.py` |
+| File TS/TSX | 78 (41 `.ts` + 37 `.tsx`) |
 | File test E2E | 34 test Playwright + 1 smoke script `.mjs` |
-| Python test | **75 passed** |
+| Python test | **224 passed** |
 | Web typecheck | **exit 0** |
 | Web lint | **exit 1 — 2 error, 7 warning** |
 | Web build | **exit 0** |
@@ -72,7 +80,7 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 
 ```
 .
-├── README.md PLAN.md AGENTS.md RULES.md TASKS.md AUDIT.md SECURITY-ACTIONS.md
+├── README.md PLAN.md ARCHITECTURE.md AGENTS.md RULES.md TASKS.md AUDIT.md SECURITY-ACTIONS.md
 ├── REPO_MAP.md                  ← dokumen ini (baru, Phase 0)
 ├── cli.py                       # CLI lokal: backtest|paper|live --dry-run|watcher|doctor
 ├── config.yaml                  # SOURCE OF TRUTH parameter strategi + risk + paper + execution
@@ -85,7 +93,9 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 │   ├── research/                # 7 script riset (tidak masuk CI/runtime)
 │   └── reports/                 # metrics.md, decision_log.md, presets/, research/
 ├── paper_trading/
-│   └── live_signal.py           # engine paper harian (file terpanjang: 595 baris)
+│   ├── live_signal.py           # engine paper harian (file terpanjang: 634 baris)
+│   ├── config_source.py         # ConfigSource fail-closed (remote → cache → mati total)
+│   └── run_deployment.py        # runtime per-deployment (env TREND_SENTRY_*, status heartbeat)
 ├── risk_manager/
 │   └── guards.py                # validate_config + CircuitBreaker + re-export position_size
 ├── llm_filter/
@@ -94,7 +104,7 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 │   └── telegram_alert.py        # alert Telegram (Python, dipakai engine)
 ├── monitoring/
 │   └── web/                     # Next.js 16 app (produk SaaS + dashboard publik)
-│       ├── app/                 # routes: marketing, /app (auth), /auth, /api (14 route)
+│       ├── app/                 # routes: marketing, /app (auth), /auth, /api (17 route)
 │       ├── lib/                 # supabase, deviation, encryption, bitget, validations, dll
 │       ├── e2e/                 # Playwright specs + API smoke + .auth/ (untracked)
 │       ├── proxy.ts             # middleware Next 16 (gate /app & /auth)
@@ -108,16 +118,17 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 │   ├── schema.sql               # DDL SQLite (dijalankan tiap start engine)
 │   ├── paper_trading.db         # state runtime — DI-COMMIT ke git (accepted risk)
 │   ├── backup_db.sh             # backup lokal (cron lokal sudah dibatalkan)
+│   ├── deployments/             # runtime output Phase A–E (satu .db per deployment, ignored)
 │   └── backups/                 # ignored lokal
 ├── supabase/
 │   ├── config.toml              # config Supabase CLI (local dev)
-│   └── migrations/              # 10 file .sql — SOURCE OF TRUTH skema Postgres
+│   └── migrations/              # 12 file .sql — SOURCE OF TRUTH skema Postgres
 ├── deploy/                      # persiapan VPS/Coolify (belum pernah dibuild — RUNBOOK)
 ├── .github/workflows/           # 4 workflow: paper-trading, daily-sync, fetch-data, test-api
 ├── data/
 │   ├── historical/              # 13 CSV OHLCV (10 pair config + BCH/LTC/PAXG sisa riset)
 │   └── funding/                 # 2 CSV funding (riset long-short)
-└── tests/                       # 10 file pytest + conftest.py
+└── tests/                       # 17 file pytest + conftest.py (224 test)
 ```
 
 Tidak ada: `execution/`, `llm_filter/deepseek_client.py`, `llm_filter/prompts/`,
@@ -145,7 +156,7 @@ Tidak ada: `execution/`, `llm_filter/deepseek_client.py`, `llm_filter/prompts/`,
                                                                         │
 ┌──────────────────────── NODE/TS (Next.js 16, Vercel) ─────────────────┼──────────────────────────┐
 │  Browser ── proxy.ts (auth gate /app, /auth) ── server components     │                          │
-│          ├── /api/* (14 route: trades, strategies, api-keys,           ▼                          │
+│          ├── /api/* (17 route: trades, strategies, api-keys,           ▼                          │
 │          │    cron/paper-sync ◄───────────────────────────────  Supabase Postgres                 │
 │          │    cron/daily-sync, checkout, webhooks/stripe, ...)   paper_* (mirror engine)          │
 │          └── lib/ (deviation, guardrails, encryption, bitget read-only) user_* (produk disiplin)  │
@@ -263,7 +274,7 @@ Karakteristik yang diverifikasi langsung dari DB lokal:
 
 ## 6. Web / Backend Flow
 
-Semua di `monitoring/web/app/api/**/route.ts` (14 route), Next.js 16 di Vercel:
+Semua di `monitoring/web/app/api/**/route.ts` (17 route), Next.js 16 di Vercel:
 
 | Route | Method | Auth | Fungsi aktual |
 |---|---|---|---|
@@ -281,6 +292,9 @@ Semua di `monitoring/web/app/api/**/route.ts` (14 route), Next.js 16 di Vercel:
 | `/api/webhooks/stripe` | POST | signature Stripe | checkout/invoice.paid/subscription.updated/deleted → `profiles.plan` + `plan_expires_at` |
 | `/api/account/password` | POST | session + reauth password | ganti password + `signOut({scope:'global'})` |
 | `/api/account/delete` | POST | session + reauth password | `deleteUser` → FK cascade membersihkan tabel user |
+| `/api/deployments` | GET/POST | session + CSRF | GET: daftar deployment milik sendiri (**tanpa** `config_token_hash`); POST: buat deployment + `deployment_config_versions` v1 — **mengembalikan plaintext token tepat sekali**, lalu hanya hash SHA-256 yang disimpan. Hanya `mode=paper` (`z.literal("paper")`) |
+| `/api/deployments/[id]/config` | GET | Bearer token (SHA-256, timing-safe) | bundle config versi **aktif** untuk engine; `id` tidak dikenal → **401** (bukan 404, supaya keberadaan tidak bocor); `id<=0`/bukan bilangan bulat → 404 |
+| `/api/deployments/[id]/status` | POST | Bearer token (timing-safe) | heartbeat runtime: `running|stopped|failed` (`BodySchema`); tulis `last_heartbeat_at` — **`updated_at` tidak ikut berubah** (temuan, `docs/CLOSURE_NOTES_2026-10-01.md` §5.2) |
 
 Middleware: `proxy.ts` (konvensi Next 16, menggantikan middleware) — redirect ke
 `/auth/login` untuk `/app/*` tanpa user, ke `/app/dashboard` untuk `/auth/*` saat sudah login.
@@ -395,14 +409,19 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 |---|---|---|---|---|---|
 | README.md | wajah publik proyek | link eksternal, SITE | — | — | SUPPORT |
 | PLAN.md | roadmap, strategi, risk rules, model bisnis | AGENTS.md, RULES.md, TASKS.md, AUDIT.md, kode (komentar) | — | — | SUPPORT |
+| ARCHITECTURE.md | arsitektur kanonik; **§16 Source-of-Truth Map (gated, keputusan terpisah)** | PLAN.md, AGENTS.md, kode | — | — | CORE |
+| REPO_MAP.md | peta repo ini sendiri (§10 inventaris, §15 coverage) | AUDIT.md | — | — | CORE |
 | AGENTS.md | instruksi agent (otomatis dibaca) | harness | — | — | SUPPORT |
 | RULES.md | ringkasan aturan/gate | — (dirujuk dokumen) | — | — | SUPPORT |
 | TASKS.md | checklist fase | PLAN.md, AGENTS.md | — | — | SUPPORT |
-| AUDIT.md | audit 2026-09-21 (P0–P4) | — | — | — | SUPPORT |
+| AUDIT.md | audit 2026-09-21 (P0–P4) — **log bertanggal, riwayat tidak ditulis ulang** | — | — | — | SUPPORT |
 | SECURITY-ACTIONS.md | status rotasi secret manual | — | — | — | SUPPORT |
 | LICENSE | AGPL-3.0 + clause SaaS | README.md | — | — | SUPPORT |
+| OD2_ENTRY_EXECUTION_STOP_DECISION.md | catatan keputusan OD-2 (stop anchor, eksekusi) | OD7_REPRODUCIBILITY_DECISION.md | — | — | DECISION (tracked) |
+| OD7_REPRODUCIBILITY_DECISION.md | catatan keputusan OD-7 — **merujuk 4 file OD3–OD8/TREE yang UNTRACKED** | `docs/2_OCTOBER_CLOSURE_PLAN.md` | — | — | DECISION (tracked) |
+| OD3…OD8 + TREE_REFACTOR_AUDIT.md (7 file, **UNTRACKED**) | catatan riwayat audit/dekision — **immutable: tidak dimodifikasi, dipindahkan, di-commit, atau dihapus** sampai seri OD ditutup (`docs/2_OCTOBER_CLOSURE_PLAN.md` §5.7 + §9.C) | `docs/2_OCTOBER_CLOSURE_PLAN.md` | — | — | DECISION (untracked) |
 
-### 10.2 Python — engine & tooling (19 file sumber)
+### 10.2 Python — engine & tooling (22 file sumber)
 
 | Path | Purpose | Rujuk | Impor | Runtime | Status |
 |---|---|---|---|---|---|
@@ -410,10 +429,13 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | backtest/run_backtest.py | simulasi portfolio + metrics + report | cli.py, research/*.py (5), tests/test_backtest_cash.py | backtest.strategy, pandas, yaml, matplotlib (opsional) | manual / cli / riset | CORE |
 | backtest/__init__.py | penanda paket | import path tests | — | — | SUPPORT |
 | paper_trading/live_signal.py | engine paper harian (signal→risk→SQLite→alert) | paper-trading.yml, cli.py, tests/test_live_signal.py | backtest.strategy, alerting.telegram_alert, guards, llm_filter (kondisional), ccxt, pandas, yaml | CI 01:00 UTC / cli paper | CORE |
+| paper_trading/config_source.py | `ConfigSource` + `ConfigUnavailable`: ambil config bundle gagal-closed (remote → cache → mati total), hash token tidak pernah disimpan | run_deployment.py, tests/test_config_source.py | urllib, hashlib, json | tiap start run | CORE |
+| paper_trading/run_deployment.py | runtime per-deployment (kontrak env `TREND_SENTRY_DEPLOYMENT_ID`/`_CONFIG_URL`/`_CONFIG_TOKEN`), `report_status` heartbeat, DB `db/deployments/<id>.db` | .github cron, tests/test_deployment_runtime.py | config_source, live_signal | per deployment | CORE |
 | risk_manager/guards.py | validate_config, CircuitBreaker, re-export position_size | live_signal.py, cli.py doctor, tests | backtest.strategy | tiap start paper & doctor | CORE |
 | risk_manager/__init__.py | penanda paket | — | — | — | SUPPORT |
 | cli.py | CLI gratis (backtest/paper/live/watcher/doctor) | PLAN §9, TASKS, tests/test_cli.py | rich, yaml, sqlite3 | manual lokal | SUPPORT |
 | llm_filter/filter.py | kontrak filter Fase 3 (pass-through skeleton) | live_signal (bila enabled), tests/test_filter.py | dataclasses | **tidak aktif** (config false) | FUTURE |
+| alerting/__init__.py | penanda paket (hasil pemindahan `monitoring/telegram_alert.py` → `alerting/`, dijaga `tests/test_module_identity.py`) | — | — | — | SUPPORT |
 | alerting/telegram_alert.py | kirim alert Telegram | live_signal.py, SECURITY-ACTIONS.md | urllib | tiap run paper | CORE |
 | scripts/sync_paper_to_supabase.py | SQLite → /api/cron/paper-sync inkremental | paper-trading.yml, RUNBOOK | urllib, sqlite3 | CI setelah engine | CORE |
 | scripts/fetch_bitget_data.py | fetch OHLCV Bitget → CSV | fetch-bitget-data.yml, DESIGN.md | ccxt, pandas, yaml | manual/dispatch | SUPPORT |
@@ -426,7 +448,7 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | backtest/research/run_longshort_backtest.py | long-short vs long-only vs short-only (riset, "tidak dipakai paper") | reports/research/longshort/ | run_backtest, strategy, matplotlib | manual | RESEARCH |
 | backtest/research/sharpe_benchmark.py | Sharpe identik formula vs B&H | reports/sharpe_benchmark_comparison.md | run_backtest, **scipy (tidak di requirements)** | manual | RESEARCH |
 
-### 10.3 Python — tests (10 file, 75 test + `tests/conftest.py` bootstrap path)
+### 10.3 Python — tests (17 file, 224 test + `tests/conftest.py` bootstrap path)
 
 | Path | Test | Melindungi | Status |
 |---|---|---|---|
@@ -441,6 +463,13 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | tests/test_filter.py | 2 | kontrak LLM filter (verdict sempit, skeleton pass) | CORE |
 | tests/test_backtest_cash.py | 1 | regresi P0-3 (kas negatif saat clamp) | CORE |
 | tests/test_strategy_templates_seed.py | 6 | seed template anti-drift (forward-only INSERT, urutan migrasi) | CORE |
+| tests/test_config_source.py | 25 | `ConfigSource`: Bearer-only, hash SHA-256 timing-safe, **FAIL CLOSED** (remote mati/rusak → cache → mati total), token tidak pernah masuk cache/UI/URL/log, `/config` + `/status` contract | CORE |
+| tests/test_deployment_runtime.py | 31 | `run_deployment`: kontrak env (`TREND_SENTRY_*`), path DB per-deployment, `report_status` (3 state, header-only, tidak menjatuhkan runtime), **tanpa jalur order live** | CORE |
+| tests/test_deployment_dashboard.py | 26 | dashboard Phase C: kepemilikan diverifikasi sebelum baca data, snapshot config tanpa rahasia, kontrak 6 tabel mirror `deployment_id` + `fill_key` | CORE |
+| tests/test_deployments_contract.py | 19 | API control plane: token di-hash & dijawab **sekali**, versi config immutable, migrasi forward-only, RLS owner-only, `mode=paper` terkunci di schema | CORE |
+| tests/test_two_deployments_isolation.py | 16 | isolasi file-per-deployment (SQLite/`fill_key`/`sync_key`), perubahan A tidak mengubah B, jalur legacy `config.yaml` tetap jalan | CORE |
+| tests/test_runtime_hardening.py | 19 | runtime hardening: alert dibatasi per-run (bukan storm), heartbeat putus tidak mematikan run, watermark tidak maju saat sync putus, kegagalan dipetakan terpusat ke `failed` | CORE |
+| tests/test_mvp_ship_gate.py | 13 | ship gate E1–E7: slice vertikal penuh, dua deployment tak terkontaminasi, `mode=paper` saja yang bisa dikonfigurasi, tak ada credential hardcoded/di-UI | CORE |
 
 ### 10.4 Config, data, presets, DB
 
@@ -453,7 +482,8 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | .gitignore | ignore venv/.env/report csv/db/node_modules | — | git | CORE |
 | .dockerignore | jangan bawa secret/venv/node_modules ke image | Docker builds | build | SUPPORT |
 | db/schema.sql | DDL SQLite 7 tabel | live_signal (`executescript`), cli | tiap start paper | CORE |
-| db/paper_trading.db | state paper (3 closed trade, 235 signal) | semua pembaca SQLite; **di-commit ke git** | CI harian | CORE |
+| db/paper_trading.db | state paper (4 closed trade, 325 signal, `lastRun` 2026-09-30) | semua pembaca SQLite; **di-commit ke git** oleh CI harian | CI harian | CORE |
+| db/deployments/ | **runtime output Phase A–E**: satu SQLite per deployment (`<id>.db`), **gitignored** — tidak boleh di-commit | `paper_trading/run_deployment.py` | tiap run per deployment | SUPPORT |
 | db/backup_db.sh | backup SQLite harian 14 hari | TASKS.md; cron lokal **dibatalkan** | tidak terjadwal | SUSPICIOUS |
 | db/backups/paper_trading_2026-08-14.db | artefak backup lokal (ignored) | — | — | SUSPICIOUS |
 | presets/donchian_cluster_a2.yaml | preset 1 (gate passed) | run_backtest (PRESET env), tests | manual | CORE |
@@ -467,7 +497,7 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 
 | Path | Trigger | Fungsi | Status |
 |---|---|---|---|
-| .github/workflows/paper-trading.yml | cron 01:00 UTC + dispatch | pytest → engine → sync → commit DB → failure alert | CORE |
+| .github/workflows/paper-trading.yml | cron 01:00 UTC + dispatch | pytest → `paper_trading/live_signal.py` (**jalur legacy `config.yaml`** — `run_deployment.py` / `TREND_SENTRY_*` tidak dipanggil workflow mana pun) → `sync_paper_to_supabase.py` → commit DB → failure alert | CORE |
 | .github/workflows/trendsentry-daily-sync.yml | cron 01:30 UTC + dispatch | panggil /api/cron/daily-sync | CORE |
 | .github/workflows/fetch-bitget-data.yml | dispatch | refresh CSV historis + commit | SUPPORT |
 | .github/workflows/test-bitget-api.yml | dispatch | probe konektivitas Bitget (one-off) | SUSPICIOUS |
@@ -489,7 +519,7 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 Semua `deploy/*` disiapkan untuk cutover VPS yang **belum pernah dieksekusi**
 (RUNBOOK §4: image "belum pernah dibuild"). Bukan dead — persiapan Fase-4/VPS yang disengaja.
 
-### 10.7 Supabase (11)
+### 10.7 Supabase (14)
 
 | Path | Purpose | Status |
 |---|---|---|
@@ -503,6 +533,9 @@ Semua `deploy/*` disiapkan untuk cutover VPS yang **belum pernah dieksekusi**
 | supabase/migrations/20260911130000_metrics_referral_events.sql | analytics_events + referral | CORE |
 | supabase/migrations/20260912120000_harden_profiles_rls.sql | profiles SELECT saja | CORE |
 | supabase/migrations/20260912130000_recalc_discipline_score_trigger.sql | recompute skor saat deviasi berubah | CORE |
+| supabase/migrations/20260922120000_insert_builtin_strategy_templates.sql | seed kanonik 8 `strategy_templates` (forward-only; riwayat migrasi tidak ditulis ulang) | CORE |
+| supabase/migrations/20260928120000_add_deployments_and_config_versions.sql | **Phase A control plane**: tabel `deployments` + `deployment_config_versions`, trigger immutable, RLS owner-only | CORE |
+| supabase/migrations/20260929120000_add_deployment_id_to_paper_tables.sql | **Phase B**: `deployment_id NOT NULL DEFAULT 0` di 6 tabel `paper_*` + `side`/`fill_key`, unique key dimigrasi (forward-only) | CORE |
 | supabase/.gitignore + .temp/* | artefak CLI (project-ref, versi) | SUPPORT |
 
 ### 10.8 Backtest reports & research docs (15 baris / 25 file)
@@ -543,7 +576,7 @@ Semua `deploy/*` disiapkan untuk cutover VPS yang **belum pernah dieksekusi**
 | monitoring/web/.env.example | template env web | SUPPORT |
 | monitoring/web/.env + .env.local | secret lokal (ignored, tidak di-track) | SUPPORT |
 
-### 10.10 Web — lib (16)
+### 10.10 Web — lib (17)
 
 | Path | Purpose | Rujuk | Status |
 |---|---|---|---|
@@ -553,6 +586,7 @@ Semua `deploy/*` disiapkan untuk cutover VPS yang **belum pernah dieksekusi**
 | lib/db-supabase.ts | `getDashboardData()` — agregasi paper_* untuk dashboard | papertrading/* | CORE |
 | lib/deviation.ts | rule engine deviasi + `calculateDisciplineScore` | trades & daily-sync route | CORE |
 | lib/validations.ts | zod schema + `GUARDRAILS` + `checkStrategyGuardrails` | semua route mutasi | CORE |
+| lib/deployment-config.ts | `buildDonchianBundle` + `MVP_ENGINE_DEFAULTS` + `DONCHIAN_TEMPLATE_NAME` — membangun config bundle yang dikonsumsi engine | `/api/deployments`, tests/test_deployments_contract | CORE |
 | lib/supabase/{server,client,admin}.ts | cookie / browser / service-role client | proxy, pages, routes | CORE |
 | lib/bitget.ts | HMAC + `USER_KEY_READ_ENDPOINTS` + `verifySpotReadAccess` | api-keys, daily-sync | CORE |
 | lib/encryption.ts | AES-GCM + PBKDF2 (legacy path dipertahankan) | api-keys, daily-sync | CORE |
@@ -563,14 +597,20 @@ Semua `deploy/*` disiapkan untuk cutover VPS yang **belum pernah dieksekusi**
 | lib/telegram.ts | alert Telegram deviasi (TS) | trades route | CORE |
 | lib/site.ts | copy/tautan marketing (`SITE`, `NAV_LINKS`) | Nav, Footer, marketing pages | CORE |
 
-### 10.11 Web — API routes (14)
+### 10.11 Web — API routes (17)
 
 Semua `monitoring/web/app/api/**/route.ts`: `account/delete`, `account/password`, `api-keys`,
-`checkout`, `cron/daily-sync`, `cron/paper-sync`, `deviation-log`, `discipline`, `events`,
+`checkout`, `cron/daily-sync`, `cron/paper-sync`, `deployments`,
+`deployments/[id]/config`, `deployments/[id]/status`, `deviation-log`, `discipline`, `events`,
 `prices`, `strategies`, `templates`, `trades`, `webhooks/stripe` — fungsi per route ada di §6.
 Semua **CORE**.
 
-### 10.12 Web — halaman & komponen (35 tsx + 1 css)
+Tiga route `deployments*` (Phase A/B) berbeda dari yang lain: **tanpa session**, autentikasi
+`Authorization: Bearer` dibandingkan timing-safe terhadap SHA-256 di `deployments.config_token_hash`,
+unknown id dijawab **401** (bukan 404) supaya keberadaan tidak bocor, dan `id <= 0`/bukan bilangan
+bulat dijawab 404.
+
+### 10.12 Web — halaman & komponen (37 tsx + 1 css)
 
 | Path | Purpose | Rujuk | Status |
 |---|---|---|---|
@@ -586,11 +626,13 @@ Semua **CORE**.
 | app/app/AppSidebar.tsx | navigasi app (client) | layout | CORE |
 | app/app/dashboard/page.tsx | ringkasan user + checklist | /app | CORE |
 | app/app/dashboard/ScoreTrendChart.tsx | grafik tren skor | dashboard | CORE |
-| app/app/dashboard/EquityCurveChart.tsx | grafik equity (client) | **TIDAK ADA** | DEAD |
 | app/app/strategies/page.tsx | daftar strategi | /app | CORE |
 | app/app/strategies/new/page.tsx | buat strategi dari template schema | /app | CORE |
 | app/app/deviation-log/page.tsx | log deviasi | /app | CORE |
 | app/app/settings/page.tsx | API key, password, delete account | /app | CORE |
+| app/app/deployments/page.tsx | daftar deployment milik sendiri (server component, session) | /app | CORE |
+| app/app/deployments/[id]/page.tsx | dashboard deployment: kepemilikan dicek dulu → `.eq("user_id", …)` → `notFound()`; 404 identik untuk "tidak ada" dan "bukan milikmu" | DeploymentSelector, `/api/deployments/[id]/*` | CORE |
+| app/app/deployments/[id]/DeploymentSelector.tsx | pemilih deployment (client) — **navigasi saja**, tidak membaca/menulis data | page.tsx | CORE |
 | app/auth/{login,signup}/page.tsx | form auth (client) | proxy | CORE |
 | app/auth/callback/route.ts | verifyOtp token_hash + fallback code | email confirm | CORE |
 | app/auth/signout/route.ts | signOut + redirect | Nav | CORE |
@@ -601,7 +643,10 @@ Semua **CORE**.
 | app/components/LiveSection.tsx | ticker live + unrealized PnL (poll 3s) | PaperLiveBoard | CORE |
 | app/components/marketing/{SiteShell,Nav,Footer}.tsx | kerangka situs + auth-aware nav | semua page publik | CORE |
 | app/components/marketing/{Hero,ProofStrip,BentoFeatures,Methodology,PricingTeaser,ui}.tsx | konten landing | page.tsx, pages (ui) | CORE |
-| app/public/*.svg (5) | aset default create-next-app | **tidak direferensikan** | DEAD |
+
+> **Baris dihapus saat penyesuaian 2026-10-01:** `app/app/dashboard/EquityCurveChart.tsx` dan
+> `app/public/*.svg (5)` — keduanya sudah tidak ada di disk maupun di git (0 referensi kode),
+> jadi dicatat di sini sebagai riwayat, bukan sebagai inventaris.
 
 ### 10.13 Web — E2E (3)
 
@@ -620,20 +665,22 @@ Rekap status (dihitung dari tabel §10):
 
 | Status | Definisi | Jumlah baris inventory |
 |---|---|---|
-| CORE | masuk execution path produksi (CI harian, runtime web, SoT) | 88 |
-| SUPPORT | dibutuhkan operasi/docs/tests tapi bukan execution path langsung | 28 |
+| CORE | masuk execution path produksi (CI harian, runtime web, SoT) | 108 |
+| SUPPORT | dibutuhkan operasi/docs/tests tapi bukan execution path langsung | 31 |
 | RESEARCH | reproducible research / artefak riset | 17 |
 | FUTURE | disengaja untuk fase mendatang (LLM filter Fase 3, deploy VPS) | 10 |
 | SUSPICIOUS | ada bukti tidak terjadwal/tidak terpakai, perlu keputusan owner | 5 |
-| DEAD | bukti kuat tidak direferensikan & tidak ada runtime path | 2 baris = **6 file** (EquityCurveChart.tsx + 5 SVG) |
+| DECISION (tracked) | catatan keputusan OD yang **sudah** ter-commit | 2 |
+| DECISION (untracked) | catatan keputusan/audit yang **belum** ter-commit — immutable, lihat `docs/CLOSURE_NOTES_2026-10-01.md` §3 | 1 baris = **7 file** (OD3–OD8 + `TREE_REFACTOR_AUDIT.md`) |
+| DEAD | bukti kuat tidak direferensikan & tidak ada runtime path | 0 — kedua barisnya dihapus 2026-10-01 (`EquityCurveChart.tsx`, `app/public/*.svg` sudah tidak ada di repo; riwayatnya dicatat di §10.12) |
 | UNKNOWN | tidak berhasil diklasifikasi | 0 |
-| **Total** | | **150 baris** |
+| **Total** | | **174 baris** |
 
-Catatan hitungan: 150 baris inventory memetakan **seluruh 201 file repo** (198 ter-track git +
-3 file untracked), **ditambah** ±15 artefak lokal ter-`.gitignore` yang ikut didokumentasikan
-dengan jelas (file `.env` lokal, `db/backups/`, CSV/PNG run terakhir, `.temp/` Supabase).
-Beberapa baris sengaja mengelompokkan banyak file serupa (13 CSV historis, 2 CSV funding,
-11 file laporan riset, 5 SVG) — perinciannya tertulis di kolom Path.
+Catatan hitungan: 174 baris inventory memetakan **seluruh 239 file repo** (232 ter-track git +
+7 file untracked), **ditambah** ±15 artefak lokal ter-`.gitignore` yang ikut didokumentasikan
+dengan jelas (file `.env` lokal, `db/backups/`, `db/deployments/`, CSV/PNG run terakhir,
+`.temp/` Supabase). Beberapa baris sengaja mengelompokkan banyak file serupa (13 CSV historis,
+2 CSV funding, 11 file laporan riset) — perinciannya tertulis di kolom Path.
 
 Entri DEAD/SUSPICIOUS dengan bukti lengkap → §13.
 **Tidak ada file yang disimpulkan DEAD hanya dari nama** — semua punya hasil grep + runtime path check.
@@ -802,7 +849,7 @@ Metode: grep referensi lintas repo (Python/TS/TSX/YAML/MD) + penelusuran runtime
 
 ## 15. Test Coverage Map
 
-### 15.1 Python (pytest) — 10 file, **75 test, semua PASS**
+### 15.1 Python (pytest) — 17 file, **224 test, semua PASS**
 
 | Implementasi | Test yang melindungi | Status |
 |---|---|---|
@@ -820,11 +867,17 @@ Metode: grep referensi lintas repo (Python/TS/TSX/YAML/MD) + penelusuran runtime
 | `llm_filter/filter.py` | test_filter (2) | terlindungi (kontrak sempit) |
 | `cli.py` | test_cli (4) | terlindungi |
 | `presets/*.yaml` | test_presets (4) termasuk `test_parameter_beku` | terlindungi |
-| `scripts/sync_paper_to_supabase.py` (watermark) | — | **TIDAK diuji** |
+| `scripts/sync_paper_to_supabase.py` (watermark, sync identity) | test_runtime_hardening (watermark tidak maju saat sync putus, payload terkumpul tidak dihitung maju) + test_two_deployments_isolation (`sync_key` membawa `deployment_id`, payload membawa `side`/`fill_key`) | terlindungi |
 | `scripts/fetch_bitget_data.py` | — | tidak diuji (butuh network) |
-| `alerting/telegram_alert.py` | — | tidak diuji (wiring alert teruji lewat test_live_signal) |
+| `alerting/telegram_alert.py` | — | tidak diuji (wiring alert teruji lewat test_live_signal + test_runtime_hardening) |
+| `paper_trading/config_source.py` | test_config_source (25): fail-closed, cache last-known-good, hash timing-safe, token tidak pernah bocor ke cache/UI/URL/log | terlindungi |
+| `paper_trading/run_deployment.py` | test_deployment_runtime (31) + test_runtime_hardening (19): kontrak env, `report_status` 3 state, alert dibatasi per-run, kegagalan dipetakan ke `failed` | terlindungi |
+| route `api/deployments*` | test_deployments_contract (19): token sekali-kali, versi immutable, RLS owner-only, `mode=paper` terkunci | terlindungi |
+| halaman `app/app/deployments/**` | test_deployment_dashboard (26): kepemilikan sebelum baca data, 404 identik, snapshot tanpa rahasia | terlindungi |
+| isolasi file-per-deployment | test_two_deployments_isolation (16): SQLite/`fill_key`/`sync_key` tidak boleh menyilang | terlindungi |
+| ship gate MVP (E1–E7) | test_mvp_ship_gate (13): slice vertikal penuh, dua deployment tak terkontaminasi, tanpa credential hardcoded | terlindungi |
 
-**Test tanpa implementasi:** tidak ada — semua 75 test menunjuk file yang ada.
+**Test tanpa implementasi:** tidak ada — semua 224 test menunjuk file yang ada.
 **Duplicate coverage:** `position_size` sengaja diuji 2× (anti-drift, ada test khusus
 `position_size is strat_size`).
 **Test perilaku lama/deprecated:** tidak ditemukan.
@@ -845,7 +898,7 @@ saja; total suite = 34.
 **Implementation dengan test lemah/tidak ada (web):** `lib/deviation.ts` (rule engine +
 skor — hanya teruji E2E page-load), `lib/encryption.ts`, `lib/csrf.ts`, `lib/rate-limit.ts`,
 `lib/bitget.ts` (signature HMAC), `lib/validations.ts:checkStrategyGuardrails`,
-semua 14 API route. E2E juga **dilarin menulis data** (playwright.config komentar:
+semua 17 API route. E2E juga **dilarin menulis data** (playwright.config komentar:
 tanpa signup submit / connect key) → jalur tulis produk tidak teruji otomatis.
 
 ### 15.3 Status build web (dijalankan saat audit ini)
@@ -856,6 +909,19 @@ tanpa signup submit / connect key) → jalur tulis produk tidak teruji otomatis.
 | Lint | `npm run lint` | **FAIL (exit 1): 2 error, 7 warning** — error `react-hooks/set-state-in-effect` di `AppSidebar.tsx:24` dan `strategies/new/page.tsx:107` |
 | Build | `npm run build` | **PASS (exit 0)**, 32 static pages generated, semua route aplikasi `ƒ dynamic` |
 | Python | `pytest tests/ -q` | **PASS (64 passed)** |
+
+Tabel di atas adalah **bukti eksekusi Phase 0** pada `3a4dae8` — dibiarkan sebagai riwayat.
+
+**Re-verifikasi 2026-10-01 (HEAD `24c3ac4`):**
+
+| cek | perintah | hasil |
+|---|---|---|
+| Typecheck | `npx tsc --noEmit` | **PASS (exit 0)** |
+| Lint | `npm run lint` | **FAIL (exit 1): 2 error, 7 warning** — *baseline tidak berubah* |
+| Build | `npm run build` | **PASS (exit 0)**, 34 static pages generated |
+| Python | `venv/bin/python -m pytest tests/ -q` | **PASS (224 passed, 35.50s)** |
+| `git diff --check` | — | **bersih** |
+| sha256 7 file audit | `sha256sum OD3*…TREE_REFACTOR_AUDIT.md` | **7/7 cocok** |
 
 ---
 
@@ -1022,4 +1088,32 @@ grep referensi                  → EquityCurveChart: 1 match (deklarasi); vecto
                                   WebSocket: 0 match di kode; output:'export': tidak ada
 ```
 
+Blok di atas adalah **bukti eksekusi audit Phase 0** pada `3a4dae8` — dibiarkan sebagai riwayat.
+
+**Re-verifikasi 2026-10-01 (HEAD `24c3ac4`) — dijalankan saat penyesuaian dokumentasi:**
+
+```
+venv/bin/python -m pytest tests/ -q  → 224 passed in 35.50s
+npx tsc --noEmit                     → exit 0
+npm run lint                         → exit 1 (2 errors, 7 warnings — baseline tidak berubah)
+npm run build                        → exit 0 (34 static pages; route aplikasi semua ƒ dynamic)
+git diff --check                     → bersih
+sha256 7 file audit                  → 7/7 cocok (d48a985b eba974bc 7ed1ffbe d6f9a9a4
+                                      9c6e7972 f89d821a 22d00ca8)
+git status                           → untracked: tepat 7 file audit (OD3–OD8 +
+                                      TREE_REFACTOR_AUDIT.md), setelah catatan closure ikut di-commit
+sqlite3 db/paper_trading.db         → signals 325, positions 6 (4 closed), slippage 325 (avg 0.0129%),
+                                      equity 38 hari (cash 621.39), yield 36 hari,
+                                      rentang 2026-08-24..2026-09-29, lastRun 2026-09-30T06:08:59Z
+                                      (state dari commit CI `36c9f5c`, 2026-09-30)
+```
+
+> **Catatan:** +10 signal (315 → 325) berasal dari workflow CI `paper-trading.yml` yang berjalan
+> harian di `ubuntu-latest` dan **berhasil menjangkau Bitget** — commit `36c9f5c` (2026-09-30).
+> Artinya jalur `config.yaml` legacy sudah tervalidasi environment-nya. Yang **belum**
+> tervalidasi adalah runtime deployment `run_deployment.py` (tidak dipanggil workflow mana pun);
+> percobaan dari mesin lokal berhenti di blokir ISP. Lihat `docs/CLOSURE_NOTES_2026-10-01.md` §6.
+
 *Dokumen ini dibuat tanpa mengubah file sumber mana pun selain menambahkan `REPO_MAP.md` itu sendiri.*
+*Penyesuaian 2026-10-01 mengubah **dokumentasi saja** — tidak ada kode, config, test, atau schema
+yang disentuh, sehingga jumlah test tetap 224 dan baseline lint tetap 2 error / 7 warning.*
