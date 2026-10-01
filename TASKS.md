@@ -120,3 +120,22 @@
 > **Terverifikasi 2026-10-01 (dispatch manual run 36856966129):** `config v1 (remote)` → `selesai bersih` (status `stopped`, heartbeat 11:42:38Z) → sync 30 records (`signals:10`, `equity_log:2`, deployment_id=2 di Supabase). Slice deployment end-to-end terhadap market nyata: LENGKAP.
 
 **Jumlah test saat ini: 224 (17 file + `tests/conftest.py`).**
+
+## Backlog UX — kejelasan UI/UX + warning/catatan (DICATAT 2026-10-01, JANGAN dikerjakan sebelum instruksi owner)
+
+> Temuan owner dari dogfooding akun tester 2026-10-01: UI/UX tidak menjelaskan
+> alur dan batasan produk. Dicatat sebagai backlog — BUKAN gate, BUKAN scope aktif.
+
+Bukti sesi (data live, bukan opini):
+- Strategi "donchian" (id=2) + "12"/RSI (id=3) sukses tersimpan, tapi user tidak
+  melihat feedback apa pun → submit tanpa template/nama = silent `return`
+  (`monitoring/web/app/app/strategies/new/page.tsx`); error non-JSON = unhandled.
+- Dropdown deployments hanya Donchian (by design) tanpa penjelasan → user mengira
+  strategi barunya "percuma" (padahal jalur disiplin vs deployment — dua hal beda).
+- Panel token sekali-tampil hilang permanen bila halaman ditinggal (by design);
+  tanpa panduan pemulihan dan tanpa endpoint rotasi token.
+
+- [ ] New strategy: tombol submit disabled sampai form lengkap + error wajib tampil
+- [ ] Deployments: badge "Deployable" khusus Donchian + kalimat penjelas kenapa strategi lain tidak muncul
+- [ ] Token panel: panduan pasca-dismiss (di mana token dipakai, apa bila hilang, tanpa endpoint rotasi)
+- [ ] Sapu-bersih umum: setiap aksi destruktif/satu-kali di UI wajib punya konfirmasi + catatan
