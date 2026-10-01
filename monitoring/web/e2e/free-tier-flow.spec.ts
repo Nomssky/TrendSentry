@@ -6,7 +6,7 @@
  *   cd monitoring/web
  *   export E2E_TEST_EMAIL="..."      # isi dari password manager owner; JANGAN commit
  *   export E2E_TEST_PASSWORD="..."
- *   BASE_URL=https://trendsentry.vercel.app npx playwright test e2e/free-tier-flow.spec.ts --headed
+ *   BASE_URL=https://trendsentry.xyz npx playwright test e2e/free-tier-flow.spec.ts --headed
  *
  * Test ini melakukan LOGIN NYATA ke environment produksi — jangan run di CI.
  * Kredensial TIDAK boleh ada di source; baca dari process.env saja (lihat
@@ -16,7 +16,7 @@
 import { test, expect, type Page } from "@playwright/test"
 import fs from "fs"
 
-const BASE = process.env.BASE_URL || "https://trendsentry.vercel.app"
+const BASE = process.env.BASE_URL || "https://trendsentry.xyz"
 const AUTH_FILE = "e2e/.auth/user.json"
 
 // Fail-closed: hanya baca dari environment, tanpa nilai default/dummy.

@@ -8,7 +8,7 @@
  * Tidak perlu Playwright — pakai fetch() langsung.
  */
 
-const BASE = "https://trendsentry.vercel.app"
+const BASE = process.env.BASE_URL || "https://trendsentry.xyz"
 const SUPABASE_URL = "https://ypkdnvwlekxmmotxsvrm.supabase.co"
 
 let passed = 0
