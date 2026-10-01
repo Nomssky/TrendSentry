@@ -705,9 +705,31 @@ Klasifikasi per domain (ringkas):
 
 ## 12. Documentation Drift
 
-Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan.
+> **Status penyesuaian 2026-10-01:** seksi ini adalah **catatan riwayat Phase 0 (2026-09-16)**.
+> Mayoritas butirnya sudah diperbaiki di Documentation Reset 2026-09-22 — tiap sub-bagian di
+> bawah diberi status. Kutipan `file:baris` di dalam butir adalah **keadaan garis saat Phase 0
+> ditulis** dan sebagian besar sudah tidak menunjuk ke yang diklaim (baris yang dikutip sudah
+> tidak ada lagi justru karena diperbaiki). Status kini mengacu pada file aktual.
+
+| Sub-bagian | Status 2026-10-01 |
+|---|---|
+| 12.1 Node.js vs Python | ✅ TERPECAHKAN (Documentation Reset 2026-09-22) |
+| 12.2 Static export | ✅ TERPECAHKAN (Documentation Reset 2026-09-22) |
+| 12.3 Struktur folder lama | ✅ TERPECAHKAN (`AGENTS.md:50-53`) |
+| 12.4 Nama file lama | ✅ TERPECAHKAN (Documentation Reset 2026-09-22) |
+| 12.5 Klaim file dihapus | ⚠️ SEBAGIAN (P4-4 ✅; `db/backup_db.sh:4` masih terbuka) |
+| 12.6 Diagram arsitektur | ✅ TERPECAHKAN (Documentation Reset 2026-09-22) |
+| 12.7 Bisnis/produk | ✅ TERPECAHKAN (Documentation Reset 2026-09-22) |
+| 12.8 Klaim teknis spesifik | ⚠️ SEBAGIAN (WebSocket ✅, lint ✅; **counter di butir ini sendiri basi** → diperbaiki) |
+| 12.9 Preset/gate | ✅ BUKAN DRIFT (sengaja konsisten — jangan "diperbaiki") |
+
+Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan *(saat Phase 0)*.
 
 ### 12.1 Node.js vs Python untuk live execution (Fase 4)
+
+> **Status 2026-10-01: ✅ TERPECAHKAN** — `AGENTS.md:41` dan `RULES.md:111` kini menetapkan
+> **Python + ccxt (BUKAN Node.js)**, dan amendemen `PLAN.md:141` mengganti baris "Node.js".
+> Kutipan di bawah adalah riwayat baris lama.
 - Klaim lama: `README.md:39` "Execution: Python (paper), **Node.js (live, Fase 4)**";
   `AGENTS.md:43` "Execution | Node.js + TypeScript, ccxt"; `RULES.md:111` "Execution |
   Node.js + TypeScript, ccxt"; `PLAN.md:105` diagram "Execution Engine (Node.js, Fase 4)";
@@ -718,6 +740,10 @@ Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan.
   dengan README/AGENTS/RULES yang belum diupdate.
 
 ### 12.2 Static export + SQLite build-time vs SSR + Supabase runtime
+
+> **Status 2026-10-01: ✅ TERPECAHKAN** — `README.md:87`, `PLAN.md:236`, `TASKS.md:47`, dan
+> `monitoring/web/README.md:61` semuanya kini menulis **bukan static export** (SSR + Supabase
+> runtime). Kutipan di bawah adalah riwayat baris lama.
 - Klaim lama: `README.md:40` "Dashboard: Next.js static export → Vercel";
   `PLAN.md:209` "Next.js 16 static export"; `PLAN.md:210` "DB dibaca saat build (bukan runtime)";
   `TASKS.md:37` "Next.js static export → Vercel gratis";
@@ -732,6 +758,11 @@ Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan.
 - Status: **kontradiksi besar** (5 dokumen).
 
 ### 12.3 Struktur folder lama (`PLAN.md` §4) vs repository aktual
+
+> **Status 2026-10-01: ✅ TERPECAHKAN** — `AGENTS.md:50-53` kini menunjuk ke `ARCHITECTURE.md` +
+> `REPO_MAP.md` sebagai struktur aktual dan menyatakan `PLAN.md` §4 **usulan lama yang sudah
+> basi**; `PLAN.md:12` sendiri menandai §4 sebagai usulan lama. Kutipan di bawah adalah riwayat
+> baris lama.
 - `PLAN.md:142-167` menggambarkan `crypto-trend-bot/` dengan `llm_filter/deepseek_client.py`,
   `llm_filter/prompts/`, `execution/` (Node.js), `risk_manager/position_sizing.py`,
   `monitoring/telegram_bot.py`.
@@ -744,6 +775,10 @@ Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan.
 - Status: **kontradiksi**.
 
 ### 12.4 Nama file lama yang tidak ada
+
+> **Status 2026-10-01: ✅ TERPECAHKAN** — `TASKS.md:9` dan `TASKS.md:77` mencantumkan nama aktual
+> beserta nama lamanya, `PLAN.md:190` menandai `monitoring/telegram_bot.py` **tidak pernah ada**,
+> `backtest/DESIGN.md:23` menandai path/venue lama. Kutipan di bawah adalah riwayat baris lama.
 | Klaim | Lokasi | Realitas |
 |---|---|---|
 | `backtest/fetch_data.py` | TASKS.md:9 (dicentang `[x]`!) | tidak ada; aktual `scripts/fetch_bitget_data.py` |
@@ -754,13 +789,23 @@ Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan.
 | `conftest.py` (root) | AUDIT.md menyebut sudah dihapus | benar masih tidak ada di root (klaim AUDIT valid); `tests/conftest.py` BARU ditambahkan Wave 1 (bootstrap import, bukan file yang sama) |
 
 ### 12.5 Klaim "file sudah dihapus/mati" yang ternyata masih ada atau sebaliknya
+
+> **Status 2026-10-01: ⚠️ SEBAGIAN** — P4-4 ✅ (`AUDIT.md:238` kini "✅ Done (2026-09-22)").
+> **Masih terbuka:** `db/backup_db.sh:4` menulis "Cron: 5 1 * * * …" seolah aktif padahal cron
+> lokal dibatalkan. Butir `TASKS.md:40` di bawah adalah snapshot checkpoint bertanggal
+> (2026-09-21) — riwayat, bukan klaim kini.
 - `AUDIT.md:222` daftar perbaikan masih mencantumkan **"P4-4 Buat deploy/.env.example" sebagai
   pending** — file `deploy/.env.example` **sudah ada** (berisi 10+ var). Drift status audit.
 - `TASKS.md:40` crontab lokal "dibatalkan", tetapi `db/backup_db.sh:4` masih menulis
   "Cron: 5 1 * * * …" seolah aktif — backup lokal **tidak lagi terjadwal** (§13).
-- Sebaliknya: `AUDIT.md` menyebut `live_signal.py:595` — aktual 595 baris ✓ (klaim benar).
+- Sebaliknya: `AUDIT.md` menyebut `paper_trading/live_signal.py` — aktual 634 baris (595 baris
+  saat Phase 0; klaim benar saat itu).
 
 ### 12.6 Diagram arsitektur basi
+
+> **Status 2026-10-01: ✅ TERPECAHKAN** — `README.md` kini punya diagram dengan Supabase +
+> `17 API routes` + tautan ke `ARCHITECTURE.md`; `PLAN.md:96` menandai jalur tanpa LLM filter
+> dan menempatkan LLM Filter di Fase 3 NONAKTIF. Kutipan di bawah adalah riwayat baris lama.
 - `README.md:32-36` diagram "Data (ccxt) → Signal Engine → Risk Manager → Paper/Live Execution →
   DB + Alerts" tanpa Supabase/produk user — tidak menggambarkan sistem disiplin-user yang aktual.
 - `PLAN.md:86-116` diagram masih menaruh LLM Filter & Execution Node.js di jalur utama
@@ -768,6 +813,12 @@ Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan.
 - `monitoring/web/AGENTS.md` bukan arsitektur project (blok generator Next) — jangan dijadikan referensi.
 
 ### 12.7 Deskripsi bisnis/produk basi
+
+> **Status 2026-10-01: ✅ TERPECAHKAN** — `RULES.md:110` kini menyebut `vectorbt` *tidak dipakai
+> sebagai runtime dependency*; `AGENTS.md:45` kini menulis **tidak ada vitest/jest**
+> (Playwright + smoke). "Real-time dashboard", "PostgreSQL (live, future)", "Private Beta"
+> sudah tidak ada di dokumen; "Discipline Benchmark 🔜 Coming soon" dibingkai ulang sebagai
+> simulasi yang belum dibangun (`README.md:39`). Kutipan di bawah adalah riwayat baris lama.
 - `README.md:23` "Real-time dashboard … ✅ Active" vs `README.md:25` "Discipline Benchmark …
   Coming soon" — padahal **discipline score/deviation sudah terimplementasi & teruji**
   (`lib/deviation.ts`, trigger SQL, halaman `/app/*`). Bagian "What It Does" tidak menyebut
@@ -782,18 +833,26 @@ Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan.
   tidak punya vitest/jest; yang ada Playwright + script smoke manual.
 
 ### 12.8 Klaim teknis spesifik yang salah/ basi
+
+> **Status 2026-10-01: ⚠️ SEBAGIAN** — WebSocket ✅ (`TASKS.md:47` kini "REST polling
+> `/api/prices` tiap 3 detik (bukan WebSocket)"), lint ✅ (masih baseline 2 error / 7 warning).
+> **Counter di tabel ini sendiri basi** — diperbaiki di bawah. Path laporan di bawah kurang
+> awalan `backtest/` (nama file tepatnya `backtest/reports/sharpe_discrepancy_report.md`),
+> dan `DESIGN.md` yang dimaksud adalah `backtest/DESIGN.md`.
 | Klaim | Lokasi | Realitas (bukti) |
 |---|---|---|
 | "live ticker + unrealized PnL realtime (WebSocket)" | TASKS.md:37 | **tidak ada WebSocket** di repo; aktual REST polling `/api/prices` tiap 3 detik |
 | "bot CI commit db → Vercel auto-redeploy → DB dibaca saat build" | PLAN.md:210 | commit DB tetap terjadi (backup), tetapi web **tidak membacanya**; jalur data = sync → Supabase |
-| "slippage 125 sampel, avg 0.011%" | TASKS.md:44 | DB aktual: **235 sampel, avg 0.0124%** |
-| "sekarang 1/10 trade" | TASKS.md:46 | DB aktual: **3 trade tertutup** (3/10) |
-| "Sharpe valid 0.53" | reports/sharpe_discrepancy_report.md:10 | angka Cluster-A2 pasca cluster-limit = **0.82** (report adalah snapshot 2026-09-05; basi) |
-| pointer "`DESIGN.md:176` Sharpe ~1.06" | sharpe_discrepancy_report.md:71 | DESIGN.md:176 kini berisi tabel definisi metrik; angka 1.06 sudah tidak ada di DESIGN.md (pointer basi) |
+| "slippage 125 sampel, avg 0.011%" | TASKS.md:44 | DB saat Phase 0: 235 sampel, avg 0.0124% — **DB kini: 325 sampel, avg 0.0129%** (rentang 2026-08-24..2026-09-29) |
+| "sekarang 1/10 trade" | TASKS.md:46 | DB saat Phase 0: 3 trade tertutup (3/10) — **DB kini: 4 trade tertutup** (HYPE/USDT menutup posisi kedua) |
+| "Sharpe valid 0.53" | `backtest/reports/sharpe_discrepancy_report.md:10` | angka Cluster-A2 pasca cluster-limit = **0.82** (report adalah snapshot 2026-09-05; basi) |
+| pointer "`DESIGN.md:176` Sharpe ~1.06" | `backtest/reports/sharpe_discrepancy_report.md:71` | `backtest/DESIGN.md:176` kini kosong (isi bergeser oleh edit Documentation Reset); angka 1.06 sudah tidak ada di DESIGN.md (pointer basi) |
 | lint sudah bersih / P3-12 selesai | AUDIT.md (implisit) | `npm run lint` **exit 1**: 2 error `react-hooks/set-state-in-effect` (AppSidebar:24, strategies/new:107) + 7 warning unused var |
 | "Discipline Benchmark 🔜 Coming soon" | README.md:25 | sebagian sudah ada (score/deviation), tapi simulasi benchmark memang belum — perlu framing ulang |
 
 ### 12.9 Preset/gate vs dokumentasi (konsisten — dicatat agar tidak "diperbaiki" keliru)
+
+> **Status 2026-10-01: ✅ BUKAN DRIFT** — status ini tidak berubah; tetap jangan dianggap drift.
 - Preset SMA & RSI berstatus `gate: failed` di YAML **selaras** TASKS.md:87-88 dan metrics.md
   preset. Jangan dianggap drift.
 
@@ -802,21 +861,23 @@ Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan.
 ## 13. Dead-Code Candidates
 
 Metode: grep referensi lintas repo (Python/TS/TSX/YAML/MD) + penelusuran runtime path.
-**Belum ada yang dihapus.**
+
+> **Status penyesuaian 2026-10-01:** kandidat **#1, #2, #11 sudah dihapus dari repo**
+> (ditandai ✅ di bawah). Sisanya tetap terbuka — keputusan owner, **tidak dihapus di sini**.
 
 | # | File | Kenapa mencurigakan | Referensi ditemukan | Bukti runtime path | Confidence |
 |---|---|---|---|---|---|
-| 1 | `monitoring/web/app/app/dashboard/EquityCurveChart.tsx` | komponen export tanpa importer | **hanya deklarasinya sendiri** (grep seluruh repo: 1 match) | `/app/dashboard` memakai `ScoreTrendChart`; kurva equity ditampilkan di `/papertrading` via `components/EquityChart` (komponen berbeda) | **HIGH** |
-| 2 | `monitoring/web/public/{file,globe,next,window,vercel}.svg` (5) | aset default create-next-app | 0 referensi di `app/` maupun `next.config.ts` | tidak ada route yang merujuk | MEDIUM (dead, tapi dampak nol) |
+| 1 | `monitoring/web/app/app/dashboard/EquityCurveChart.tsx` | komponen export tanpa importer | **hanya deklarasinya sendiri** (grep seluruh repo: 1 match) | `/app/dashboard` memakai `ScoreTrendChart`; kurva equity ditampilkan di `/papertrading` via `components/EquityChart` (komponen berbeda) | **HIGH** → ✅ **DIHAPUS** (file tidak ada di disk maupun git; riwayat di §10.12) |
+| 2 | `monitoring/web/public/{file,globe,next,window,vercel}.svg` (5) | aset default create-next-app | 0 referensi di `app/` maupun `next.config.ts` | tidak ada route yang merujuk | MEDIUM (dead, tapi dampak nol) → ✅ **DIHAPUS** (direktori `public/` tidak ada di disk maupun git) |
 | 3 | `db/backup_db.sh` | fungsi backup yang kehilangan scheduler | hanya `TASKS.md:39` + komentar dirinya sendiri | crontab lokal **dibatalkan** (TASKS:40); jalur backup resmi kini = commit `db/paper_trading.db` di CI | MEDIUM (masih berguna manual) |
 | 4 | `.github/workflows/test-bitget-api.yml` | probe one-off untuk keputusan yang sudah diambil | tidak direferensikan workflow lain | `workflow_dispatch` saja; venue Bitget sudah dipakai produksi | MEDIUM (obsolete sebagai prosedur) |
 | 5 | `backtest/research/correlation_mitigation.py` | import `yfinance` — **tidak ada di requirements** | hanya dirujuk laporan riset | manual; dari install bersih akan ImportError | MEDIUM (reproducibility, bukan dead) |
 | 6 | `backtest/research/sharpe_benchmark.py` | import `scipy` — **tidak ada di requirements** | hanya dirujuk laporannya | manual; ImportError dari install bersih | MEDIUM (reproducibility) |
 | 7 | `requirements.txt` → `vectorbt` | tidak pernah di-import di kode repo | 0 import (grep `vectorbt` hanya requirements) | — | **HIGH** (unused dependency) |
 | 8 | `requirements.txt` → `requests` | hanya dipakai riset `fetch_funding.py` | 1 import (research) | bukan dep runtime engine | LOW-MEDIUM (keputusan: pisahkan ke research requirements) |
-| 9 | Unused vars hasil lint | `lib/db-supabase.ts:85 lastRunDate`, `e2e/free-tier-flow.spec.ts:12 fs`, `e2e/api-smoke-test.mjs:12 SUPABASE_URL`, import `SITE` di `Hero.tsx`/`PricingTeaser.tsx`/`start/page.tsx`, import `createClient` di `strategies/new:3` | lint | dead local | HIGH (kecil) |
+| 9 | Unused vars hasil lint | `lib/db-supabase.ts:93 lastRunDate`, `e2e/free-tier-flow.spec.ts:12 fs`, `e2e/api-smoke-test.mjs:12 SUPABASE_URL`, import `SITE` di `Hero.tsx`/`PricingTeaser.tsx`/`start/page.tsx`, import `createClient` di `strategies/new:3` | lint | dead local | HIGH (kecil) — **catatan:** `e2e/**` dilarang disentuh (§18 #16) |
 | 10 | `db/backups/paper_trading_2026-08-14.db` | artefak backup lokal (ignored, bukan bagian repo) | tidak ada | — | LOW (bukan repo content) |
-| 11 | `monitoring/web/e2e/.auth/user.json` (untracked) | storage state login tes di working tree | dipakai Playwright storageState? **spec tidak menyetel `storageState`** — auth.spec memakai redirect-only, free-tier login via form | berpotensi membawa session tes; tidak di-ignore | MEDIUM (hygiene) |
+| 11 | `monitoring/web/e2e/.auth/user.json` (untracked) | storage state login tes di working tree | dipakai Playwright storageState? **spec tidak menyetel `storageState`** — auth.spec memakai redirect-only, free-tier login via form | berpotensi membawa session tes; tidak di-ignore | MEDIUM (hygiene) → ✅ **SELESAI** (direktori tidak ada; sudah di-`.gitignore:36`) |
 | 12 | `backtest/DESIGN.md` | tidak direferensikan kode; sebagian angka basi | hanya dokumen | — | LOW (dokumentasi berguna — jangan dihapus, perlu review angka) |
 
 **Kandidat yang sudah dicurigai tapi TIDAK dead (diverifikasi):**
@@ -933,74 +994,72 @@ Tabel di atas adalah **bukti eksekusi Phase 0** pada `3a4dae8` — dibiarkan seb
 | **Parameter risk** (risk 1%, max 5, CB 15%) | `config.yaml` `risk:` + guard `risk_manager/guards.validate_config` | `presets/*.yaml risk`, `lib/validations.ts GUARDRAILS` (web), seed SQL template | Konsisten (1% / 5 / long_only) di 3 tempat — sumber terpisah |
 | **Paper execution behavior** | `paper_trading/live_signal.py` (+ `config.yaml paper_trading`) | — | tunggal |
 | **Database schema SQLite** | `db/schema.sql` | dibaca ulang tiap start (idempoten) | tunggal |
-| **Database schema Postgres** | `supabase/migrations/*.sql` (10) | `AGENTS.md` salah menyebut `db/migrations/` | Dokumentasi salah, kode benar |
+| **Database schema Postgres** | `supabase/migrations/*.sql` (12) | `AGENTS.md` kini menulis "TIDAK ADA `db/migrations/`" (diperbaiki 2026-09-22) | Dokumentasi dan kode konsisten |
 | **Backtest reference metrics** | **ambigu**: `monitoring/web/lib/backtest-reference.json` (dipakai kode) vs `backtest/reports/metrics.md` (output runner) | DESIGN §6.1, README, PLAN, TASKS, RULES, disclaimer, presets | **YA — 2 keluarga angka beda (§12.9/§14 #1-2)** |
 | **Web user strategy model** | Supabase `user_strategies` + `strategy_templates` (seed SQL) + `lib/validations.ts` guardrail | `lib/deviation.ts parseRules` (interpretasi params) | Konsisten; interpretasi rules ada di 1 tempat |
-| **Paper trading data (untuk web)** | Supabase `paper_*` (mirror), diisi `/api/cron/paper-sync` | `db/paper_trading.db` (asli, di CI) | Tidak konflik — arah sinkron satu jalir; **tetapi README/PLAN masih mengklaim web membaca SQLite** |
+| **Paper trading data (untuk web)** | Supabase `paper_*` (mirror), diisi `/api/cron/paper-sync` | `db/paper_trading.db` (asli, di CI) | Tidak konflik — arah sinkron satu jalur; `PLAN.md:237` sudah menulis **web membaca Supabase saat request, tidak pernah membaca SQLite** (diperbaiki 2026-09-22) |
 | **Business/product rules** | `PLAN.md` §9 (+ amendemen) — "tidak jual sinyal, tidak pegang dana, baca-saja" | direplikasi komentar kode: `lib/bitget.ts`, `checkout` gate, `validate_config` menolak live | Konsisten terverifikasi di kode |
 | **Decision log / histori gate** | `backtest/reports/decision_log.md` (dirujuk `SITE.decisionLog`, PLAN) | `TASKS.md`, `AUDIT.md` | kronologis, tidak konflik |
 
-**Dokumen yang jangan diasumsikan benar** (hasil verifikasi):
-- `README.md` — drift static-export, Node.js, PostgreSQL "future", deskripsi produk basi.
-- `PLAN.md` — §4 struktur basi, §8 data flow web basi, diagram §3 vs amendemen §3 sendiri.
-- `AGENTS.md` — path migrasi salah, Node.js execution, vitest/jest tidak ada.
-- `RULES.md` — vectorbt tidak dipakai, Node.js execution.
-- `TASKS.md` — nama file `backtest/fetch_data.py`, `telegram_bot.py`, WebSocket, angka
-  slippage/trade basi.
-- `AUDIT.md` — status P4-4 basi (file sudah ada); kesan lint bersih tidak akurat;
-  pointer `DESIGN.md:176` di laporan terkait sudah bergeser.
-- `monitoring/web/README.md` — **seluruh bagian Stack/Build/Data salah** (static export +
-  build-time SQLite).
-- `monitoring/web/AGENTS.md` — bukan dokumen proyek (blok generator Next).
+**Dokumen yang jangan diasumsikan benar** (hasil verifikasi Phase 0):
+
+> **Status 2026-10-01: daftar ini basi.** Semua klaim di bawah sudah diperbaiki di
+> Documentation Reset 2026-09-22 — status per klaim ada di §12 (12.1–12.9). Daftar ini
+> dibiarkan sebagai riwayat apa yang Phase 0 temukan, bukan sebagai vonis kini.
+>
+> - `README.md` — drift static-export, Node.js, PostgreSQL "future", deskripsi produk basi.
+> - `PLAN.md` — §4 struktur basi, §8 data flow web basi, diagram §3 vs amendemen §3 sendiri.
+> - `AGENTS.md` — path migrasi salah, Node.js execution, vitest/jest tidak ada.
+> - `RULES.md` — vectorbt tidak dipakai, Node.js execution.
+> - `TASKS.md` — nama file `backtest/fetch_data.py`, `telegram_bot.py`, WebSocket, angka
+>   slippage/trade basi.
+> - `AUDIT.md` — status P4-4 basi (file sudah ada); kesan lint bersih tidak akurat;
+>   pointer `DESIGN.md:176` di laporan terkait sudah bergeser.
+> - `monitoring/web/README.md` — **seluruh bagian Stack/Build/Data salah** (static export +
+>   build-time SQLite).
+> - `monitoring/web/AGENTS.md` — bukan dokumen proyek (blok generator Next).
 
 ---
 
-## 17. Recommended Cleanup Plan (BELUM dieksekusi)
+## 17. Recommended Cleanup Plan
+
+> **Status penyesuaian 2026-10-01:** judul lama seksi ini — *"(BELUM dieksekusi)"* — basi.
+> Langkah 0–1 dan item 11 di bawah **sudah dieksekusi** (di Documentation Reset 2026-09-22
+> dan penyesuaian dokumentasi 2026-10-01). Sisanya tetap terbuka — **keputusan owner**,
+> tidak dikerjakan di sini.
 
 Urutan yang disarankan — masing-masing butuh konfirmasi owner sesuai aturan AGENTS.md:
 
-**Langkah 0 — kebersihan working tree (risiko nol)**
-1. Putuskan nasib 2 laporan untracked (`bh_max_drawdown.md`,
-   `bh_drawdown_and_btc_eth_corr.md`): commit sebagai riset, atau pindah ke folder riset.
-2. Tambah ignore untuk `monitoring/web/e2e/.auth/` (session storage) — atau hapus isinya.
+### Sudah dieksekusi ✅
 
-**Langkah 1 — drift dokumentasi (dokumen saja, nol perubahan kode)**
-3. `monitoring/web/README.md`: ganti klaim static export/SQLite build-time → SSR + Supabase.
-4. `README.md`: arsitektur + stack (Python live, PostgreSQL sudah aktif), diagram §"What It Does".
-5. `PLAN.md` §4 (struktur folder) dan §8 (data flow web) ditandai "usulan lama → aktual";
-   diagram §3 diselaraskan dengan amendemen Python.
-6. `AGENTS.md`: path `supabase/migrations/`, hapus vitest/jest (Playwright), execution Python.
-7. `RULES.md` §H: hapus vectorbt (atau catat sebagai tidak dipakai), Node.js → Python.
-8. `TASKS.md`: `backtest/fetch_data.py` → `scripts/fetch_bitget_data.py`;
-   `telegram_bot.py` → `telegram_alert.py`; WebSocket → REST polling; perbarui angka
-   3/10 trade & 235 sampel.
-9. `AUDIT.md`: tandai P4-4 done; catat status lint 2 error.
+- **Item 1** — 2 laporan (`bh_max_drawdown.md`, `bh_drawdown_and_btc_eth_corr.md`) kini
+  **ter-track di git** (`git ls-files` terkonfirmasi).
+- **Item 2** — `monitoring/web/e2e/.auth/` tidak ada di disk dan sudah di-`.gitignore:36`.
+- **Item 3–7** — klaim static export/SQLite build-time, arsitektur README, `PLAN.md` §4/§8,
+  `AGENTS.md`, `RULES.md` semua sudah dikoreksi (status per klaim di §12).
+- **Item 8** — `TASKS.md` menyebut path aktual beserta nama lamanya; WebSocket → REST polling
+  (`TASKS.md:47`). Angka checkpoint bertanggal (245 sampel, 3/10) dibiarkan sebagai snapshot
+  riwayat 2026-09-21.
+- **Item 9** — `AUDIT.md:238` kini "✅ Done (2026-09-22)"; status lint 2 error tercatat.
+- **Item 11** — `app/app/dashboard/EquityCurveChart.tsx` sudah tidak ada di repo.
 
-**Langkah 2 — keputusan angka (butuh re-run backtest, JANGAN ubah parameter)**
-10. Re-run `run_backtest.py` (config beku) dan tentukan keluarga angka yang benar; jadikan
-    `backtest-reference.json` satu-satunya sumber, sinkronkan `metrics.md`/DESIGN/disclaimer.
-    *Ini sentuh angka publik → wajib persetujuan owner + catat di PLAN.md (AGENTS #2).*
+### Masih terbuka — keputusan owner
 
-**Langkah 3 — dead code (konfirmasi dulu)**
-11. Hapus `app/app/dashboard/EquityCurveChart.tsx` (HIGH confidence) — satu-satunya kandidat
-    yang buktinya kuat.
-12. Putuskan `test-bitget-api.yml` (arsipkan) dan `db/backup_db.sh` (aktifkan kembali atau
-    dokumentasikan sebagai manual-only).
-13. Bersihkan unused vars (7 warning lint) — menyelamatkan `npm run lint` dari error:
-    2 error `set-state-in-effect` perlu pola alternatif (bukan sekadar hapus).
-
-**Langkah 4 — dependensi & riset**
-14. `requirements.txt`: keluarkan `vectorbt`; pisahkan `requests`/`scipy`/`yfinance` ke
-    `requirements-research.txt` agar riset reproducible.
-15. (Opsional) tandai `run_longshort_backtest.py` sebagai arsip eksperimen.
-
-**Langkah 5 — struktur (paling akhir, paling hati-hati)**
-16. Struktur yang direkomendasikan **mendukung kode yang ada** (lihat §18 struktur sasaran):
-    `backtest/` (engine), `backtest/research/` (sudah ada), `backtest/reports/` (sudah ada),
-    `paper_trading/`, `risk_manager/`, `scripts/`, `monitoring/`, `presets/`, `supabase/`.
-    **Tidak perlu restructure besar** — yang kurang hanya pemisahan artefak data non-config
-    (`data/historical/{BCH,LTC,PAXG}`, `data/funding`) ke `research/data/`, dan keputusan
-    apakah `monitoring/web` dipisah (monorepo kecil, tidak mendesak).
+- **Item 10** — ⛔ **GATED (§18 #15)**: re-run backtest + satukan keluarga angka
+  (`metrics.md` vs `backtest-reference.json`). Sentuh angka publik → wajib persetujuan owner
+  + catat di `PLAN.md` (AGENTS #2). **Sengaja dikeluarkan dari scope penyesuaian ini.**
+- **Item 12** — `test-bitget-api.yml` (arsipkan?) dan `db/backup_db.sh` (aktifkan kembali
+  atau dokumentasikan sebagai manual-only?).
+- **Item 13** — 7 warning unused vars; 2 error `set-state-in-effect` butuh pola alternatif
+  (bukan sekadar hapus). **Catatan:** `e2e/**` dilarang disentuh (§18 #16).
+- **Item 14** — `requirements.txt`: keluarkan `vectorbt`; pisahkan `requests`/`scipy`/
+  `yfinance` ke `requirements-research.txt`. (Efek samping: catatan di `TASKS.md:7` dan
+  `RULES.md:110` yang menyebut sisa ini jadi basi — putuskan sepaket.)
+- **Item 15** — (opsional) tandai `run_longshort_backtest.py` sebagai arsip eksperimen.
+- **Item 16** — struktur: kesimpulan Phase 0 tetap berlaku — **tidak perlu restructure besar**
+  (lihat §18). Yang kurang hanya pemisahan artefak data non-config
+  (`data/historical/{BCH,LTC,PAXG}`, `data/funding`) ke `research/data/`, dan keputusan
+  apakah `monitoring/web` dipisah (monorepo kecil, tidak mendesak).
 
 ---
 

@@ -208,3 +208,40 @@ verifikasi *runtime deployment* terhadap data pasar nyata.
 - Artefak cache lokal (Playwright `test-results/`, `supabase/.temp/`, `.pytest_cache`,
   `tsconfig.tsbuildinfo`, `db/deployments/` yang kosong) dibersihkan. `.next`, `node_modules`,
   `venv/`, `.env*`, dan `db/*.db` tidak disentuh.
+
+---
+
+## 8. PENYELARASAN DIAGNOSIS REPO_MAP (commit lanjutan, 2026-10-01)
+
+Penutupan di atas memperbaiki **inventaris** (`§10`, `§11`, `§15`). Commit lanjutan ini
+menyelaraskan **diagnosis** (`§12`, `§13`, `§16`, `§17`) yang masih menulis vonis Phase 0
+seolah kini — padahal sebagian besar sudah diperbaiki di Documentation Reset 2026-09-22.
+
+- **§12 Documentation Drift** — diberi banner status + satu baris status per 12.1–12.9:
+  12.1–12.4, 12.6–12.7 ✅ terpecahkan; 12.5 dan 12.8 ⚠️ sebagian (P4-4 ✅, WebSocket ✅,
+  lint ✅; terbuka: `db/backup_db.sh:4`, counter tabel ini sendiri); 12.9 ✅ bukan drift.
+  Kutipan `file:baris` lama dibiarkan sebagai riwayat; **38 dari 40 pointer-nya sudah tidak
+  menunjuk ke yang diklaim** (baris yang dikutip hilang justru karena diperbaiki) —
+  diverifikasi programatik satu per satu. Dua counter (§12.8) diperbarui ke DB kini:
+  325 signal, 4 trade tertutup.
+- **§13 Dead-Code** — header "Belum ada yang dihapus" diganti status per kandidat:
+  #1, #2, #11 ✅ dihapus/selesai; #9 dikoreksi (`lib/db-supabase.ts:85` → `:93`) +
+  catatan `e2e/**` dilarang (§18 #16); #3–#8, #10, #12 tetap terbuka (keputusan owner).
+- **§16 Source-of-Truth Map** — migrasi `(10)` → **12**; vonis "`AGENTS.md` salah menyebut
+  `db/migrations/`" dicabut (sudah dikoreksi); klaim "README/PLAN masih mengklaim web
+  membaca SQLite" dicabut (`PLAN.md:237` sudah menulis web membaca Supabase); blok
+  "Dokumen yang jangan diasumsikan benar" ditandai basi dengan status per klaim di §12.
+- **§17 Cleanup Plan** — judul "(BELUM dieksekusi)" yang basi diganti dua kelompok:
+  **sudah dieksekusi** (item 1, 2, 3–9, 11, dengan bukti) vs **masih terbuka** (10 ⛔ GATED
+  §18 #15 — sengaja di luar scope; 12, 13, 14, 15, 16).
+- **Lampiran A** — diverifikasi masih relevan (rekomendasi tanpa eksekusi; hanya direktori
+  yang memang ada). Tidak diubah.
+
+**Sengaja TIDAK dikerjakan** (tetap terbuka, keputusan terpisah): arsipkan
+`test-bitget-api.yml`, `db/backup_db.sh`, keluarkan `vectorbt` dari `requirements.txt`,
+7 lint warning, dep riset `scipy`/`yfinance`, rekonsiliasi angka backtest. Semuanya menyentuh
+kode/CI/requirements atau angka publik.
+
+**Temuan samping:** satu file asing `high-level-description-…​.jpg` (263 KB, muncul
+2026-10-01 11:28, bukan artefak pekerjaan ini) dipindahkan dari root ke `/tmp/opencode/`
+— tidak dihapus, supaya tidak hilang kalau milik owner.
