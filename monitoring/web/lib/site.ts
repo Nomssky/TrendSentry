@@ -10,7 +10,7 @@ export const SITE = {
   github: "https://github.com/Nomssky/TrendSentry",
   liveDashboard: "/papertrading",
   realAccount: "/live",
-  dashboardExternal: "https://trendsentry.vercel.app/papertrading",
+  dashboardExternal: "https://trendsentry.xyz/papertrading",
   decisionLog:
     "https://github.com/Nomssky/TrendSentry/blob/main/backtest/reports/decision_log.md",
   waitlistAnchor: "/start",

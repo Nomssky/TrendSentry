@@ -8,6 +8,7 @@ function allowedOrigins(): string[] {
     return fromEnv.split(",").map((o) => o.trim()).filter(Boolean)
   }
   return [
+    "https://trendsentry.xyz",
     "https://trendsentry.vercel.app",
     "http://localhost:3000",
     "http://localhost:3001",

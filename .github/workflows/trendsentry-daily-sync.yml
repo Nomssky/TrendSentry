@@ -17,4 +17,4 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           curl -sf -H "Authorization: Bearer ${CRON_SECRET}" \
-            "https://trendsentry.vercel.app/api/cron/daily-sync" || echo "sync failed (may be first deploy)"
+            "https://trendsentry.xyz/api/cron/daily-sync" || echo "sync failed (may be first deploy)"

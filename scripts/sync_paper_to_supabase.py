@@ -24,7 +24,7 @@ import urllib.error
 from pathlib import Path
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://ypkdnvwlekxmmotxsvrm.supabase.co")
-VERCEL_URL = os.environ.get("VERCEL_URL", "https://trendsentry.vercel.app")
+VERCEL_URL = os.environ.get("VERCEL_URL", "https://trendsentry.xyz")
 CRON_SECRET = os.environ.get("CRON_SECRET")
 DB_PATH = os.environ.get("DB_PATH", "db/paper_trading.db")
 

@@ -41,7 +41,7 @@ export async function POST(request: Request) {
 
   const planConfig = STRIPE_PLANS[plan as PlanKey]
   const stripe = getStripe()
-  const origin = request.headers.get("origin") ?? "https://trendsentry.vercel.app"
+  const origin = request.headers.get("origin") ?? "https://trendsentry.xyz"
 
   try {
     const session = await stripe.checkout.sessions.create({
