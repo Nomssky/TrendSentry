@@ -1,7 +1,6 @@
 // Pricing teaser + FAQ. No fake prices: Watcher tier is live, Paper Beta waitlist.
 
 import Link from "next/link";
-import { SITE } from "@/lib/site";
 import { NeonButton, TechLabel } from "./ui";
 
 const FAQS = [

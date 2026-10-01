@@ -1,6 +1,5 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 
@@ -97,15 +96,18 @@ export default function NewStrategyPage() {
 
   const selectedTemplate = templates.find((t) => t.id === selected)
 
-  // Isi default params saat template berganti.
-  useEffect(() => {
-    if (!selectedTemplate) return
-    const defaults: Record<string, unknown> = {}
-    for (const [key, schema] of Object.entries(selectedTemplate.params_schema.properties)) {
-      if (schema.default !== undefined) defaults[key] = schema.default
+  // Isi default params saat template berganti (render-time adjustment — tanpa effect).
+  const [prevTemplate, setPrevTemplate] = useState(selectedTemplate)
+  if (selectedTemplate !== prevTemplate) {
+    setPrevTemplate(selectedTemplate)
+    if (selectedTemplate) {
+      const defaults: Record<string, unknown> = {}
+      for (const [key, schema] of Object.entries(selectedTemplate.params_schema.properties)) {
+        if (schema.default !== undefined) defaults[key] = schema.default
+      }
+      setParams(defaults)
     }
-    setParams(defaults)
-  }, [selectedTemplate])
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

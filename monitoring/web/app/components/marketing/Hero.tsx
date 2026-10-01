@@ -2,7 +2,6 @@
 // Numbers come from the static backtest reference (read-only, no DB).
 
 import { BACKTEST_REFERENCE } from "@/lib/reference";
-import { SITE } from "@/lib/site";
 import { GhostButton, NeonButton, TechLabel } from "./ui";
 
 function Mockup() {

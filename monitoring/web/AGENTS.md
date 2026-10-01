@@ -74,7 +74,7 @@ and trigger SQL `supabase/migrations/20260912130000_recalc_discipline_score_trig
 
 ```bash
 npm run typecheck     # tsc --noEmit — must exit 0
-npm run lint          # eslint . — currently 2 known errors + 7 warnings (tracked in AUDIT.md)
+npm run lint          # eslint . — 0 errors, 2 warnings (keduanya di e2e/, off-limits); app+lib bersih
 npm run build         # next build — must exit 0
 npm run test:e2e      # Playwright (34 tests); config forbids destructive actions
 node e2e/api-smoke-test.mjs   # manual HTTP smoke against a running server

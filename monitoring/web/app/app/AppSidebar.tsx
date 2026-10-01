@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -20,8 +20,12 @@ export function AppSidebar() {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
 
-  // Tutup menu saat navigasi.
-  useEffect(() => { setOpen(false) }, [pathname])
+  // Tutup menu saat navigasi (render-time adjustment — tanpa effect).
+  const [prevPathname, setPrevPathname] = useState(pathname)
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname)
+    setOpen(false)
+  }
 
   return (
     <>

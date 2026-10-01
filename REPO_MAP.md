@@ -69,7 +69,7 @@ Angka audit:
 | File test E2E | 34 test Playwright + 1 smoke script `.mjs` |
 | Python test | **224 passed** |
 | Web typecheck | **exit 0** |
-| Web lint | **exit 1 — 2 error, 7 warning** |
+| Web lint | **exit 0 di `app/`+`lib/` (0 error, 0 warning)**; 2 warning tersisa di `e2e/` (off-limits §18 #16) |
 | Web build | **exit 0** |
 
 ---
@@ -875,7 +875,7 @@ Metode: grep referensi lintas repo (Python/TS/TSX/YAML/MD) + penelusuran runtime
 | 6 | `backtest/research/sharpe_benchmark.py` | import `scipy` — **tidak ada di requirements** | hanya dirujuk laporannya | manual; ImportError dari install bersih | MEDIUM (reproducibility) |
 | 7 | `requirements.txt` → `vectorbt` | tidak pernah di-import di kode repo | 0 import (grep `vectorbt` hanya requirements) | — | ✅ **DIHAPUS 2026-10-01** (keputusan owner) |
 | 8 | `requirements.txt` → `requests` | hanya dipakai riset `fetch_funding.py` | 1 import (research) | bukan dep runtime engine | ✅ **SELESAI 2026-10-01** — pindah ke `requirements-research.txt` bersama `scipy`/`yfinance` |
-| 9 | Unused vars hasil lint | `lib/db-supabase.ts:93 lastRunDate`, `e2e/free-tier-flow.spec.ts:12 fs`, `e2e/api-smoke-test.mjs:12 SUPABASE_URL`, import `SITE` di `Hero.tsx`/`PricingTeaser.tsx`/`start/page.tsx`, import `createClient` di `strategies/new:3` | lint | dead local | HIGH (kecil) — **catatan:** `e2e/**` dilarang disentuh (§18 #16) |
+| 9 | Unused vars hasil lint | `lib/db-supabase.ts:93 lastRunDate`, import `SITE` di `Hero.tsx`/`PricingTeaser.tsx`/`start/page.tsx`, import `createClient` di `strategies/new:3` | lint | dead local | ✅ **SELESAI 2026-10-01** (5 dihapus; 2 di `e2e/` dibiarkan — off-limits §18 #16) |
 | 10 | `db/backups/paper_trading_2026-08-14.db` | artefak backup lokal (ignored, bukan bagian repo) | tidak ada | — | LOW (bukan repo content) |
 | 11 | `monitoring/web/e2e/.auth/user.json` (untracked) | storage state login tes di working tree | dipakai Playwright storageState? **spec tidak menyetel `storageState`** — auth.spec memakai redirect-only, free-tier login via form | berpotensi membawa session tes; tidak di-ignore | MEDIUM (hygiene) → ✅ **SELESAI** (direktori tidak ada; sudah di-`.gitignore:36`) |
 | 12 | `backtest/DESIGN.md` | tidak direferensikan kode; sebagian angka basi | hanya dokumen | — | LOW (dokumentasi berguna — jangan dihapus, perlu review angka) |
@@ -973,12 +973,12 @@ tanpa signup submit / connect key) → jalur tulis produk tidak teruji otomatis.
 
 Tabel di atas adalah **bukti eksekusi Phase 0** pada `3a4dae8` — dibiarkan sebagai riwayat.
 
-**Re-verifikasi 2026-10-01 (HEAD `24c3ac4`):**
+**Re-verifikasi 2026-10-01 (HEAD `24c3ac4`, diperbarui pasca-lint-cleanup):**
 
 | cek | perintah | hasil |
 |---|---|---|
 | Typecheck | `npx tsc --noEmit` | **PASS (exit 0)** |
-| Lint | `npm run lint` | **FAIL (exit 1): 2 error, 7 warning** — *baseline tidak berubah* |
+| Lint | `npx eslint app lib` (scope `monitoring/web`) | **PASS (0 error, 0 warning)** — 2 error `set-state-in-effect` diperbaiki via render-time adjustment, 5 warning unused-var dihapus; 2 warning tersisa hanya di `e2e/` (off-limits §18 #16); `next build` exit 0 |
 | Build | `npm run build` | **PASS (exit 0)**, 34 static pages generated |
 | Python | `venv/bin/python -m pytest tests/ -q` | **PASS (224 passed, 35.50s)** |
 | `git diff --check` | — | **bersih** |
@@ -1050,8 +1050,9 @@ Urutan yang disarankan — masing-masing butuh konfirmasi owner sesuai aturan AG
   + catat di `PLAN.md` (AGENTS #2). **Sengaja dikeluarkan dari scope penyesuaian ini.**
 - **Item 12** — ✅ **SELESAI 2026-10-01**: `test-bitget-api.yml` dihapus (keputusan owner);
   `db/backup_db.sh` didokumentasikan manual-only (header skrip + §10 SUPPORT).
-- **Item 13** — 7 warning unused vars; 2 error `set-state-in-effect` butuh pola alternatif
-  (bukan sekadar hapus). **Catatan:** `e2e/**` dilarang disentuh (§18 #16).
+- **Item 13** — ✅ **SELESAI 2026-10-01**: 2 error `set-state-in-effect` diperbaiki via
+  render-time adjustment (`AppSidebar`, `strategies/new`); 5 warning unused-var dihapus;
+  2 warning `e2e/` dibiarkan (off-limits §18 #16). `tsc` + `next build` exit 0.
 - **Item 14** — ✅ **SELESAI 2026-10-01**: `vectorbt` dikeluarkan dari `requirements.txt`;
   `requests`/`scipy`/`yfinance` pindah ke `requirements-research.txt`;
   `TASKS.md:7` + `RULES.md:110` diselaraskan sepaket.

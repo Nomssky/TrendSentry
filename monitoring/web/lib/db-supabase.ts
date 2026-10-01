@@ -90,7 +90,6 @@ export async function getDashboardData(deploymentId = 0): Promise<DashboardData>
 
   const cash = Number(meta.paper_cash ?? 1000)
   const lastRun = meta.lastRun ?? signals[0]?.processed_at ?? ""
-  const lastRunDate = lastRun ? lastRun.slice(0, 10) : ""
   const dates = [...new Set(signals.map((s) => s.candle_date))].sort()
   const startDate = dates[0] ?? new Date().toISOString().slice(0, 10)
   const lastCandleDate = dates[dates.length - 1] ?? startDate

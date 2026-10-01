@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { SiteShell } from "../components/marketing/SiteShell";
 import { GlassCard, NeonButton, TechLabel } from "../components/marketing/ui";
-import { SITE } from "@/lib/site";
 
 const STEPS = [
   {
