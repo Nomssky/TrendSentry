@@ -122,7 +122,7 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 │   └── backups/                 # ignored lokal
 ├── supabase/
 │   ├── config.toml              # config Supabase CLI (local dev)
-│   └── migrations/              # 12 file .sql — SOURCE OF TRUTH skema Postgres
+│   └── migrations/              # 13 file .sql — SOURCE OF TRUTH skema Postgres
 ├── deploy/                      # persiapan VPS/Coolify (belum pernah dibuild — RUNBOOK)
 ├── .github/workflows/           # 4 workflow: paper-trading, daily-sync, fetch-data, test-api
 ├── data/
@@ -248,7 +248,7 @@ GitHub Actions cron 0 1 * * * UTC
      8. snapshot_equity (total = cash + MTM, upsert per hari) + backfill_equity
  → python scripts/sync_paper_to_supabase.py
      POST {signals, positions, equity_log, slippage_log, yield_log, meta}
-     → https://trendsentry.vercel.app/api/cron/paper-sync (Bearer CRON_SECRET)
+     → https://trendsentry.xyz/api/cron/paper-sync (Bearer CRON_SECRET)
      → route memvalidasi PaperSyncSchema → upsert ke tabel paper_* di Supabase
      → watermark sync_state dimaju HANYA setelah HTTP 200
  → git pull --rebase && git add -f db/paper_trading.db && git commit && git push
@@ -482,7 +482,7 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | .gitignore | ignore venv/.env/report csv/db/node_modules | — | git | CORE |
 | .dockerignore | jangan bawa secret/venv/node_modules ke image | Docker builds | build | SUPPORT |
 | db/schema.sql | DDL SQLite 7 tabel | live_signal (`executescript`), cli | tiap start paper | CORE |
-| db/paper_trading.db | state paper (4 closed trade, 325 signal, `lastRun` 2026-09-30) | semua pembaca SQLite; **di-commit ke git** oleh CI harian | CI harian | CORE |
+| db/paper_trading.db | state paper — snapshot bertanggal **per 2026-09-30** (4 closed trade, 325 signal, `lastRun` 2026-09-30; DB maju harian via CI, jangan dikutip tanpa tanggal) | semua pembaca SQLite; **di-commit ke git** oleh CI harian | CI harian | CORE |
 | db/deployments/ | **runtime output Phase A–E**: satu SQLite per deployment (`<id>.db`), **gitignored** — tidak boleh di-commit | `paper_trading/run_deployment.py` | tiap run per deployment | SUPPORT |
 | db/backup_db.sh | backup SQLite harian 14 hari | TASKS.md; cron lokal **dibatalkan** | tidak terjadwal | SUSPICIOUS |
 | db/backups/paper_trading_2026-08-14.db | artefak backup lokal (ignored) | — | — | SUSPICIOUS |
@@ -519,7 +519,7 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 Semua `deploy/*` disiapkan untuk cutover VPS yang **belum pernah dieksekusi**
 (RUNBOOK §4: image "belum pernah dibuild"). Bukan dead — persiapan Fase-4/VPS yang disengaja.
 
-### 10.7 Supabase (14)
+### 10.7 Supabase (15)
 
 | Path | Purpose | Status |
 |---|---|---|
@@ -536,6 +536,7 @@ Semua `deploy/*` disiapkan untuk cutover VPS yang **belum pernah dieksekusi**
 | supabase/migrations/20260922120000_insert_builtin_strategy_templates.sql | seed kanonik 8 `strategy_templates` (forward-only; riwayat migrasi tidak ditulis ulang) | CORE |
 | supabase/migrations/20260928120000_add_deployments_and_config_versions.sql | **Phase A control plane**: tabel `deployments` + `deployment_config_versions`, trigger immutable, RLS owner-only | CORE |
 | supabase/migrations/20260929120000_add_deployment_id_to_paper_tables.sql | **Phase B**: `deployment_id NOT NULL DEFAULT 0` di 6 tabel `paper_*` + `side`/`fill_key`, unique key dimigrasi (forward-only) | CORE |
+| supabase/migrations/20261001103839_revoke_public_execute_on_trigger_functions.sql | cabut EXECUTE PUBLIC/anon/authenticated pada 2 trigger function DEFINER (trigger tetap jalan; backend via service_role) | CORE |
 | supabase/.gitignore + .temp/* | artefak CLI (project-ref, versi) | SUPPORT |
 
 ### 10.8 Backtest reports & research docs (15 baris / 25 file)
@@ -843,8 +844,8 @@ Semua butir di bawah **sudah diverifikasi terhadap kode** sebelum dilaporkan *(s
 |---|---|---|
 | "live ticker + unrealized PnL realtime (WebSocket)" | TASKS.md:37 | **tidak ada WebSocket** di repo; aktual REST polling `/api/prices` tiap 3 detik |
 | "bot CI commit db → Vercel auto-redeploy → DB dibaca saat build" | PLAN.md:210 | commit DB tetap terjadi (backup), tetapi web **tidak membacanya**; jalur data = sync → Supabase |
-| "slippage 125 sampel, avg 0.011%" | TASKS.md:44 | DB saat Phase 0: 235 sampel, avg 0.0124% — **DB kini: 325 sampel, avg 0.0129%** (rentang 2026-08-24..2026-09-29) |
-| "sekarang 1/10 trade" | TASKS.md:46 | DB saat Phase 0: 3 trade tertutup (3/10) — **DB kini: 4 trade tertutup** (HYPE/USDT menutup posisi kedua) |
+| "slippage 125 sampel, avg 0.011%" | TASKS.md:44 | DB saat Phase 0: 235 sampel, avg 0.0124% — **DB per 2026-09-30: 325 sampel, avg 0.0129%** (rentang 2026-08-24..2026-09-29; snapshot bertanggal, DB maju harian) |
+| "sekarang 1/10 trade" | TASKS.md:46 | DB saat Phase 0: 3 trade tertutup (3/10) — **DB per 2026-09-30: 4 trade tertutup** (HYPE/USDT menutup posisi kedua) |
 | "Sharpe valid 0.53" | `backtest/reports/sharpe_discrepancy_report.md:10` | angka Cluster-A2 pasca cluster-limit = **0.82** (report adalah snapshot 2026-09-05; basi) |
 | pointer "`DESIGN.md:176` Sharpe ~1.06" | `backtest/reports/sharpe_discrepancy_report.md:71` | `backtest/DESIGN.md:176` kini kosong (isi bergeser oleh edit Documentation Reset); angka 1.06 sudah tidak ada di DESIGN.md (pointer basi) |
 | lint sudah bersih / P3-12 selesai | AUDIT.md (implisit) | `npm run lint` **exit 1**: 2 error `react-hooks/set-state-in-effect` (AppSidebar:24, strategies/new:107) + 7 warning unused var |
@@ -994,7 +995,7 @@ Tabel di atas adalah **bukti eksekusi Phase 0** pada `3a4dae8` — dibiarkan seb
 | **Parameter risk** (risk 1%, max 5, CB 15%) | `config.yaml` `risk:` + guard `risk_manager/guards.validate_config` | `presets/*.yaml risk`, `lib/validations.ts GUARDRAILS` (web), seed SQL template | Konsisten (1% / 5 / long_only) di 3 tempat — sumber terpisah |
 | **Paper execution behavior** | `paper_trading/live_signal.py` (+ `config.yaml paper_trading`) | — | tunggal |
 | **Database schema SQLite** | `db/schema.sql` | dibaca ulang tiap start (idempoten) | tunggal |
-| **Database schema Postgres** | `supabase/migrations/*.sql` (12) | `AGENTS.md` kini menulis "TIDAK ADA `db/migrations/`" (diperbaiki 2026-09-22) | Dokumentasi dan kode konsisten |
+| **Database schema Postgres** | `supabase/migrations/*.sql` (13) | `AGENTS.md` kini menulis "TIDAK ADA `db/migrations/`" (diperbaiki 2026-09-22) | Dokumentasi dan kode konsisten |
 | **Backtest reference metrics** | **ambigu**: `monitoring/web/lib/backtest-reference.json` (dipakai kode) vs `backtest/reports/metrics.md` (output runner) | DESIGN §6.1, README, PLAN, TASKS, RULES, disclaimer, presets | **YA — 2 keluarga angka beda (§12.9/§14 #1-2)** |
 | **Web user strategy model** | Supabase `user_strategies` + `strategy_templates` (seed SQL) + `lib/validations.ts` guardrail | `lib/deviation.ts parseRules` (interpretasi params) | Konsisten; interpretasi rules ada di 1 tempat |
 | **Paper trading data (untuk web)** | Supabase `paper_*` (mirror), diisi `/api/cron/paper-sync` | `db/paper_trading.db` (asli, di CI) | Tidak konflik — arah sinkron satu jalur; `PLAN.md:237` sudah menulis **web membaca Supabase saat request, tidak pernah membaca SQLite** (diperbaiki 2026-09-22) |

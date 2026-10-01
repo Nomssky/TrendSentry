@@ -152,6 +152,14 @@ Ketiganya **direkam, bukan diperbaiki** — perbaikannya keputusan terpisah.
    riwayat migrasi DB **tidak selaras 1:1**. Jangan menganggap kecocokan nama = kecocokan
    penerapan.
 
+> **Update 2026-10-01 (pasca-closure):** temuan #1 di atas **sudah diperbaiki** via
+> `supabase/migrations/20261001103839_revoke_public_execute_on_trigger_functions.sql`
+> (`REVOKE EXECUTE ... FROM PUBLIC, anon, authenticated` untuk
+> `reject_config_version_update()` dan `recalc_discipline_score()`; trigger tetap
+> aktif, backend via `service_role`). Terverifikasi dari `pg_catalog`:
+> `anon`/`authenticated` tidak bisa EXECUTE, `service_role` bisa. Temuan #2 dan #3
+> tetap direkam-belum-diperbaiki. Jumlah file migrasi repo kini **13**.
+
 ---
 
 ## 6. LINGKUNGAN — KAKI DATA MARKET: TERPECAH DUA

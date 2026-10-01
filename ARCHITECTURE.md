@@ -265,7 +265,7 @@ live_signal.py ──► SQLite ──► scripts/sync_paper_to_supabase.py
                    watermark dimaju HANYA setelah HTTP 200
 ```
 
-- **Skema Postgres: `supabase/migrations/*.sql` (12 file) = source of truth.**
+- **Skema Postgres: `supabase/migrations/*.sql` (13 file) = source of truth.**
   (Bukan `db/migrations/` — path itu tidak pernah ada.)
 - **Seed 8 `strategy_templates` built-in** = migration `20260922120000_insert_builtin_strategy_templates.sql`
   (`INSERT … ON CONFLICT (name) DO NOTHING`, ID 1–8 eksplisit + sinkron sequence).
