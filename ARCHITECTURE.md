@@ -468,29 +468,27 @@ Tidak ada di repo:                 Penjaga yang memastikan:
 | Business/product rules | `docs/internal/PLAN.md` §9 | komentar kode: `lib/bitget.ts`, checkout gate, `validate_config` |
 | Decision log | `backtest/reports/decision_log.md` | `docs/internal/TASKS.md`, `docs/internal/AUDIT.md` (kronologis) |
 
-### METRIC SOURCE OF TRUTH — **PENDING (keputusan canonical belum diambil)**
+### METRIC SOURCE OF TRUTH — **CANONICAL (diputuskan 2026-10-02)**
 
-> **Reference metric discrepancy — see canonical source decision pending.**
+> **Keputusan owner 2026-10-02:** re-run `backtest/run_backtest.py` config beku
+> menghasilkan persis Snapshot B — maka **Snapshot B adalah canonical**.
+> `backtest/reports/metrics.md` (keluaran runner) sudah menuliskannya ulang;
+> semua kutipan di bawah disatukan ke angka ini. Riwayat dua-snapshot
+> (A: +149.59%/−26.19%/4.31/−0.84/1.02/2.26 — keluaran runner pra-Wilder-seed)
+> dicatat di sini agar tidak "ditemukan ulang".
 >
-> Ada **dua snapshot metrik backtest yang hidup berdempetan** dan **keduanya tidak boleh
-> diubah/dipilih sepihak** sebelum keputusan owner + (bila perlu) re-run backtest:
+> | Metrik | Canonical (Snapshot B) |
+> |---|---|
+> | Total return | +152.0% |
+> | Max drawdown | −26.45% |
+> | Avg win R / Avg loss R | +4.35 / −0.85 |
+> | Avg R / Profit factor | +1.03 / 2.27 |
+> | Sharpe / Trades / Win rate / B&H | 0.82 / 94 / 36.17% / +155.03% |
+> | CAGR / Sortino / Final equity | +17.24% / 0.85 / 2520.02 |
 >
-> | Metrik | Snapshot A — `backtest/reports/metrics.md` & `backtest/DESIGN.md` §6.1 | Snapshot B — `monitoring/web/lib/backtest-reference.json` & `docs/internal/TASKS.md` |
-> |---|---|---|
-> | Total return | +149.59% | +152.0% |
-> | Max drawdown | −26.19% | −26.45% |
-> | Avg win R / Avg loss R | +4.31 / −0.84 | +4.35 / −0.85 |
-> | Avg R / Profit factor | +1.02 / 2.26 | +1.03 / 2.27 |
-> | Sharpe / Trades / Win rate / B&H | 0.82 / 94 / 36.17% / +155.03% | **sama** |
->
-> - Snapshot B diperbarui setelah fix RSI/ATR Wilder seed (P2-7, 2026-09-12);
->   Snapshot A adalah keluaran runner yang tidak ditulis ulang pada saat itu.
-> - Kode memakai **Snapshot B** (`backtest-reference.json` dibaca `lib/reference.ts`
->   dan `scripts/compare_live_vs_backtest.py`) — tetapi **itu bukan pemilihan canonical**,
->   hanya fakta implementasi.
-> - **Jangan** "mengkonsistenskan" angka dengan mengedit salah satu file.
->   Resolusi butuh: keputusan owner → re-run backtest config beku → tulis ulang
->   SEMUA kutipan dari satu sumber, dicatat di `docs/internal/PLAN.md`.
+> Sumber: `backtest/reports/metrics.md` (runner) = `monitoring/web/lib/backtest-reference.json`
+> (dipakai `lib/reference.ts` + `scripts/compare_live_vs_backtest.py`).
+> Keputusan dicatat di `docs/internal/PLAN.md` §6.
 
 ---
 

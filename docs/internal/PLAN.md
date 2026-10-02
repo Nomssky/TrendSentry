@@ -209,7 +209,8 @@ TrendSentry/
 - [x] Fetch data historis BTC/USDT & ETH/USDT (6 tahun, daily)
 - [x] Implementasi `backtest/strategy.py` (Donchian breakout + ATR sizing)
 - [x] Jalankan backtest pertama, bandingkan dengan buy-and-hold benchmark
-- [x] Review hasil — **decision gate diperdebatkan (Sharpe 1.06 config 2-pair Binance — TIDAK reproducible dengan Bitget 10-pair). Cluster-A2 final: Sharpe 0.82, DD -26.19% — gate: Sharpe > B&H terpenuhi, DD < 30% terpenuhi. Lihat decision_log.md.**
+- [x] Review hasil — **decision gate diperdebatkan (Sharpe 1.06 config 2-pair Binance — TIDAK reproducible dengan Bitget 10-pair). Cluster-A2 final: Sharpe 0.82, DD -26.45% — gate: Sharpe > B&H terpenuhi, DD < 30% terpenuhi. Lihat decision_log.md.**
+- [x] **Keputusan canonical metric 2026-10-02 (persetujuan owner):** re-run `backtest/run_backtest.py` config beku → +152.0%/−26.45%/+4.35R/−0.85R/PF 2.27 (= `backtest-reference.json`) — CANONICAL. `metrics.md` ditulis ulang runner; kutipan di DESIGN §6, TASKS, README, ARCH §16 disatukan. Snapshot A pra-Wilder-seed (+149.59%/−26.19%) tinggal sebagai riwayat di ARCH §16.
 - [x] Jalankan paper trading (Fase 2 aktif sejak 2026-08-25)
 - [ ] **Saat ini:** Tunggu 8 minggu paper trading + ≥10 trade tertutup → evaluasi Fase 2
 - [x] **Keputusan 2026-09-10 (dicatat atas persetujuan owner):** Fase 2 tetap evaluasi **harian** — tidak ada cek stop intraday/per-jam di paper. Window ~24 jam tanpa proteksi diterima sadar (modal riil Rp 0; exit telat = data slippage, bukan kerugian). Proteksi realtime (**exchange-side stop order** + circuit breaker) disyaratkan sebagai **syarat masuk Fase 4**, bukan dibangun di paper. Sizing (risk 1%, maks 5 posisi, cluster limit) adalah satu-satunya pelindung dari gap risk.

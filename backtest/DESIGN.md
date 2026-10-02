@@ -129,7 +129,7 @@ Untuk mitigasi korelasi tinggi antar pair crypto (avg cross-corr ~0.75 di cluste
 - Sebelum entry dicek: `cluster_position_count(pos, symbol) >= max_per_cluster` → skip siluman
 - Implementasi di `strategy.py` (definisi cluster + helper) + `run_backtest.py` (guard di entry)
 
-Dampak: DD turun dari -58.49% (vanilla) ke -26.19% (Cluster-A2), Sharpe naik 0.53→0.82, trade count turun 171→94.
+Dampak: DD turun dari -58.49% (vanilla) ke -26.45% (Cluster-A2), Sharpe naik 0.53→0.82, trade count turun 171→94.
 
 ```python
 def position_size(equity, entry_price, stop_price, risk_pct):
@@ -175,23 +175,19 @@ def position_size(equity, entry_price, stop_price, risk_pct):
 ### 6.1 Referensi Backtest (Cluster-A2, 10-pair, 6 tahun)
 
 > ⚠️ **Reference metric discrepancy — see canonical source decision pending.**
-> Tabel di bawah adalah **snapshot A** (keluaran runner `backtest/reports/metrics.md`).
-> Ada **snapshot B** dengan angka sedikit berbeda yang dipakai kode
-> (`monitoring/web/lib/backtest-reference.json`): return +152.0% (vs +149.59%),
-> DD −26.45% (vs −26.19%), avg win +4.35R (vs +4.31), avg loss −0.85 (vs −0.84),
-> PF 2.27 (vs 2.26). Sharpe 0.82, 94 trades, win rate 36.17% sama di keduanya.
-> **Kedua snapshot tidak diubah dan belum dipilih yang canonical** — daftar perbandingan
-> lengkap & keputusan: `ARCHITECTURE.md` §16.
+> Tabel di bawah = **canonical** (diputuskan 2026-10-02: re-run config beku =
+> Snapshot B; snapshot A pra-Wilder-seed +149.59%/−26.19%/4.31/−0.84/1.02/2.26
+> dicatat di `ARCHITECTURE.md` §16 sebagai riwayat).
 
 | Metrik | Nilai |
 |---|---|
 | Win rate | 36.17% |
-| Avg win R | +4.31 |
-| Avg loss R | -0.84 |
-| Avg R | +1.02 |
-| Profit factor | 2.26 |
-| Max drawdown | -26.19% |
-| Total return | +149.59% |
+| Avg win R | +4.35 |
+| Avg loss R | -0.85 |
+| Avg R | +1.03 |
+| Profit factor | 2.27 |
+| Max drawdown | -26.45% |
+| Total return | +152.0% |
 | Trades | 94 |
 | Trades/year | ~15.7 |
 | Sharpe | 0.82 |

@@ -94,14 +94,14 @@ One-screen directory map: **[`TREE.md`](TREE.md)**.
 
 ---
 
-## Backtest reference metrics — canonical source decision pending
+## Backtest reference metrics — canonical (diputuskan 2026-10-02)
 
-Our 6-year 10-pair backtest is summarized by two slightly different metric snapshots
-(return +149.59% / DD −26.19% vs +152.0% / −26.45%; Sharpe 0.82, 94 trades, win rate 36.17%
-agree across both). **No snapshot has been chosen as canonical yet** — see
-[`ARCHITECTURE.md` §16](ARCHITECTURE.md) ("Reference metric discrepancy — see canonical
-source decision pending"). Do not treat either set of numbers as final, and note that
-backtest ≠ future performance: survivorship bias and wide confidence intervals apply
+Our 6-year 10-pair backtest resolves to one canonical set (re-run frozen config
+2026-10-02 = `backtest-reference.json` = `backtest/reports/metrics.md`): return
+**+152.0%**, DD **−26.45%**, avg win **+4.35R**, avg loss **−0.85R**, PF **2.27**,
+Sharpe 0.82, 94 trades, win rate 36.17%. See [`ARCHITECTURE.md` §16](ARCHITECTURE.md)
+(decision record in `docs/internal/PLAN.md` §6). Note that backtest ≠ future
+performance: survivorship bias and wide confidence intervals apply
 (details in `backtest/reports/decision_log.md` and `/disclaimer`).
 
 ---
