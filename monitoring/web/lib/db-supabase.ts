@@ -50,7 +50,7 @@ export type DashboardData = {
     avgLossR: number | null
   }
   slippage: { avgPct: number | null; maxPct: number | null; n: number }
-  yieldInfo: { total: number; days: number; apyAssumed: number }
+  yieldInfo: { total: number; days: number }
   yieldDaily: { date: string; amount: number }[]
   equityCurve: EquityPoint[]
   hasSnapshots: boolean
@@ -150,7 +150,7 @@ export async function getDashboardData(deploymentId = 0): Promise<DashboardData>
       maxPct: spreads.length ? Math.max(...spreads) : null,
       n: spreads.length,
     },
-    yieldInfo: { total: yieldTotal, days: yields.length, apyAssumed: 5 },
+    yieldInfo: { total: yieldTotal, days: yields.length },
     yieldDaily: yields,
     equityCurve: equityLog.map((r) => ({ date: r.date, equity: Math.round(r.total_equity * 100) / 100 })),
     hasSnapshots: equityLog.length > 0,

@@ -31,7 +31,10 @@ risk:
 
 paper_trading:
   data_source: "bitget"            # venue tunggal — konsisten dgn rencana eksekusi Fase 4 (mirror Binance dicabut 2026-09-08: satu venue, satu kebenaran harga)
-  yield_apy_idle_cash: 5.0         # simulasi bunga harian di paper cash idle (DeFi/earn; risiko platform tidak dimodelkan)
+  yield_apy_idle_cash: 0.0          # DINONAKTIFKAN 2026-10-02 (keputusan owner): simulasi bunga flat
+                                   # tidak dipakai — bukan model earn sebenarnya (tanpa lockup/fee/risiko-platform)
+                                   # dan backtest tidak menerapkannya. Yield yang sudah terkredit tetap di paper_cash
+                                   # (tidak ditulis ulang). Aktifkan lagi hanya via config bila ada model yang benar.
 
 backtest:
   lookback_years: 6                 # diperluas 3->6 (2020-08..2026-08) utk cakup bull-bear-bull penuh, atas instruksi user 2026-08-14

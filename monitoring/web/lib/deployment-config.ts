@@ -34,7 +34,7 @@ export const MVP_ENGINE_DEFAULTS = {
   fee_pct: 0.1,
   slippage_pct: 0.05,
   data_source: "bitget",
-  yield_apy_idle_cash: 5.0,
+  yield_apy_idle_cash: 0.0, // dinonaktifkan 2026-10-02 (ikut config.yaml)
   mode: "paper",
   exchange: "bitget",
 } as const

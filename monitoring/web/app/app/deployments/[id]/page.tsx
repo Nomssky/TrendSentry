@@ -211,7 +211,6 @@ export default async function DeploymentDashboardPage({
       <PaperLiveBoard
         cash={data.cash}
         yieldTotal={data.yieldInfo.total}
-        apyAssumed={data.yieldInfo.apyAssumed}
         startDate={data.startDate}
         daysRunning={data.daysRunning}
         openPositions={data.openPositions.map((p) => ({
@@ -246,7 +245,7 @@ function MetricsGrid({ data }: { data: DashboardData }) {
     ["Win rate", data.realized.winRatePct != null ? `${data.realized.winRatePct.toFixed(1)}%` : "—"],
     ["Avg R", data.realized.avgR != null ? `${data.realized.avgR >= 0 ? "+" : ""}${data.realized.avgR.toFixed(2)}R` : "—"],
     ["Avg slippage", data.slippage.avgPct != null ? `${data.slippage.avgPct.toFixed(4)}%` : "—"],
-    ["Yield earned", `$${data.yieldInfo.total.toFixed(2)}`],
+    ["Yield earned (sim off)", `$${data.yieldInfo.total.toFixed(2)}`],
   ]
   return (
     <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
