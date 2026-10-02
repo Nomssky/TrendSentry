@@ -6,7 +6,7 @@
 
 > **Legenda dokumen (diperjelas 2026-09-22, Phase 1 Documentation Reset):**
 > - **CURRENT IMPLEMENTATION** — yang benar-benar berjalan sekarang → dokumentasi fakta di
->   [`ARCHITECTURE.md`](ARCHITECTURE.md) & [`REPO_MAP.md`](REPO_MAP.md).
+>   [`ARCHITECTURE.md`](../ARCHITECTURE.md) & [`REPO_MAP.md`](REPO_MAP.md).
 > - **FUTURE PLAN** — roadmap & desain yang digated (Fase 3 LLM filter, Fase 4 live) → §2, §3 (envelope), §9.
 > - **HISTORICAL DECISION** — catatan keputusan & alasan (jangan dihapus, jangan dianggap status saat ini) → §6, §7, catatan bertanggal.
 > Struktur folder usulan di §4 sudah diganti struktur aktual; klaim teknis basi (static export,
@@ -95,7 +95,7 @@ Catatan: parameter ini **tidak boleh diutak-atik berdasarkan feeling** selama fa
 > (termasuk Fase 3/4 yang belum ada). Yang **berjalan hari ini** hanya:
 > Data → Signal Engine → Risk Manager → Logger+DB → Monitoring (tanpa LLM filter, tanpa
 > execution engine) + jalur produk web. Diagram fakta sistem aktual ada di
-> [`ARCHITECTURE.md`](ARCHITECTURE.md).
+> [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 
 ```
 ┌─────────────────┐

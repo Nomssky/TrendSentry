@@ -1,10 +1,10 @@
 # ARCHITECTURE.md — Arsitektur Aktual TrendSentry
 
-> **Dokumen fakta (code aktual adalah source of truth).** Ditulis dari audit `REPO_MAP.md`
-> (Phase 0, HEAD `3a4dae8`, diverifikasi ulang 2026-09-22).
+> **Dokumen fakta (code aktual adalah source of truth).** Ditulis dari audit
+> `docs/internal/REPO_MAP.md` (Phase 0, HEAD `3a4dae8`, diverifikasi ulang 2026-09-22).
 > Dokumen ini menggambarkan **yang berjalan sekarang**, bukan roadmap.
-> Roadmap & keputusan historis ada di `PLAN.md`; aturan di `AGENTS.md` / `RULES.md`;
-> hasil audit kebersihan kode di `REPO_MAP.md`.
+> Roadmap & keputusan historis ada di `docs/internal/PLAN.md`; aturan di `AGENTS.md` /
+> `docs/internal/RULES.md`; hasil audit kebersihan kode di `docs/internal/REPO_MAP.md`.
 
 ---
 
@@ -49,7 +49,7 @@ TrendSentry hari ini terdiri dari **dua subsistem dalam satu repository**:
 |---|---|
 | `backtest/`, `paper_trading/`, `risk_manager/` | Engine Python. Satu-satunya tempat logika sinyal/sizing/exit. |
 | `monitoring/web/` | Frontend + backend produk. **Tidak boleh** berisi logika signal/entry/exit/risk/DB trading (AGENTS.md #9). Boleh: logika produk disiplin miliknya sendiri (guardrail, deviasi, skor). |
-| `monitoring/web` → order | **Dilarang permanen** — tidak ada jalur order di web (PLAN.md §9 amendemen 2026-09-11, terverifikasi audit). |
+| `monitoring/web` → order | **Dilarang permanen** — tidak ada jalur order di web (docs/internal/PLAN.md §9 amendemen 2026-09-11, terverifikasi audit). |
 | `supabase/migrations/` | Satu-satunya source of truth skema Postgres. |
 | `config.yaml` | Satu-satunya source of truth parameter strategi/risk (preset = salinan terkunci test). |
 | `db/schema.sql` + `db/paper_trading.db` | Skema & state SQLite engine (DB di-commit = accepted risk, backup off-disk). |
@@ -390,7 +390,7 @@ deviation_log berubah
 ```
 
 - **Dua implementasi, satu formula** — wajib paritas (diberi komentar di kedua tempat;
-  belum ada test paritas otomatis → dicatat sebagai risiko drift di `REPO_MAP.md` §14).
+  belum ada test paritas otomatis → dicatat sebagai risiko drift di `docs/internal/REPO_MAP.md` §14).
 - Trigger menjamin skor tidak basi walau `deviation_log` diisi luar jalur aplikasi.
 
 ---
@@ -444,7 +444,7 @@ Tidak ada di repo:                 Penjaga yang memastikan:
   & 8 minggu). Stack yang **dikunci lewat amendemen 2026-09-11: Python + ccxt**
   (bukan Node.js).
 - Desain envelope Fase 4 (paritas paper/live, stop berlapis, circuit breaker 15%,
-  dry-run, modal $50-100) ada di `PLAN.md` §3 — **rencana, belum implementasi.**
+  dry-run, modal $50-100) ada di `docs/internal/PLAN.md` §3 — **rencana, belum implementasi.**
 - Perilaku yang **tidak ada & tidak boleh ditambah implisit**: martingale/averaging-down,
   auto-increase risk, auto-top-up, order dari server.
 - **Runtime deployment Phase B (§5b) ikut batas ini**: `execution.mode = 'paper'`
@@ -465,8 +465,8 @@ Tidak ada di repo:                 Penjaga yang memastikan:
 | Guardrail strategi (web) | `lib/validations.ts GUARDRAILS` | `risk_manager/guards.py` (engine), seed `20260911120000` + `20260922120000` (template) |
 | Formula discipline score | `lib/deviation.ts` **dan** trigger SQL — keduanya identik, wajib paritas | — |
 | Web strategy model | Supabase `user_strategies` + `strategy_templates` | `lib/deviation.ts::parseRules` (interpretasi) |
-| Business/product rules | `PLAN.md` §9 | komentar kode: `lib/bitget.ts`, checkout gate, `validate_config` |
-| Decision log | `backtest/reports/decision_log.md` | `TASKS.md`, `AUDIT.md` (kronologis) |
+| Business/product rules | `docs/internal/PLAN.md` §9 | komentar kode: `lib/bitget.ts`, checkout gate, `validate_config` |
+| Decision log | `backtest/reports/decision_log.md` | `docs/internal/TASKS.md`, `docs/internal/AUDIT.md` (kronologis) |
 
 ### METRIC SOURCE OF TRUTH — **PENDING (keputusan canonical belum diambil)**
 
@@ -475,7 +475,7 @@ Tidak ada di repo:                 Penjaga yang memastikan:
 > Ada **dua snapshot metrik backtest yang hidup berdempetan** dan **keduanya tidak boleh
 > diubah/dipilih sepihak** sebelum keputusan owner + (bila perlu) re-run backtest:
 >
-> | Metrik | Snapshot A — `backtest/reports/metrics.md` & `backtest/DESIGN.md` §6.1 | Snapshot B — `monitoring/web/lib/backtest-reference.json` & `TASKS.md` |
+> | Metrik | Snapshot A — `backtest/reports/metrics.md` & `backtest/DESIGN.md` §6.1 | Snapshot B — `monitoring/web/lib/backtest-reference.json` & `docs/internal/TASKS.md` |
 > |---|---|---|
 > | Total return | +149.59% | +152.0% |
 > | Max drawdown | −26.19% | −26.45% |
@@ -490,7 +490,7 @@ Tidak ada di repo:                 Penjaga yang memastikan:
 >   hanya fakta implementasi.
 > - **Jangan** "mengkonsistenskan" angka dengan mengedit salah satu file.
 >   Resolusi butuh: keputusan owner → re-run backtest config beku → tulis ulang
->   SEMUA kutipan dari satu sumber, dicatat di `PLAN.md`.
+>   SEMUA kutipan dari satu sumber, dicatat di `docs/internal/PLAN.md`.
 
 ---
 
@@ -518,4 +518,4 @@ Tidak ada di repo:                 Penjaga yang memastikan:
 ---
 
 *Dokumen ini dijaga sinkron dengan kode pada setiap perubahan arsitektur.
-Perubahan arsitektur → update `ARCHITECTURE.md` + `REPO_MAP.md` di commit yang sama.*
+Perubahan arsitektur → update `ARCHITECTURE.md` + `docs/internal/REPO_MAP.md` di commit yang sama.*

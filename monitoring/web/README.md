@@ -26,7 +26,7 @@ Browser
 ```
 
 **There is no order-submission path in this app.** See `lib/bitget.ts`
-(`USER_KEY_READ_ENDPOINTS` allowlist) and `PLAN.md` §9.
+(`USER_KEY_READ_ENDPOINTS` allowlist) and `docs/internal/PLAN.md` §9.
 
 ## Route categories
 
@@ -77,7 +77,7 @@ npm run dev          # http://localhost:3000 (needs .env: NEXT_PUBLIC_SUPABASE_U
 
 ```bash
 npm run typecheck    # tsc --noEmit
-npm run lint         # eslint .   (currently: 2 errors + 7 warnings — known, tracked in AUDIT.md)
+npm run lint         # eslint .   (app+lib bersih; 2 warning tersisa di e2e/ yang off-limits)
 npm run build        # next build
 npm run test:e2e     # Playwright — see playwright.config.ts (destructive tests are disallowed)
 ```

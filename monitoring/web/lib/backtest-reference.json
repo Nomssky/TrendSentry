@@ -1,5 +1,5 @@
 {
-  "_comment": "SATU sumber angka referensi backtest Cluster-A2 (2026-09-12, ATR/RSI Wilder seed). Dipakai monitoring/web/lib/reference.ts dan scripts/compare_live_vs_backtest.py. Jangan ubah tanpa re-run backtest + catatan di PLAN.md (AGENTS.md aturan 2).",
+  "_comment": "SATU sumber angka referensi backtest Cluster-A2 (2026-09-12, ATR/RSI Wilder seed). Dipakai monitoring/web/lib/reference.ts dan scripts/compare_live_vs_backtest.py. Jangan ubah tanpa re-run backtest + catatan di docs/internal/PLAN.md (AGENTS.md aturan 1).",
   "period": "2020-08 .. 2026-08 (6 tahun, 10 pair Bitget, Cluster-A2)",
   "winRatePct": 36.17,
   "avgWinR": 4.35,

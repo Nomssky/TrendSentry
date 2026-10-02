@@ -242,6 +242,6 @@ def position_size(equity, entry_price, stop_price, risk_pct):
 
 - **Parameter tidak boleh diutak-atik berdasarkan feeling** — harus berbasis backtest, dicatat alasannya
 - **Benchmark wajib** — strategi harus dikomparasi dengan buy-and-hold
-- **Decision gate**: Sharpe strategi vs B&H portofolio yang sama (bukan angka absolut), DD < 30% — lihat RULES.md revisi
+- **Decision gate**: Sharpe strategi vs B&H portofolio yang sama (bukan angka absolut), DD < 30% — lihat docs/internal/RULES.md revisi
 - **No overfitting**: kalau hasil terlalu bagus (win rate >70%, drawdown minim) → curigai look-ahead/overfitting
 - **Concentration of returns**: top-5 trade ≈ 100% dari net pnl — normal untuk trend-following

@@ -72,7 +72,7 @@ Bitget public data (ccxt)                    Browser → Next.js 16 (proxy.ts au
 ```
 
 Full detail with diagrams: **[`ARCHITECTURE.md`](ARCHITECTURE.md)**.
-Repository inventory & audit evidence: **[`REPO_MAP.md`](REPO_MAP.md)**.
+Repository inventory & audit evidence: **[`docs/internal/REPO_MAP.md`](docs/internal/REPO_MAP.md)**.
 One-screen directory map: **[`TREE.md`](TREE.md)**.
 
 ### Stack
@@ -137,7 +137,7 @@ npm run test:e2e                # Playwright (needs local server + fixtures)
 
 **Fase 2 — Paper trading active** since 2026-08-25 (daily GitHub Actions run, no crashes).
 Waiting for the Phase 2 gate (≥ 10 closed trades, 8 weeks) before any Fase 3/Fase 4 work.
-See `TASKS.md` for gate criteria and `PLAN.md` for the roadmap.
+See `docs/internal/TASKS.md` for gate criteria and `docs/internal/PLAN.md` for the roadmap.
 
 Web: [trendsentry.xyz](https://trendsentry.xyz)
 

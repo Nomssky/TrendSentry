@@ -2,7 +2,7 @@
 
 Di-run sekali per hari VIA CRON, SETELAH candle harian close (candle 1d close di 00:00 UTC):
 
-    0 1 * * * cd /home/kresna/project && ./venv/bin/python paper_trading/live_signal.py >> paper_trading/logs/live_signal.log 2>&1
+    0 1 * * * cd ~/project && ./venv/bin/python paper_trading/live_signal.py >> paper_trading/logs/live_signal.log 2>&1
 
 Idempotent: candle yang sudah ada di tabel `signals` (UNIQUE candle_date+pair) dilewati,
 jadi aman walau cron ke-run ulang atau script dijalankan manual berkali-kali.

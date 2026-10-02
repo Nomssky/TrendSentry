@@ -57,7 +57,7 @@ Repo-specific rules for working in this directory. The block at the bottom of th
 - `lib/bitget.ts` `USER_KEY_READ_ENDPOINTS` is a closed allowlist of exactly two endpoints:
   `/api/v2/spot/account/assets`, `/api/v2/spot/trade/fills`.
 - **Never add an order/transfer/withdraw endpoint.** This app must never gain an order path
-  (root `PLAN.md` §9 product boundary; adding one requires an explicit PLAN amendment).
+  (root `docs/internal/PLAN.md` §9 product boundary; adding one requires an explicit PLAN amendment).
 - Keys are verified on submit, stored AES-GCM-encrypted (`lib/encryption.ts`), decrypted
   server-side only inside cron/verify routes.
 

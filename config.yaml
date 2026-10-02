@@ -1,5 +1,5 @@
 # Config parameter strategi — jangan hardcode angka ini di dalam kode.
-# Perubahan parameter harus dicatat alasannya di PLAN.md sebelum dipakai.
+# Perubahan parameter harus dicatat alasannya di docs/internal/PLAN.md sebelum dipakai.
 
 strategy:
   pairs:

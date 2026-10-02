@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
   const { api_key, api_secret, passphrase } = parsed.data
 
-  // Syarat PLAN.md §9: key harus valid + punya akses read SEBELUM disimpan.
+  // Syarat docs/internal/PLAN.md §9: key harus valid + punya akses read SEBELUM disimpan.
   // Verifikasi via endpoint read-only (tidak menyentuh dana, tidak order).
   const { verifySpotReadAccess } = await import("@/lib/bitget")
   const verified = await verifySpotReadAccess(api_key, api_secret, passphrase ?? "")

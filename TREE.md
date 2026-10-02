@@ -1,12 +1,12 @@
 # TREE.md — Peta Direktori TrendSentry
 
 > Satu layar. Detail arsitektur: [`ARCHITECTURE.md`](ARCHITECTURE.md).
-> Inventaris file-per-file + bukti audit: [`REPO_MAP.md`](REPO_MAP.md).
+> Inventaris file-per-file + bukti audit: [`docs/internal/REPO_MAP.md`](docs/internal/REPO_MAP.md).
 
 ```
 TrendSentry/
-├── README.md, ARCHITECTURE.md, REPO_MAP.md, TREE.md
-│   └── Mulai di sini. PLAN.md = roadmap, TASKS.md = checklist, AGENTS.md/RULES.md = aturan.
+├── README.md, ARCHITECTURE.md, TREE.md (+ AGENTS.md publik untuk kontributor AI)
+│   └── Mulai di sini. Roadmap/checklist/aturan proses: docs/internal/ (PLAN, TASKS, RULES).
 ├── backtest/            # Engine strategi: strategy.py (Donchian/ATR/sizing), run_backtest.py
 │   ├── research/        # Eksperimen arsip (bukan engine) — dep di requirements-research.txt
 │   └── reports/         # Output backtest + bukti gate (jangan edit angka manual)
