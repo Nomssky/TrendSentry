@@ -13,12 +13,12 @@ const STEPS = [
   {
     n: "02",
     title: "Size the risk",
-    body: "1% of equity per trade, stop distance from 2×ATR(14), max 2 positions per correlation cluster. Idle cash earns simulated 5% APY in paper — tracked openly, platform risk disclosed.",
+    body: "1% of equity per trade, stop distance from 2×ATR(14), max 2 positions per correlation cluster. Cash yield simulation is off since 2026-10-02 — past credited yield stays in cash, no new accrual.",
   },
   {
     n: "03",
     title: "Account for everything",
-    body: "Every signal, fill, slippage sample and yield credit lands in SQLite, committed daily by CI, rendered on /papertrading. Weekly reviews; if live trails the backtest 2–3 weeks running, we pause and investigate.",
+    body: "Every signal, fill and slippage sample lands in SQLite, committed daily by CI, rendered on /papertrading. Weekly reviews; if live trails the backtest 2–3 weeks running, we pause and investigate.",
   },
 ] as const;
 

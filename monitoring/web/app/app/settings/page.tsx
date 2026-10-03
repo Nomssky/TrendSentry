@@ -41,18 +41,32 @@ export default function SettingsPage() {
       .catch(() => setLoading(false))
   }, [])
 
+  async function safeError(res: Response): Promise<string> {
+    try {
+      const j = await res.json()
+      if (j && typeof j.error === "string" && j.error) return j.error
+    } catch { /* non-JSON */ }
+    return `Request failed (HTTP ${res.status}).`
+  }
+
   async function saveApiKeys(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    const res = await fetch("/api/api-keys", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ api_key: apiKey, api_secret: apiSecret, passphrase: passphrase || undefined }),
-    })
+    setMsg(null)
+    let res: Response
+    try {
+      res = await fetch("/api/api-keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ api_key: apiKey, api_secret: apiSecret, passphrase: passphrase || undefined }),
+      })
+    } catch {
+      setSaving(false)
+      return setMsg("Network problem — check your connection and try again.")
+    }
     setSaving(false)
     if (!res.ok) {
-      const { error } = await res.json()
-      return setMsg(error)
+      return setMsg(await safeError(res))
     }
     setMsg("API keys saved")
     setApiKey(""); setApiSecret(""); setPassphrase("")
@@ -64,15 +78,20 @@ export default function SettingsPage() {
     if (!currentPassword) return setPasswordMsg("Current password is required")
     setChangingPassword(true)
     setPasswordMsg(null)
-    const res = await fetch("/api/account/password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
-    })
+    let res: Response
+    try {
+      res = await fetch("/api/account/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+      })
+    } catch {
+      setChangingPassword(false)
+      return setPasswordMsg("Network problem — check your connection and try again.")
+    }
     setChangingPassword(false)
     if (!res.ok) {
-      const { error } = await res.json()
-      return setPasswordMsg(error)
+      return setPasswordMsg(await safeError(res))
     }
     setCurrentPassword(""); setNewPassword("")
     setPasswordMsg("Password updated — signing you out. Redirecting to login…")
@@ -82,15 +101,21 @@ export default function SettingsPage() {
   async function deleteAccount() {
     if (deleteConfirm !== "DELETE" || !deletePassword) return
     setDeleting(true)
-    const res = await fetch("/api/account/delete", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: deletePassword }),
-    })
+    setDeleteMsg(null)
+    let res: Response
+    try {
+      res = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: deletePassword }),
+      })
+    } catch {
+      setDeleting(false)
+      return setDeleteMsg("Network problem — check your connection and try again.")
+    }
     setDeleting(false)
     if (!res.ok) {
-      const { error } = await res.json()
-      setDeleteMsg(error)
+      setDeleteMsg(await safeError(res))
       return
     }
     const supabase = createClient()
@@ -100,10 +125,13 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-lg space-y-8">
-      <h1 className="text-3xl font-bold text-white">Settings</h1>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Settings</h1>
+        <p className="mt-1 text-sm text-white/50">Exchange connection, account security, and danger zone.</p>
+      </div>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-white">Bitget API Key</h2>
+        <h2 className="text-lg font-semibold text-white">Exchange connection</h2>
         <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-white/60">
           <p>
             Connect your Bitget account with a <strong className="text-white/80">read-only</strong> API key.
@@ -137,7 +165,7 @@ export default function SettingsPage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-white">Change Password</h2>
+        <h2 className="text-lg font-semibold text-white">Account password</h2>
         {passwordMsg && <p className={`text-sm ${passwordMsg.startsWith("Password updated") ? "text-emerald-400" : "text-rose-400"}`}>{passwordMsg}</p>}
         <form onSubmit={changePassword} className="space-y-3">
           <input value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Current password" required type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
@@ -147,7 +175,7 @@ export default function SettingsPage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-rose-400">Danger Zone</h2>
+        <h2 className="text-lg font-semibold text-rose-400">Danger zone</h2>
         <p className="text-sm text-white/40">Delete your account and all associated data. This cannot be undone.</p>
         {deleteMsg && <p className="text-sm text-rose-400">{deleteMsg}</p>}
         <div className="space-y-3">

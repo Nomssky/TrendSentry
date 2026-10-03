@@ -4,8 +4,15 @@
   --font-display: var(--font-display), "Space Grotesk", sans-serif;
   --font-mono-tech: var(--font-mono-tech), "JetBrains Mono", monospace;
   --color-obsidian: #0c0c0c;
+  --color-abyss: #060809;
   --color-neon: #ccff00;
   --color-glow: #10b981;
+  /* Status semantik (§21): netral = info normal, lime = sehat/sukses,
+     rose = error/loss, amber = warning, sky = info sekunder. */
+  --color-success: #34d399;
+  --color-danger: #fb7185;
+  --color-warning: #fbbf24;
+  --color-info: #7dd3fc;
 }
 
 body {

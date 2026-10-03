@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client"
 import { storedReferral } from "@/app/components/AnalyticsBeacon"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import LogoMark from "@/app/components/LogoMark"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -30,7 +31,7 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-black px-4">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ccff00] font-mono-tech text-lg font-bold text-black">T</span>
+          <LogoMark tone="light" className="h-9 w-9" />
           <span className="text-lg font-semibold tracking-tight text-white">TrendSentry</span>
         </div>
         <h1 className="text-2xl font-bold text-white">Create account</h1>

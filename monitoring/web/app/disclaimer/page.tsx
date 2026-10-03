@@ -15,7 +15,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: "High variance, real losses",
     body: [
-      "Crypto trend-following has long flat stretches and deep drawdowns. The backtest reference shows max drawdown −26.19% over 6 years; live drawdowns can exceed backtested ones.",
+      "Crypto trend-following has long flat stretches and deep drawdowns. The backtest reference shows max drawdown −26.45% over 6 years; live drawdowns can exceed backtested ones.",
       "Only capital you can afford to lose belongs anywhere near systematic trading. Never trade with rent money, and never add leverage or martingale logic to recover losses.",
     ],
   },
@@ -23,7 +23,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
     title: "Past performance proves nothing",
     body: [
       "The 6-year reference (+152%, Sharpe 0.82, 94 trades) contains survivorship bias and a wide confidence interval. Top-5 trades carried ~100% of net PnL — if no 2020–21-style supertrend recurs, future returns can be far flatter.",
-      "Paper trading omits real-world frictions: slippage beyond the 0.05% assumption, exchange outages, API failures, and (in paper) platform risk on the simulated 5% APY idle yield.",
+      "Paper trading omits real-world frictions: slippage beyond the 0.05% assumption, exchange outages, API failures.",
     ],
   },
   {

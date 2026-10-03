@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { SITE } from "@/lib/site";
+import LogoMark from "../LogoMark";
 import { StatusTag } from "./ui";
 
 type NavProps = {
@@ -27,12 +28,10 @@ export function Nav({ isLoggedIn }: NavProps) {
   const links = isLoggedIn ? authLinks : publicLinks;
 
   return (
-    <header className="absolute inset-x-0 top-0 z-50 flex items-center justify-between gap-4 px-5 pt-5 sm:px-10 sm:pt-7">
+    <header className="sticky top-0 z-50 flex items-center justify-between gap-4 border-b border-white/10 bg-black/70 px-5 py-4 backdrop-blur-xl sm:px-10">
       <Link href="/" className="flex items-center gap-2.5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ccff00] font-mono-tech text-lg font-bold text-black">
-          T
-        </span>
-        <span className="text-lg font-semibold tracking-tight">{SITE.name}</span>
+        <LogoMark tone="light" className="h-9 w-9" />
+        <span className="text-lg font-semibold tracking-tight text-white">{SITE.name}</span>
       </Link>
 
       <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1.5 backdrop-blur md:flex">

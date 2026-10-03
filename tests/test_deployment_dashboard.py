@@ -164,8 +164,13 @@ def test_status_dan_heartbeat_tampil_di_dashboard():
     src = _read(PAGE)
     assert "deployment.status" in src
     assert "deployment.last_heartbeat" in src
+    # Gaya tiap state tinggal di komponen bersama StatusBadge (app/components/ui.tsx);
+    # halaman wajib memakainya (bukan style lokal per halaman).
+    assert "StatusBadge" in src
+    assert "status={deployment.status}" in src
+    shared = _read(WEB / "app" / "components" / "ui.tsx")
     for state in ("created", "running", "stopped", "failed"):
-        assert f"{state}:" in src, f"state {state} tidak punya gaya tampilan"
+        assert f"{state}:" in shared, f"state {state} tidak punya gaya tampilan"
 
 
 def test_stale_heartbeat_diakui_pakai_timestamp_bukan_skor():

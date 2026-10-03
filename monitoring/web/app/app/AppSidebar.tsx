@@ -3,18 +3,25 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import LogoMark from "../components/LogoMark"
 
-const appLinks = [
-  { href: "/app/dashboard", label: "Dashboard" },
+// IA produk (§8): Overview, Strategies, Deployments, Activity, Settings.
+// Label bahasa produk — bukan istilah internal. Rute tidak berubah.
+const primaryLinks = [
+  { href: "/app/dashboard", label: "Overview" },
   { href: "/app/strategies", label: "Strategies" },
-  { href: "/app/deviation-log", label: "Deviation Log" },
+  { href: "/app/deployments", label: "Deployments" },
+  { href: "/app/deviation-log", label: "Activity" },
   { href: "/app/settings", label: "Settings" },
 ]
 
-const publicLinks = [
-  { href: "/papertrading", label: "Paper Trading" },
-  { href: "/proof", label: "Proof" },
-]
+const secondaryLinks = [{ href: "/papertrading", label: "Paper Trading" }]
+
+function isActive(pathname: string, href: string) {
+  // Prefix match supaya /app/strategies/new tetap menyorot Strategies,
+  // dan /app/deployments/2 tetap menyorot Deployments.
+  return pathname === href || pathname.startsWith(href + "/")
+}
 
 export function AppSidebar() {
   const [open, setOpen] = useState(false)
@@ -27,14 +34,25 @@ export function AppSidebar() {
     setOpen(false)
   }
 
+  const linkClass = (href: string) =>
+    `rounded-lg px-3 py-2 transition-colors ${
+      isActive(pathname, href)
+        ? "bg-white/10 text-white"
+        : "text-white/60 hover:bg-white/5 hover:text-white"
+    }`
+
   return (
     <>
       <button
         onClick={() => setOpen(!open)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setOpen(false)
+        }}
         className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 backdrop-blur md:hidden"
         aria-label="Toggle menu"
+        aria-expanded={open}
       >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden>
           {open ? (
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           ) : (
@@ -51,51 +69,39 @@ export function AppSidebar() {
       )}
 
       <nav
+        aria-label="Product"
         className={`fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-white/10 bg-black p-5 pt-20 text-sm transition-transform duration-200 md:static md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        {/* Logo / Home */}
-        <Link href="/" className="mb-6 flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#ccff00] font-mono-tech text-sm font-bold text-black">
-            T
-          </span>
+        <Link href="/app/dashboard" className="mb-6 flex items-center gap-2.5" aria-label="TrendSentry overview">
+          <LogoMark tone="light" className="h-8 w-8" />
           <span className="text-sm font-semibold tracking-tight text-white">TrendSentry</span>
         </Link>
 
-        {/* App links */}
-        <div className="flex flex-col gap-1">
-          {appLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`rounded-lg px-3 py-2 transition-colors ${pathname === l.href ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"}`}
-            >
+        <div className="flex flex-col gap-1" role="list">
+          {primaryLinks.map((l) => (
+            <Link key={l.href} href={l.href} className={linkClass(l.href)} aria-current={isActive(pathname, l.href) ? "page" : undefined}>
               {l.label}
             </Link>
           ))}
         </div>
 
-        {/* Divider */}
         <div className="my-4 border-t border-white/10" />
 
-        {/* Public links */}
         <div className="flex flex-col gap-1">
-          <p className="mb-1 px-3 font-mono-tech text-[10px] uppercase tracking-[0.15em] text-white/30">Public</p>
-          {publicLinks.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`rounded-lg px-3 py-2 transition-colors ${pathname === l.href ? "bg-white/10 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"}`}
-            >
+          <p className="mb-1 px-3 font-mono-tech text-[10px] uppercase tracking-[0.15em] text-white/30">
+            Public proof
+          </p>
+          {secondaryLinks.map((l) => (
+            <Link key={l.href} href={l.href} className={linkClass(l.href)}>
               {l.label}
             </Link>
           ))}
         </div>
 
-        {/* Sign out */}
         <div className="mt-auto border-t border-white/10 pt-4">
-          <form action="/auth/signout" method="post">
-            <button className="rounded-lg px-3 py-2 text-left text-white/40 hover:text-white">Sign out</button>
-          </form>
+          <p className="px-3 text-[11px] leading-relaxed text-white/30">
+            Paper mode — no real orders, no real capital.
+          </p>
         </div>
       </nav>
     </>

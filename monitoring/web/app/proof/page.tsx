@@ -30,7 +30,7 @@ const CAVEATS = [
   "Survivorship bias: SOL/BNB/XRP and the 7 other pairs are today's survivors, selected with hindsight — the figures are an upper expectation from historical data, not a promise.",
   "Concentration of returns: the top-5 trades contributed ~100% of net PnL; the single largest trade (BTC Oct 2020 → Mar 2021) was ~45% of the total. If no 2020–21-style supertrend recurs, future performance can be far flatter.",
   "Sharpe 0.82 from 94 trades has a wide confidence interval (reality could be ±0.3). The edge is cutting losses fast and letting winners run — not metric precision.",
-  "The simulated 5% APY on paper idle cash adds return without changing the strategy — platform risk is not modeled.",
+  "Cash yield simulation is off since 2026-10-02: past credited yield stays in paper cash, no new accrual.",
   "Live vs backtest comparison is only valid after ≥10 closed trades (Fase 2 criterion). Before that: monitor operations, not numbers.",
 ] as const;
 

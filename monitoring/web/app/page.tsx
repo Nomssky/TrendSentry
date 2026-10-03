@@ -5,7 +5,6 @@ import { BentoFeatures } from "./components/marketing/BentoFeatures";
 import { Hero } from "./components/marketing/Hero";
 import { Methodology } from "./components/marketing/Methodology";
 import { PricingTeaser } from "./components/marketing/PricingTeaser";
-import { ProofStrip } from "./components/marketing/ProofStrip";
 import { SiteShell } from "./components/marketing/SiteShell";
 
 export default function Home() {
@@ -13,7 +12,6 @@ export default function Home() {
     <SiteShell>
       <main>
         <Hero />
-        <ProofStrip />
         <BentoFeatures />
         <Methodology />
         <PricingTeaser />

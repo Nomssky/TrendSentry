@@ -154,7 +154,7 @@ test.describe("Free Tier — Full User Flow", () => {
       await page.goto(`${BASE}/app/settings`)
     }
 
-    await expect(page.locator("text=Bitget API Key")).toBeVisible()
+    await expect(page.locator("text=Exchange connection")).toBeVisible()
     await expect(page.getByPlaceholder("API Key")).toBeVisible()
     await expect(page.getByPlaceholder("API Secret")).toBeVisible()
   })
@@ -182,14 +182,14 @@ test.describe("Free Tier — Full User Flow", () => {
     console.log(`Strategy page: Donchian template=${hasTemplates}`)
   })
 
-  test("deviation log page loads", async ({ page }) => {
+  test("activity page loads (deviation log)", async ({ page }) => {
     await page.goto(`${BASE}/app/deviation-log`)
     if (page.url().includes("/auth/login")) {
       await login(page)
       await page.goto(`${BASE}/app/deviation-log`)
     }
 
-    await expect(page.locator("text=Deviation Log").first()).toBeVisible()
+    await expect(page.locator("text=Activity").first()).toBeVisible()
   })
 
   // ─── 4. NAVIGATION FLOW ───────────────────────────────────────────
@@ -267,10 +267,10 @@ test.describe("Free Tier — Full User Flow", () => {
       await page.waitForLoadState("networkidle")
       await expect(page.locator("text=Paper").first()).toBeVisible()
 
-      // 3. Deviation log
+      // 3. Activity (deviation log)
       await page.goto(`${BASE}/app/deviation-log`)
       await page.waitForLoadState("networkidle")
-      await expect(page.locator("text=Deviation Log").first()).toBeVisible()
+      await expect(page.locator("text=Activity").first()).toBeVisible()
 
       // 4. Verify sidebar links exist
       await page.goto(`${BASE}/app/dashboard`)

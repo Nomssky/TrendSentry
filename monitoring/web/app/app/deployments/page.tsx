@@ -1,12 +1,19 @@
 "use client"
 
-// Halaman daftar deployment + token sekali-pakai (Phase A/B). Dashboard
-// per-deployment (status detail, config, data paper ter-scope) ada di
-// /app/deployments/<id> — halaman ini hanya memberi tautan ke sana.
+// Deployments = bot paper-trading terisolasi (satu strategi Donchian per bot).
+// Bahasa produk: "bot", bukan "deployment record". Token config hanya hidup
+// di state React ini — tidak localStorage/sessionStorage, tidak URL, tidak log.
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { DONCHIAN_TEMPLATE_NAME } from "@/lib/deployment-config"
+import {
+  Alert,
+  EmptyState,
+  FormField,
+  PageHeader,
+  StatusBadge,
+} from "@/app/components/ui"
 
 type Deployment = {
   id: number
@@ -20,20 +27,9 @@ type Deployment = {
 
 type Strategy = { id: number; name: string; template_id: number | null }
 
-/** Token config hanya hidup di state React ini — tidak localStorage/sessionStorage,
- *  tidak URL, tidak log. Ditutup = hilang permanen (tidak bisa dibaca ulang). */
+/** Token config hanya hidup di state React ini — ditutup = hilang permanen. */
 type IssuedToken = { id: number; token: string; configUrl: string }
 
-const STATUS_STYLES: Record<Deployment["status"], string> = {
-  created: "bg-white/10 text-white/60",
-  running: "bg-emerald-500/20 text-emerald-400",
-  stopped: "bg-white/10 text-white/40",
-  failed: "bg-rose-500/20 text-rose-400",
-}
-
-// Di luar komponen agar effect cukup memanggilnya lewat `.then(setDeployments)` —
-// eslint react-hooks melaporkan pemanggilan fungsi lokal yang berisi setState
-// langsung dari dalam useEffect.
 async function fetchDeployments(): Promise<Deployment[]> {
   try {
     const res = await fetch("/api/deployments")
@@ -43,7 +39,21 @@ async function fetchDeployments(): Promise<Deployment[]> {
   }
 }
 
-/** Blok env yang di-copy user untuk runtime self-hosted (paper_trading/run_deployment.py). */
+/** Waktu relatif yang mudah dibaca ("3 min ago") — bukan timestamp mentah. */
+function relativeTime(iso: string | null): string {
+  if (!iso) return "Never checked in"
+  const diffMs = Date.now() - new Date(iso).getTime()
+  if (Number.isNaN(diffMs) || diffMs < 0) return "Just now"
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return "Just now"
+  if (mins < 60) return `${mins} min ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`
+  const days = Math.floor(hours / 24)
+  return `${days} day${days === 1 ? "" : "s"} ago`
+}
+
+/** Blok env yang di-copy user untuk runtime (paper_trading/run_deployment.py). */
 function runtimeEnvBlock(issued: IssuedToken): string {
   return [
     `TREND_SENTRY_DEPLOYMENT_ID=${issued.id}`,
@@ -53,7 +63,6 @@ function runtimeEnvBlock(issued: IssuedToken): string {
 }
 
 export default function DeploymentsPage() {
-  const router = useRouter()
   const [deployments, setDeployments] = useState<Deployment[]>([])
   const [strategies, setStrategies] = useState<Strategy[]>([])
   const [donchianId, setDonchianId] = useState<number | null>(null)
@@ -63,13 +72,17 @@ export default function DeploymentsPage() {
   const [busy, setBusy] = useState(false)
   const [issued, setIssued] = useState<IssuedToken | null>(null)
   const [copied, setCopied] = useState(false)
+  const [tested, setTested] = useState<"ok" | "fail" | null>(null)
+  const [testing, setTesting] = useState(false)
 
   useEffect(() => {
     fetchDeployments().then(setDeployments)
-    // Hanya strategi Donchian yang bisa dideploy (8 template ≠ 8 strategi eksekusi).
+    // Hanya strategi Donchian yang bisa berjalan sebagai bot.
     Promise.all([fetch("/api/templates").then((r) => r.json()), fetch("/api/strategies").then((r) => r.json())])
       .then(([templates, strategyRows]) => {
-        const donchian = (templates as { id: number; name: string }[]).find((t) => t.name === "Donchian Breakout")
+        const donchian = (templates as { id: number; name: string }[]).find(
+          (t) => t.name === DONCHIAN_TEMPLATE_NAME,
+        )
         setDonchianId(donchian?.id ?? null)
         setStrategies(strategyRows as Strategy[])
       })
@@ -77,28 +90,44 @@ export default function DeploymentsPage() {
   }, [])
 
   const donchianStrategies = strategies.filter((s) => s.template_id === donchianId)
+  const formValid = strategyId != null && name.trim().length > 0
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!strategyId || !name) return
+    if (!formValid) {
+      setError("Choose a Donchian strategy and name your bot first.")
+      return
+    }
     setBusy(true)
     setError(null)
+    let res: Response
     try {
-      const res = await fetch("/api/deployments", {
+      res = await fetch("/api/deployments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, user_strategy_id: strategyId }),
+        body: JSON.stringify({ name: name.trim(), user_strategy_id: strategyId }),
       })
+    } catch {
+      setBusy(false)
+      setError("Network problem — check your connection and try again.")
+      return
+    }
+    try {
       if (!res.ok) {
-        const { error: msg } = await res.json()
+        let msg = `Could not start the bot (HTTP ${res.status}).`
+        try {
+          const j = await res.json()
+          if (j && typeof j.error === "string" && j.error) msg = j.error
+        } catch { /* non-JSON — pakai pesan default */ }
         setError(msg)
         return
       }
       // Token plaintext hanya hidup di sini — sekali panel ditutup/halaman
-      // ditinggalkan, ia hilang dari memori browser dan tidak bisa dibaca lagi.
+      // ditinggalkan, ia hilang dan tidak bisa dibaca lagi.
       const created = (await res.json()) as { id: number; config_token?: string }
       setName("")
       setCopied(false)
+      setTested(null)
       if (created.config_token) {
         setIssued({
           id: created.id,
@@ -114,27 +143,49 @@ export default function DeploymentsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white sm:text-3xl">Deployments</h1>
-        <button onClick={() => router.push("/app/strategies")} className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/60 hover:text-white">
-          ← Strategies
-        </button>
-      </div>
+      <PageHeader
+        title="Deployments"
+        description="A bot runs one Donchian strategy automatically as paper trading — isolated, versioned, and monitored here."
+        action={
+          <Link
+            href="/app/strategies"
+            className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/60 hover:text-white"
+          >
+            ← Strategies
+          </Link>
+        }
+      />
 
-      {error && <p className="text-sm text-rose-400">{error}</p>}
+      {error && (
+        <p className="text-sm text-rose-400" role="alert">
+          {error}
+        </p>
+      )}
 
       {issued && (
-        <section className="space-y-3 rounded-2xl border border-[#ccff00]/40 bg-[#ccff00]/[0.06] p-5">
-          <h2 className="font-medium text-[#ccff00]">Config token — tampil sekali saja</h2>
+        <section aria-label="One-time setup token" className="space-y-3 rounded-2xl border border-[#ccff00]/40 bg-[#ccff00]/[0.06] p-5">
+          <h2 className="font-medium text-[#ccff00]">Bot access token — shown once</h2>
           <p className="text-sm text-white/70">
-            Simpan sekarang. Token ini <span className="text-white">tidak akan pernah ditampilkan lagi</span> —
-            hash-nya saja yang tersimpan di server, jadi tidak ada API yang bisa mengembalikannya.
-            Panel ini hilang begitu Anda menutupnya atau meninggalkan halaman.
+            Save it now. This token will <span className="text-white">never be shown again</span> —
+            only its fingerprint is stored on the server. Closing this panel or leaving the page
+            erases it from this browser for good.
+          </p>
+          <ol className="list-decimal space-y-1 pl-5 text-sm text-white/70">
+            <li>Copy the settings block below into your bot runner (self-hosted machine or CI).</li>
+            <li>
+              Run <span className="font-mono-tech text-xs">python paper_trading/run_deployment.py</span>{" "}
+              with those three values set.
+            </li>
+            <li>Click Test connection below to confirm the token works.</li>
+          </ol>
+          <p className="text-xs text-white/40">
+            Lost the token? It cannot be recovered — start a new bot (the old one will never run
+            without it).
           </p>
           <pre className="overflow-x-auto rounded-lg border border-white/10 bg-black/40 p-4 text-xs text-white/80">
             {runtimeEnvBlock(issued)}
           </pre>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={async () => {
@@ -147,96 +198,119 @@ export default function DeploymentsPage() {
               }}
               className="rounded-full border border-[#ccff00]/50 px-5 py-2 text-sm text-[#ccff00] hover:bg-[#ccff00]/10"
             >
-              {copied ? "Copied ✓" : "Copy env block"}
+              {copied ? "Copied ✓" : "Copy settings"}
             </button>
+            <button
+              type="button"
+              disabled={testing}
+              onClick={async () => {
+                setTesting(true)
+                setTested(null)
+                try {
+                  const res = await fetch(issued.configUrl, {
+                    headers: { Authorization: `Bearer ${issued.token}` },
+                  })
+                  setTested(res.ok ? "ok" : "fail")
+                } catch {
+                  setTested("fail")
+                } finally {
+                  setTesting(false)
+                }
+              }}
+              className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/70 hover:text-white disabled:opacity-40"
+            >
+              {testing ? "Testing…" : "Test connection"}
+            </button>
+            {tested === "ok" && <span className="text-sm text-emerald-400">Token works ✓</span>}
+            {tested === "fail" && <span className="text-sm text-rose-400">Token not accepted — double-check.</span>}
             <button
               type="button"
               onClick={() => {
                 setIssued(null)
                 setCopied(false)
+                setTested(null)
               }}
               className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/60 hover:text-white"
             >
-              Saya sudah menyimpannya — tutup
+              I saved it — close
             </button>
           </div>
         </section>
       )}
 
       {!deployments.length ? (
-        <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-8 text-center">
-          <p className="tech-label text-white/40">NO DEPLOYMENTS YET</p>
-        </div>
+        <EmptyState
+          title="No bots yet"
+          body="Start one below: pick a Donchian strategy, give the bot a name, and it will paper-trade on its own. Other strategy types are discipline-tracking only."
+        />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-white/10">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-white/5 text-xs uppercase tracking-wider text-white/40">
-              <tr>
-                <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Strategy</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Config</th>
-                <th className="px-4 py-3">Heartbeat</th>
-                <th className="px-4 py-3"> </th>
-              </tr>
-            </thead>
-            <tbody>
-              {deployments.map((d) => (
-                <tr key={d.id} className="border-t border-white/10">
-                  <td className="px-4 py-3 text-white">{d.name}</td>
-                  <td className="px-4 py-3 text-white/60">{d.strategy_name ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase ${STATUS_STYLES[d.status] ?? STATUS_STYLES.created}`}>
-                      {d.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-white/60">v{d.current_config_version}</td>
-                  <td className="px-4 py-3 text-white/40">{d.last_heartbeat ? new Date(d.last_heartbeat).toLocaleString() : "—"}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Link href={`/app/deployments/${d.id}`} className="text-xs font-medium text-[#ccff00] hover:underline">
-                      Open →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-3">
+          {deployments.map((d) => (
+            <Link
+              key={d.id}
+              href={`/app/deployments/${d.id}`}
+              className="block rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-white/20"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="truncate font-semibold text-white">{d.name}</h2>
+                <StatusBadge status={d.status} />
+              </div>
+              <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-white/40">
+                <span>{d.strategy_name ?? "Donchian strategy"}</span>
+                <span>Paper · Bitget</span>
+                <span>Last activity {relativeTime(d.last_heartbeat)}</span>
+              </div>
+            </Link>
+          ))}
         </div>
       )}
 
       <form onSubmit={handleCreate} className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
-        <h2 className="font-medium text-white">New deployment</h2>
-        {donchianStrategies.length === 0 ? (
-          <p className="text-sm text-white/50">
-            Belum ada strategi <span className="text-white/80">Donchian Breakout</span> — buat dulu di halaman Strategies.
+        <div>
+          <h2 className="font-medium text-white">Start a new bot</h2>
+          <p className="mt-1 text-xs text-white/40">
+            Only Donchian Breakout strategies can run — other templates are discipline-tracking only.
           </p>
+        </div>
+        {donchianStrategies.length === 0 ? (
+          <Alert tone="info">
+            No Donchian strategy yet.{" "}
+            <Link href="/app/strategies/new" className="font-medium text-[#ccff00] hover:underline">
+              Create one first →
+            </Link>
+          </Alert>
         ) : (
           <>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Deployment name"
-              required
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50"
-            />
-            <select
-              value={strategyId ?? ""}
-              onChange={(e) => setStrategyId(Number(e.target.value) || null)}
-              required
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-[#ccff00]/50"
-            >
-              <option value="">Pilih strategi Donchian…</option>
-              {donchianStrategies.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
+            <FormField label="Bot name" help="Anything recognizable — e.g. Donchian BTC daily.">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="My bot"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50"
+              />
+            </FormField>
+            <FormField label="Strategy" help="Donchian strategies you own.">
+              <select
+                value={strategyId ?? ""}
+                onChange={(e) => setStrategyId(Number(e.target.value) || null)}
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-[#ccff00]/50"
+              >
+                <option value="">Choose a Donchian strategy…</option>
+                {donchianStrategies.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </FormField>
             <button
               type="submit"
-              disabled={busy || !strategyId || !name}
-              className="w-full rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00] disabled:opacity-40"
+              disabled={busy || !formValid}
+              className="w-full rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Create deployment
+              {busy ? "Starting…" : "Start bot"}
             </button>
+            {!formValid && (
+              <p className="text-center text-xs text-white/30">Choose a strategy and name the bot to continue.</p>
+            )}
           </>
         )}
       </form>

@@ -14,7 +14,7 @@ const FAQS = [
   },
   {
     q: "What does the live dashboard prove?",
-    a: "That the engine runs daily without human touch: every HOLD, entry, exit, slippage sample and yield credit is logged and committed. Compare live win rate and avg R against the backtest reference — after ≥10 closed trades, not before.",
+    a: "That the engine runs daily without human touch: every HOLD, entry, exit and slippage sample is logged and committed. Compare live win rate and avg R against the backtest reference — after ≥10 closed trades, not before.",
   },
   {
     q: "What happens in a losing streak?",

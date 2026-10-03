@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { getDashboardData, type DashboardData } from "@/lib/db-supabase"
 import PaperLiveBoard from "@/app/papertrading/PaperLiveBoard"
 import { DeploymentSelector } from "./DeploymentSelector"
+import { Alert, StatusBadge } from "@/app/components/ui"
 
 export const dynamic = "force-dynamic"
 
@@ -32,13 +33,6 @@ const COLUMNS =
  * tapi sudah lama tidak menyentuh baris".
  */
 const HEARTBEAT_STALE_MS = 30 * 60 * 60 * 1000
-
-const STATUS_STYLES: Record<string, string> = {
-  created: "bg-white/10 text-white/60",
-  running: "bg-emerald-500/20 text-emerald-400",
-  stopped: "bg-white/10 text-white/40",
-  failed: "bg-rose-500/20 text-rose-400",
-}
 
 /** Bentuk config snapshot yang cukup untuk ditampilkan (hanya metadata aman). */
 type ConfigView = {
@@ -133,38 +127,50 @@ export default async function DeploymentDashboardPage({
       {/* ── Identitas + lifecycle ─────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
-          <p className="tech-label text-white/40">DEPLOYMENT #{deployment.id}</p>
-          <h1 className="text-2xl font-bold text-white sm:text-3xl">{deployment.name}</h1>
+          <p className="tech-label text-white/40">BOT #{deployment.id}</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold text-white sm:text-3xl">{deployment.name}</h1>
+            <StatusBadge status={deployment.status} />
+          </div>
           <p className="text-sm text-white/50">{strategy?.name ?? "—"}</p>
         </div>
         <DeploymentSelector currentId={deployment.id} />
       </div>
 
+      {deployment.status === "failed" && (
+        <Alert tone="error">
+          This bot stopped unexpectedly. Its history below is preserved. To run again, start a new
+          run from your runner with the same settings — nothing restarts on its own.
+        </Alert>
+      )}
+      {deployment.status === "created" && hbAge == null && (
+        <Alert tone="info">
+          This bot hasn&apos;t run yet. Start it from your runner — status, heartbeat, and paper
+          data will appear here after the first run.
+        </Alert>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <p className="text-xs text-white/40">Status</p>
-          <span
-            className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium uppercase ${
-              STATUS_STYLES[deployment.status] ?? STATUS_STYLES.created
-            }`}
-          >
-            {deployment.status}
-          </span>
+          <p className="mt-1">
+            <StatusBadge status={deployment.status} />
+          </p>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="text-xs text-white/40">Last check-in</p>
+          <p className="mt-1 font-mono-tech text-sm text-white">
+            {hbAge != null ? ageText(hbAge) : "—"}
+          </p>
+          <p className="text-[11px] text-white/30">{hb ? new Date(hb).toISOString() : "not yet"}</p>
           {stale && (
             <p className="mt-1 text-[11px] text-amber-300">
-              heartbeat stale (&gt; 30 jam) — status &apos;running&apos; mungkin sudah tidak akurat
+              Running but quiet for over 30 hours — the status may be outdated.
             </p>
           )}
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <p className="text-xs text-white/40">Last heartbeat</p>
-          <p className="mt-1 font-mono-tech text-sm text-white">
-            {hbAge != null ? ageText(hbAge) : "—"}
-          </p>
-          <p className="text-[11px] text-white/30">{hb ? new Date(hb).toISOString() : "belum pernah"}</p>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <p className="text-xs text-white/40">Config version</p>
+          <p className="text-xs text-white/40">Configuration</p>
           <p className="mt-1 font-mono-tech text-sm text-white">v{deployment.current_config_version}</p>
           <p className="text-[11px] text-white/30">created {new Date(deployment.created_at).toISOString().slice(0, 10)}</p>
         </div>
@@ -204,6 +210,14 @@ export default async function DeploymentDashboardPage({
               </dd>
             </div>
           </dl>
+          <details className="mt-3">
+            <summary className="cursor-pointer text-xs text-white/40 hover:text-white">
+              Technical details (exact configuration snapshot)
+            </summary>
+            <pre className="mt-2 overflow-x-auto rounded-lg border border-white/10 bg-black/40 p-3 font-mono-tech text-[11px] text-white/70">
+              {JSON.stringify(cfg, null, 2)}
+            </pre>
+          </details>
         </section>
       )}
 
