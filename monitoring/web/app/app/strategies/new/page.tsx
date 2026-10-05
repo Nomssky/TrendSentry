@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { DONCHIAN_TEMPLATE_NAME } from "@/lib/deployment-config"
-import { Alert, FormField, Stepper } from "@/app/components/ui"
+import { Alert, FormField, StatusBadge, Stepper } from "@/app/components/ui"
 
 type Template = {
   id: number
@@ -217,13 +217,9 @@ export default function NewStrategyPage() {
                   <div className="flex items-center justify-between gap-2">
                     <h2 className="font-semibold text-white">{t.name}</h2>
                     {executable ? (
-                      <span className="shrink-0 rounded-full bg-[#ccff00]/15 px-2 py-0.5 text-[10px] font-medium uppercase text-[#ccff00]">
-                        Can run
-                      </span>
+                      <StatusBadge status="paper" label="Can run" />
                     ) : (
-                      <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium uppercase text-white/50">
-                        Tracking only
-                      </span>
+                      <StatusBadge status="backtest_only" label="Tracking only" />
                     )}
                   </div>
                   <p className="mt-2 text-xs leading-relaxed text-white/50">{t.description}</p>
@@ -255,6 +251,10 @@ export default function NewStrategyPage() {
             <h3 className="font-medium text-white">
               {selectedTemplate.name} <span className="text-white/40">· “{name.trim()}”</span>
             </h3>
+            <p className="mt-1 text-xs text-white/40">
+              Strategy parameters below. Risk guardrails are engine-wide and read-only here: 1%
+              risk per trade, max 5 concurrent positions, stop loss mandatory on every order.
+            </p>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               {Object.entries(selectedTemplate.params_schema.properties).map(([key, schema]) => (
                 <SchemaField

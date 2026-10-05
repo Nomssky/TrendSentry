@@ -150,14 +150,14 @@ export default async function DeploymentDashboardPage({
         </Alert>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-y border-white/10 py-4">
+        <div>
           <p className="text-xs text-white/40">Status</p>
           <p className="mt-1">
             <StatusBadge status={deployment.status} />
           </p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div>
           <p className="text-xs text-white/40">Last check-in</p>
           <p className="mt-1 font-mono-tech text-sm text-white">
             {hbAge != null ? ageText(hbAge) : "—"}
@@ -169,7 +169,7 @@ export default async function DeploymentDashboardPage({
             </p>
           )}
         </div>
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div>
           <p className="text-xs text-white/40">Configuration</p>
           <p className="mt-1 font-mono-tech text-sm text-white">v{deployment.current_config_version}</p>
           <p className="text-[11px] text-white/30">created {new Date(deployment.created_at).toISOString().slice(0, 10)}</p>
@@ -245,7 +245,7 @@ export default async function DeploymentDashboardPage({
 
       <p className="text-center">
         <Link href="/app/deployments" className="text-sm text-white/50 hover:text-[#ccff00]">
-          ← Semua deployment
+          ← All deployments
         </Link>
       </p>
     </div>
@@ -284,7 +284,8 @@ function SignalsTable({ data }: { data: DashboardData }) {
       </div>
       {data.recentSignals.length === 0 ? (
         <p className="px-4 py-6 text-sm text-white/40">
-          Belum ada sinyal untuk deployment ini — jalankan runtime-nya dulu.
+          No signals for this bot yet — run it from your runner first. Signals appear here after
+          the first run.
         </p>
       ) : (
         <table className="w-full text-left text-sm">

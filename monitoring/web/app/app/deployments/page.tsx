@@ -245,22 +245,34 @@ export default function DeploymentsPage() {
           body="Set one up below: pick a Donchian strategy, give the bot a name, then run it from your runner to paper-trade on its own. Other strategy types are discipline-tracking only."
         />
       ) : (
-        <div className="space-y-3">
+        <div className="overflow-hidden rounded-2xl border border-white/10">
+          <div className="hidden grid-cols-[1fr_150px_130px_40px] items-center gap-4 border-b border-white/10 bg-white/[0.02] px-5 py-2.5 text-[11px] uppercase tracking-wider text-white/35 sm:grid">
+            <span>Bot</span>
+            <span>Status</span>
+            <span className="text-right">Last activity</span>
+            <span />
+          </div>
           {deployments.map((d) => (
             <Link
               key={d.id}
               href={`/app/deployments/${d.id}`}
-              className="block rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-white/20"
+              className="grid grid-cols-1 gap-1.5 border-b border-white/[0.06] px-5 py-4 transition-colors last:border-0 hover:bg-white/[0.02] sm:grid-cols-[1fr_150px_130px_40px] sm:items-center sm:gap-4"
             >
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="truncate font-semibold text-white">{d.name}</h2>
+              <span className="min-w-0">
+                <span className="block truncate font-medium text-white">{d.name}</span>
+                <span className="mt-0.5 block truncate text-xs text-white/40">
+                  {d.strategy_name ?? "Donchian strategy"} · Paper · Bitget
+                </span>
+              </span>
+              <span>
                 <StatusBadge status={d.status} />
-              </div>
-              <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-white/40">
-                <span>{d.strategy_name ?? "Donchian strategy"}</span>
-                <span>Paper · Bitget</span>
-                <span>Last activity {relativeTime(d.last_heartbeat)}</span>
-              </div>
+              </span>
+              <span className="text-xs text-white/40 sm:text-right">
+                {relativeTime(d.last_heartbeat)}
+              </span>
+              <span aria-hidden className="hidden text-white/30 sm:block sm:text-right">
+                →
+              </span>
             </Link>
           ))}
         </div>

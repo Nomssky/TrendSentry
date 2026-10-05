@@ -66,31 +66,46 @@ export default async function StrategiesPage() {
               </p>
             </div>
           )}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="overflow-hidden rounded-2xl border border-white/10">
+            <div className="hidden grid-cols-[1fr_auto] items-center gap-4 border-b border-white/10 bg-white/[0.02] px-5 py-2.5 text-[11px] uppercase tracking-wider text-white/35 sm:grid sm:grid-cols-[1fr_220px_130px]">
+              <span>Strategy</span>
+              <span>Status</span>
+              <span className="text-right">Running in</span>
+            </div>
             {strategies?.map((s) => {
               const template = templateById.get(s.template_id)
               const executable = template?.name === DONCHIAN_TEMPLATE_NAME
               const bots = botsByStrategy.get(s.id) ?? 0
               return (
-                <div key={s.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-                  <div className="flex items-center justify-between gap-2">
-                    <h2 className="truncate font-semibold text-white">{s.name}</h2>
-                    <div className="flex shrink-0 items-center gap-2">
-                      {executable && <StatusBadge status="paper" label="Can run" />}
-                      {!executable && <StatusBadge status="backtest_only" label="Tracking only" />}
-                      <StatusBadge status={s.is_active ? "active" : "paused"} />
-                    </div>
+                <div
+                  key={s.id}
+                  className="grid grid-cols-1 gap-2 border-b border-white/[0.06] px-5 py-4 transition-colors last:border-0 hover:bg-white/[0.02] sm:grid-cols-[1fr_220px_130px] sm:items-center sm:gap-4"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-white">{s.name}</p>
+                    <p className="mt-0.5 text-xs text-white/40">
+                      {template?.name ?? "Custom"} · Created{" "}
+                      {new Date(s.created_at).toLocaleDateString()}
+                    </p>
                   </div>
-                  <p className="mt-1 text-xs text-white/40">
-                    {template?.name ?? "Custom"} ·{" "}
-                    {bots > 0
-                      ? `Running in ${bots} bot${bots === 1 ? "" : "s"}`
-                      : executable
-                        ? "Not running in any bot"
-                        : "Discipline tracking only"}
-                  </p>
-                  <p className="mt-2 text-xs text-white/30">
-                    Created {new Date(s.created_at).toLocaleDateString()}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <StatusBadge status={s.is_active ? "active" : "paused"} />
+                    {executable ? (
+                      <StatusBadge status="paper" label="Can run" />
+                    ) : (
+                      <StatusBadge status="backtest_only" label="Tracking only" />
+                    )}
+                  </div>
+                  <p className="text-xs text-white/50 sm:text-right">
+                    {bots > 0 ? (
+                      <span className="text-[#ccff00]">
+                        {bots} bot{bots === 1 ? "" : "s"}
+                      </span>
+                    ) : executable ? (
+                      "Not running"
+                    ) : (
+                      "—"
+                    )}
                   </p>
                 </div>
               )

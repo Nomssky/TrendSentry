@@ -70,8 +70,8 @@ export default function Pricing() {
               key={t.name}
               className={
                 t.hot
-                  ? "noise-overlay rounded-[2.5rem] bg-[#ccff00] p-8 text-black"
-                  : "glass noise-overlay rounded-[2.5rem] p-8 transition-colors duration-300 hover:border-[#ccff00]/40"
+                  ? "noise-overlay rounded-3xl bg-[#ccff00] p-8 text-black"
+                  : "glass noise-overlay rounded-3xl p-8 transition-colors duration-300 hover:border-[#ccff00]/40"
               }
             >
               <p className={`tech-label ${t.hot ? "text-black/60" : "text-white/40"}`}>{t.state}</p>

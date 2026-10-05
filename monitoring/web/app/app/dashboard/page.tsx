@@ -5,7 +5,6 @@ import { ScoreTrendChart } from "./ScoreTrendChart"
 import {
   Alert,
   EmptyState,
-  MetricCard,
   PageHeader,
   SectionHeader,
   StatusBadge,
@@ -159,23 +158,38 @@ export default async function DashboardPage() {
       {/* ── Level 2: Performance (only what the backend actually has) ── */}
       <section aria-label="Performance">
         <SectionHeader title="Performance" />
-        <div className="grid gap-4 md:grid-cols-4">
-          <MetricCard
-            label="Discipline Score (avg)"
-            value={avgScore != null ? String(avgScore) : "—"}
-            sub={avgScore != null ? "last 30 days" : "Not available yet — needs logged trades"}
-            tone={avgScore != null ? "neutral" : "neutral"}
-          />
-          <MetricCard
-            label="Active strategies"
-            value={String(strategies.data?.filter((s) => s.is_active).length ?? 0)}
-          />
-          <MetricCard label="Fills logged" value={String(totalTrades)} sub="fills, not P&L" />
-          <MetricCard
-            label="Deviations"
-            value={String(totalDeviations.count ?? 0)}
-            tone={(totalDeviations.count ?? 0) > 0 ? "bad" : "good"}
-          />
+        <div className="grid gap-4 lg:grid-cols-5">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 lg:col-span-2">
+            <p className="text-xs text-white/40">Discipline Score (avg)</p>
+            <p className="mt-2 font-mono-tech text-6xl font-bold tabular-nums tracking-tight text-white sm:text-7xl">
+              {avgScore != null ? avgScore : "—"}
+            </p>
+            <p className="mt-2 text-xs text-white/40">
+              {avgScore != null
+                ? "Average of your last 30 daily scores. Higher means fewer rule breaks."
+                : "Not available yet — needs logged trades."}
+            </p>
+          </div>
+          <div className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03] px-6 lg:col-span-3">
+            <div className="flex items-baseline justify-between gap-4 py-4">
+              <p className="text-xs text-white/40">Active strategies</p>
+              <p className="font-mono-tech text-2xl font-bold tabular-nums text-white">
+                {strategies.data?.filter((s) => s.is_active).length ?? 0}
+              </p>
+            </div>
+            <div className="flex items-baseline justify-between gap-4 py-4">
+              <p className="text-xs text-white/40">
+                Fills logged <span className="text-white/30">· fills, not P&amp;L</span>
+              </p>
+              <p className="font-mono-tech text-2xl font-bold tabular-nums text-white">{totalTrades}</p>
+            </div>
+            <div className="flex items-baseline justify-between gap-4 py-4">
+              <p className="text-xs text-white/40">Deviations</p>
+              <p className={`font-mono-tech text-2xl font-bold tabular-nums ${(totalDeviations.count ?? 0) > 0 ? "text-rose-400" : "text-emerald-400"}`}>
+                {totalDeviations.count ?? 0}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

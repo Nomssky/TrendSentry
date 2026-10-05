@@ -53,7 +53,7 @@ export default function PaperLiveBoard({
   return (
     <>
       {/* ── Hero: live equity ─────────────────────────────── */}
-      <header className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.02] p-7 backdrop-blur-xl sm:p-10">
+      <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02] p-7 backdrop-blur-xl sm:p-10">
         <div className="glow-sphere left-[10%] top-[-60%] h-[320px] w-[320px] bg-[#ccff00]/10" />
         <div className="relative">
           <div className="flex flex-wrap items-center justify-between gap-3">

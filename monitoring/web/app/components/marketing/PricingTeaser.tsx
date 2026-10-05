@@ -29,7 +29,7 @@ const FAQS = [
 export function PricingTeaser() {
   return (
     <section className="bg-[#e5e5e5] px-5 pb-20 text-black sm:px-10 lg:px-16">
-      <div className="noise-overlay rounded-[2.5rem] bg-black p-8 text-[#ebebeb] sm:p-12">
+      <div className="noise-overlay rounded-3xl bg-black p-8 text-[#ebebeb] sm:p-12">
         <div className="flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-center">
           <div>
             <TechLabel>[ PRICING // PRIVATE BETA ]</TechLabel>

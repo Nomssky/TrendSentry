@@ -61,13 +61,13 @@ export function Nav({ isLoggedIn }: NavProps) {
           <>
             <Link
               href="/auth/login"
-              className="hidden rounded-full border border-white/20 px-5 py-2.5 text-sm text-white/80 transition hover:border-[#ccff00]/50 hover:text-[#ccff00] sm:inline-block"
+              className="hidden shrink-0 whitespace-nowrap rounded-full border border-white/20 px-5 py-2.5 text-sm text-white/80 transition hover:border-[#ccff00]/50 hover:text-[#ccff00] sm:inline-block"
             >
               Sign in
             </Link>
             <Link
               href="/start"
-              className="hidden rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#ccff00] sm:inline-block"
+              className="hidden shrink-0 whitespace-nowrap rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-[#ccff00] sm:inline-block"
             >
               Start free
             </Link>

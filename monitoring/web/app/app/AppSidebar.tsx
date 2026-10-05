@@ -35,11 +35,18 @@ export function AppSidebar() {
   }
 
   const linkClass = (href: string) =>
-    `rounded-lg px-3 py-2 transition-colors ${
+    `flex items-center gap-2.5 rounded-lg px-3 py-[7px] text-[13px] transition-colors ${
       isActive(pathname, href)
-        ? "bg-white/10 text-white"
-        : "text-white/60 hover:bg-white/5 hover:text-white"
+        ? "bg-white/[0.07] text-white"
+        : "text-white/55 hover:bg-white/5 hover:text-white"
     }`
+
+  const ActiveDot = ({ href }: { href: string }) =>
+    isActive(pathname, href) ? (
+      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#ccff00]" />
+    ) : (
+      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-transparent" />
+    )
 
   return (
     <>
@@ -70,16 +77,20 @@ export function AppSidebar() {
 
       <nav
         aria-label="Product"
-        className={`fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-white/10 bg-black p-5 pt-20 text-sm transition-transform duration-200 md:static md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-white/10 bg-black p-4 pt-20 text-sm transition-transform duration-200 md:static md:translate-x-0 md:p-4 md:pt-6 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <Link href="/app/dashboard" className="mb-6 flex items-center gap-2.5" aria-label="TrendSentry overview">
-          <LogoMark tone="light" className="h-8 w-8" />
+        <Link href="/app/dashboard" className="mb-5 flex items-center gap-2.5 px-1" aria-label="TrendSentry overview">
+          <LogoMark tone="light" className="h-7 w-7" />
           <span className="text-sm font-semibold tracking-tight text-white">TrendSentry</span>
         </Link>
 
-        <div className="flex flex-col gap-1" role="list">
+        <p className="mb-1 px-3 font-mono-tech text-[10px] uppercase tracking-[0.15em] text-white/30">
+          Workspace
+        </p>
+        <div className="flex flex-col gap-0.5" role="list">
           {primaryLinks.map((l) => (
             <Link key={l.href} href={l.href} className={linkClass(l.href)} aria-current={isActive(pathname, l.href) ? "page" : undefined}>
+              <ActiveDot href={l.href} />
               {l.label}
             </Link>
           ))}
@@ -87,12 +98,13 @@ export function AppSidebar() {
 
         <div className="my-4 border-t border-white/10" />
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-0.5">
           <p className="mb-1 px-3 font-mono-tech text-[10px] uppercase tracking-[0.15em] text-white/30">
             Public proof
           </p>
           {secondaryLinks.map((l) => (
             <Link key={l.href} href={l.href} className={linkClass(l.href)}>
+              <ActiveDot href={l.href} />
               {l.label}
             </Link>
           ))}

@@ -8,7 +8,7 @@ import { TechLabel } from "./ui";
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={`glass noise-overlay rounded-[2.5rem] p-7 transition-colors duration-300 hover:border-[#ccff00]/40 ${className}`}
+      className={`glass noise-overlay rounded-3xl p-7 transition-colors duration-300 hover:border-[#ccff00]/40 ${className}`}
     >
       {children}
     </div>
@@ -71,7 +71,7 @@ export function BentoFeatures() {
         </Card>
 
         {/* 03 accent lime card: alerts */}
-        <div className="noise-overlay rounded-[2.5rem] bg-[#ccff00] p-7 text-black transition-colors duration-300 hover:border-[#ccff00]/40">
+        <div className="noise-overlay rounded-3xl bg-[#ccff00] p-7 text-black transition-colors duration-300 hover:border-[#ccff00]/40">
           <TechLabel className="text-black/60">03 // ALERTS</TechLabel>
           <h3 className="mt-3 text-2xl font-bold tracking-tight">Real-time deviation alerts.</h3>
           <p className="mt-2 text-sm font-medium text-black/70">

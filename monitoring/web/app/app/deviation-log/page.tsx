@@ -29,23 +29,36 @@ export default async function DeviationLogPage() {
           actionLabel="Back to overview"
         />
       ) : (
-        <div className="space-y-2">
-          {deviations?.map((d) => (
-            <div key={d.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge
-                  status={d.severity === "critical" ? "error" : d.severity === "info" ? "ready" : "warning"}
-                  label={d.severity}
-                />
-                <span className="font-mono-tech text-xs uppercase text-white/30">{d.rule_key}</span>
-              </div>
-              <p className="mt-1 text-white/70">
-                Expected <span className="text-[#ccff00]">{d.expected}</span> · Actual{" "}
-                <span className="text-rose-400">{d.actual}</span>
-              </p>
-              <p className="mt-1 text-xs text-white/30">{new Date(d.detected_at).toLocaleString()}</p>
-            </div>
-          ))}
+        <div className="overflow-x-auto rounded-2xl border border-white/10">
+          <table className="w-full min-w-[640px] text-left text-sm">
+            <thead className="bg-white/[0.02] text-[11px] uppercase tracking-wider text-white/35">
+              <tr>
+                <th className="px-4 py-2.5 font-medium">Severity</th>
+                <th className="px-4 py-2.5 font-medium">Rule</th>
+                <th className="px-4 py-2.5 font-medium">Expected</th>
+                <th className="px-4 py-2.5 font-medium">Actual</th>
+                <th className="px-4 py-2.5 text-right font-medium">Detected</th>
+              </tr>
+            </thead>
+            <tbody>
+              {deviations?.map((d) => (
+                <tr key={d.id} className="border-t border-white/[0.06] transition-colors hover:bg-white/[0.02]">
+                  <td className="px-4 py-3">
+                    <StatusBadge
+                      status={d.severity === "critical" ? "error" : d.severity === "info" ? "ready" : "warning"}
+                      label={d.severity}
+                    />
+                  </td>
+                  <td className="px-4 py-3 font-mono-tech text-xs uppercase text-white/50">{d.rule_key}</td>
+                  <td className="px-4 py-3 text-[#ccff00]">{d.expected}</td>
+                  <td className="px-4 py-3 text-rose-400">{d.actual}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right text-xs tabular-nums text-white/40">
+                    {new Date(d.detected_at).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
       <p className="text-xs text-white/30">

@@ -15,10 +15,18 @@
   --color-info: #7dd3fc;
 }
 
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   background: #000000;
   color: #ebebeb;
   font-family: var(--font-display), "Space Grotesk", sans-serif;
+  /* Decorative full-bleed layers (grid, glows, scroll curves) intentionally
+     bleed past the viewport — clip horizontal overflow so they never create
+     a scrollbar. `clip` (bukan `hidden`) agar sticky positioning tetap jalan. */
 }
 
 /* Keyboard focus yang konsisten di seluruh app: outline lime 2px.
@@ -98,14 +106,25 @@ body {
   color: #000000;
   font-weight: 700;
   border-radius: 9999px;
-  box-shadow: 0 0 30px rgba(204, 255, 0, 0.3);
   transition:
-    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .neon-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 44px rgba(204, 255, 0, 0.45);
+  transform: translateY(-1px);
+  background-color: #aadd00;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-anim,
+  .pulse-dot,
+  .animate-flash-up,
+  .animate-flash-down {
+    animation: none;
+  }
+  .neon-btn:hover {
+    transform: none;
+  }
 }
 
 .tech-label {
