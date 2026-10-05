@@ -168,7 +168,8 @@ export default function DeploymentsPage() {
           <p className="text-sm text-white/70">
             Save it now. This token will <span className="text-white">never be shown again</span> —
             only its fingerprint is stored on the server. Closing this panel or leaving the page
-            erases it from this browser for good.
+            erases it from this browser for good. Creating the bot did not start it — follow the
+            steps below to connect your runner.
           </p>
           <ol className="list-decimal space-y-1 pl-5 text-sm text-white/70">
             <li>Copy the settings block below into your bot runner (self-hosted machine or CI).</li>
@@ -179,7 +180,7 @@ export default function DeploymentsPage() {
             <li>Click Test connection below to confirm the token works.</li>
           </ol>
           <p className="text-xs text-white/40">
-            Lost the token? It cannot be recovered — start a new bot (the old one will never run
+            Lost the token? It cannot be recovered — create a new bot (the old one will never run
             without it).
           </p>
           <pre className="overflow-x-auto rounded-lg border border-white/10 bg-black/40 p-4 text-xs text-white/80">
@@ -241,7 +242,7 @@ export default function DeploymentsPage() {
       {!deployments.length ? (
         <EmptyState
           title="No bots yet"
-          body="Start one below: pick a Donchian strategy, give the bot a name, and it will paper-trade on its own. Other strategy types are discipline-tracking only."
+          body="Set one up below: pick a Donchian strategy, give the bot a name, then run it from your runner to paper-trade on its own. Other strategy types are discipline-tracking only."
         />
       ) : (
         <div className="space-y-3">
@@ -267,9 +268,11 @@ export default function DeploymentsPage() {
 
       <form onSubmit={handleCreate} className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
         <div>
-          <h2 className="font-medium text-white">Start a new bot</h2>
+          <h2 className="font-medium text-white">Set up a new bot</h2>
           <p className="mt-1 text-xs text-white/40">
             Only Donchian Breakout strategies can run — other templates are discipline-tracking only.
+            Creating the bot only prepares its configuration — run the command from the setup token
+            below (or connect your runner) to actually start it.
           </p>
         </div>
         {donchianStrategies.length === 0 ? (
@@ -306,7 +309,7 @@ export default function DeploymentsPage() {
               disabled={busy || !formValid}
               className="w-full rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {busy ? "Starting…" : "Start bot"}
+              {busy ? "Creating…" : "Create bot"}
             </button>
             {!formValid && (
               <p className="text-center text-xs text-white/30">Choose a strategy and name the bot to continue.</p>

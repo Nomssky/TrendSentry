@@ -37,8 +37,11 @@ export default async function DashboardPage() {
   const hasApiKey = (apiKeys.data?.length ?? 0) > 0
   const hasStrategy = (strategies.data?.length ?? 0) > 0
   const hasFills = totalTrades > 0
-  const isSetupComplete = hasApiKey && hasStrategy && hasFills
   const bots = deployments.data ?? []
+  const hasBot = bots.length > 0
+  // Setup = configuration (key + strategy + bot). Fills are trading activity,
+  // not setup — shown separately below, never as an incomplete setup step.
+  const isSetupComplete = hasApiKey && hasStrategy && hasBot
   const runningBots = bots.filter((b) => b.status === "running")
   const failedBots = bots.filter((b) => b.status === "failed")
 
@@ -70,15 +73,15 @@ export default async function DashboardPage() {
             title="No bots running"
             body="A bot runs one of your Donchian strategies automatically as paper trading. Nothing runs until you start one."
             actionHref="/app/deployments"
-            actionLabel="Start your first bot"
+            actionLabel="Set up your first bot"
           />
         ) : (
           <div className="space-y-2">
             {failedBots.length > 0 && (
               <Alert tone="error">
                 {failedBots.length} bot{failedBots.length === 1 ? "" : "s"} stopped unexpectedly
-                {failedBots.map((b) => ` (${b.name})`).join("")}. Open it to inspect, then start a new
-                run — no action is taken automatically.
+                {failedBots.map((b) => ` (${b.name})`).join("")}. Open it to inspect, then run it
+                again from your runner — nothing starts on its own.
               </Alert>
             )}
             {bots.slice(0, 3).map((b) => (
@@ -102,8 +105,8 @@ export default async function DashboardPage() {
         )}
         {bots.length > 0 && runningBots.length === 0 && failedBots.length === 0 && (
           <p className="mt-2 text-xs text-white/40">
-            No bot is currently running. Stopped bots keep their history — start a new run from the
-            bot page when ready.
+            No bot is currently running. Stopped bots keep their history — run one again from
+            your runner when ready.
           </p>
         )}
       </section>
@@ -134,16 +137,23 @@ export default async function DashboardPage() {
               </div>
             </li>
             <li className="flex items-start gap-3">
-              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${hasFills ? "bg-[#ccff00] text-black" : hasApiKey && hasStrategy ? "border border-[#ccff00]/40 text-[#ccff00]" : "border border-white/20 text-white/40"}`}>
-                {hasFills ? "✓" : "3"}
+              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${hasBot ? "bg-[#ccff00] text-black" : hasApiKey && hasStrategy ? "border border-[#ccff00]/40 text-[#ccff00]" : "border border-white/20 text-white/40"}`}>
+                {hasBot ? "✓" : "3"}
               </span>
               <div>
-                <p className={`text-sm font-medium ${hasFills ? "text-white/40 line-through" : hasApiKey && hasStrategy ? "text-white" : "text-white/40"}`}>Wait for first sync</p>
-                {!hasFills && <p className="mt-0.5 text-xs text-white/40">{hasApiKey && hasStrategy ? "The daily sync runs at 09:00 WIB. Your trades will appear here after the next run." : "Complete steps 1 and 2 first."}</p>}
+                <p className={`text-sm font-medium ${hasBot ? "text-white/40 line-through" : hasApiKey && hasStrategy ? "text-white" : "text-white/40"}`}>Set up a bot</p>
+                {!hasBot && <p className="mt-0.5 text-xs text-white/40">{hasApiKey && hasStrategy ? "Creates the versioned configuration — you run it from your runner." : "Complete steps 1 and 2 first."}</p>}
+                {!hasBot && hasApiKey && hasStrategy && <Link href="/app/deployments" className="mt-1 inline-block text-xs font-medium text-[#ccff00] hover:underline">Set up a bot →</Link>}
               </div>
             </li>
           </ol>
         </section>
+      )}
+      {hasApiKey && hasStrategy && !hasFills && (
+        <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs text-white/40">
+          No trading activity yet — fills appear here after your first synced trades (daily sync)
+          or your bot&apos;s first run.
+        </p>
       )}
 
       {/* ── Level 2: Performance (only what the backend actually has) ── */}

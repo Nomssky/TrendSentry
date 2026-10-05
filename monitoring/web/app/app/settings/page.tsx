@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { FormField } from "@/app/components/ui"
 
 type ApiKeyInfo = {
   id: number
@@ -157,9 +158,15 @@ export default function SettingsPage() {
 
         {msg && <p className={`text-sm ${msg === "API keys saved" ? "text-emerald-400" : "text-rose-400"}`}>{msg}</p>}
         <form onSubmit={saveApiKeys} className="space-y-3">
-          <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="API Key" required type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
-          <input value={apiSecret} onChange={(e) => setApiSecret(e.target.value)} placeholder="API Secret" required type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
-          <input value={passphrase} onChange={(e) => setPassphrase(e.target.value)} placeholder="Passphrase (optional)" type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
+          <FormField label="API Key" help="Stored encrypted — values are never shown again after saving.">
+            <input value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="API Key" required type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
+          </FormField>
+          <FormField label="API Secret" help="Stored encrypted — values are never shown again after saving.">
+            <input value={apiSecret} onChange={(e) => setApiSecret(e.target.value)} placeholder="API Secret" required type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
+          </FormField>
+          <FormField label="Passphrase" help="Only if your Bitget key uses one. Optional.">
+            <input value={passphrase} onChange={(e) => setPassphrase(e.target.value)} placeholder="Passphrase (optional)" type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
+          </FormField>
           <button disabled={saving} className="w-full rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00] disabled:opacity-40">{saving ? "Saving..." : existingKey ? "Update keys" : "Save keys"}</button>
         </form>
       </section>
@@ -168,8 +175,12 @@ export default function SettingsPage() {
         <h2 className="text-lg font-semibold text-white">Account password</h2>
         {passwordMsg && <p className={`text-sm ${passwordMsg.startsWith("Password updated") ? "text-emerald-400" : "text-rose-400"}`}>{passwordMsg}</p>}
         <form onSubmit={changePassword} className="space-y-3">
-          <input value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Current password" required type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
-          <input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password (min 10 chars, upper/lower + digit)" required minLength={10} type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
+          <FormField label="Current password">
+            <input value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Current password" required type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
+          </FormField>
+          <FormField label="New password" help="Min 10 characters, upper/lowercase + digit.">
+            <input value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="New password" required minLength={10} type="password" className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
+          </FormField>
           <button disabled={changingPassword} className="w-full rounded-full bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20 disabled:opacity-40">{changingPassword ? "Updating..." : "Update password"}</button>
         </form>
       </section>
@@ -179,8 +190,12 @@ export default function SettingsPage() {
         <p className="text-sm text-white/40">Delete your account and all associated data. This cannot be undone.</p>
         {deleteMsg && <p className="text-sm text-rose-400">{deleteMsg}</p>}
         <div className="space-y-3">
-          <input value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} placeholder="Enter your password to confirm" type="password" className="w-full rounded-lg border border-rose-400/30 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-rose-400/50" />
-          <input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder='Type "DELETE" to confirm' className="w-full rounded-lg border border-rose-400/30 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-rose-400/50" />
+          <FormField label="Confirm with password" help="Re-authentication is required for this destructive action.">
+            <input value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} placeholder="Enter your password to confirm" type="password" className="w-full rounded-lg border border-rose-400/30 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-rose-400/50" />
+          </FormField>
+          <FormField label='Type "DELETE" to confirm'>
+            <input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder='Type "DELETE" to confirm' className="w-full rounded-lg border border-rose-400/30 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-rose-400/50" />
+          </FormField>
           <button disabled={deleting || deleteConfirm !== "DELETE" || !deletePassword} onClick={deleteAccount} className="w-full rounded-full bg-rose-500/20 px-6 py-3 font-semibold text-rose-400 transition hover:bg-rose-500/30 disabled:opacity-40">{deleting ? "Deleting..." : "Delete account"}</button>
         </div>
       </section>

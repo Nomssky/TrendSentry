@@ -58,7 +58,7 @@ export default async function StrategiesPage() {
               <p className="text-sm text-white/80">
                 Your Donchian strategy can run automatically as an isolated paper-trading bot.{" "}
                 <Link href="/app/deployments" className="font-medium text-[#ccff00] hover:underline">
-                  Start a bot →
+                  Set up a bot →
                 </Link>
               </p>
               <p className="mt-1 text-xs text-white/40">

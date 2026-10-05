@@ -21,6 +21,14 @@ body {
   font-family: var(--font-display), "Space Grotesk", sans-serif;
 }
 
+/* Keyboard focus yang konsisten di seluruh app: outline lime 2px.
+   Elemen yang sudah punya indikator focus sendiri (border pada input)
+   tetap mendapat outline ini sebagai lapisan kedua yang jelas. */
+:focus-visible {
+  outline: 2px solid #ccff00;
+  outline-offset: 2px;
+}
+
 /* ---------- Obsidian & Lime primitives (see template spec) ---------- */
 
 .glass {

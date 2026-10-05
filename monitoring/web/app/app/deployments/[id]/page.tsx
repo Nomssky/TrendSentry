@@ -139,13 +139,13 @@ export default async function DeploymentDashboardPage({
 
       {deployment.status === "failed" && (
         <Alert tone="error">
-          This bot stopped unexpectedly. Its history below is preserved. To run again, start a new
-          run from your runner with the same settings — nothing restarts on its own.
+          This bot stopped unexpectedly. Its history below is preserved. To run again, run it
+          again from your runner with the same settings — nothing restarts on its own.
         </Alert>
       )}
       {deployment.status === "created" && hbAge == null && (
         <Alert tone="info">
-          This bot hasn&apos;t run yet. Start it from your runner — status, heartbeat, and paper
+          This bot hasn&apos;t run yet. Run it from your runner — status, heartbeat, and paper
           data will appear here after the first run.
         </Alert>
       )}
