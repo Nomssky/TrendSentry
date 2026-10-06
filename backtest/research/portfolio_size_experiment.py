@@ -70,7 +70,7 @@ def run_single(pairs: list[str], max_concurrent: int, timeframe: str = "1d"):
             "slippage_pct": 0.05,
         },
     }
-    dfs = {s: load_ohlcv(s, timeframe) for s in pairs}
+    dfs = {s: load_ohlcv(s, timeframe, cfg) for s in pairs}
     curve, trades = run_backtest(dfs, cfg)
     metrics = compute_metrics(curve, trades, dfs, cfg)
     metrics["config_name"] = f"{len(pairs)}-pair (max_concurrent={max_concurrent})"
