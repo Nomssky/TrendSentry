@@ -194,6 +194,45 @@ def run_backtest(dfs: dict[str, pd.DataFrame], cfg: dict) -> tuple[pd.DataFrame,
     return pd.DataFrame(curve).set_index("date"), pd.DataFrame(trades)
 
 
+def sigma_sr(n: int, sr: float, skew: float, kurt: float) -> float:
+    """sigma_hat(SR) — persamaan (12) Deng dkk. (2013), dipisah agar bisa diuji.
+
+    skew = momen sampel miring; kurt = kurtosis MENTAH (bukan excess).
+    Untuk skew=0 & kurt=3, persamaan ini harus mereduksi ke persamaan (9) paper:
+    sqrt( 1/(n-1) * (1 + SR^2/2) ) — inilah yang dicek `check_metrics`.
+    """
+    return ((1.0 / (n - 1)) * (1 + 0.5 * sr**2 - sr * skew + sr**2 * (kurt - 3.0) / 4.0)) ** 0.5
+
+
+def varsh(daily: pd.Series, gamma: float = 1.96) -> dict:
+    """VaRSR — Value-at-Risk-adjusted Sharpe ratio, Deng dkk. (2013) pers. (12).
+
+        VaRSR = SR - gamma * sigma_hat(SR)
+
+    `gamma = z(alpha/2)` ditentukan oleh confidence level VaR-nya; alpha = 0,05 -> gamma = 1,96
+    (two-sided 95%). SR dihitung PER PERIODE (harian). VaRSR TIDAK di-annualisasi:
+    Deng Eq. (12) diturunkan untuk Sharpe satu periode dan tidak menetapkan konvensi
+    annualisasi, sehingga VaRSR dilaporkan pada basis harian yang sama dengan SR-nya.
+    Konstanta (gamma, confidence, frekuensi, rf) dicatat di config.yaml `metrics.varsr`.
+    """
+    r = daily.dropna()
+    n = len(r)
+    if n < 3 or r.std() == 0:
+        return {"varsh": 0.0, "sigma_sr": 0.0, "skew": 0.0, "kurtosis": 0.0, "n": n, "gamma": gamma}
+    sr = r.mean() / r.std()
+    skew = float(r.skew())
+    kurt = float(r.kurt()) + 3.0  # pandas .kurt() memberi EXCESS kurtosis
+    sig = sigma_sr(n, sr, skew, kurt)
+    return {
+        "varsh": sr - gamma * sig,
+        "sigma_sr": sig,
+        "skew": skew,
+        "kurtosis": kurt,
+        "n": n,
+        "gamma": gamma,
+    }
+
+
 def compute_metrics(curve: pd.DataFrame, trades: pd.DataFrame, dfs: dict[str, pd.DataFrame], cfg: dict) -> dict:
     bt = cfg["backtest"]
     init = bt["initial_capital_usd"]
@@ -202,9 +241,14 @@ def compute_metrics(curve: pd.DataFrame, trades: pd.DataFrame, dfs: dict[str, pd
     cagr = (curve["equity"].iloc[-1] / init) ** (1 / years) - 1 if years > 0 else float("nan")
 
     daily = curve["equity"].pct_change().dropna()
-    sharpe = daily.mean() / daily.std() * (365**0.5) if daily.std() > 0 else 0.0
+    ann = 365**0.5
+    volatility = daily.std() * ann
+    sharpe = daily.mean() / daily.std() * ann if daily.std() > 0 else 0.0
     downside = daily[daily < 0]
-    sortino = daily.mean() / downside.std() * (365**0.5) if len(downside) > 0 and downside.std() > 0 else 0.0
+    sortino = daily.mean() / downside.std() * ann if len(downside) > 0 and downside.std() > 0 else 0.0
+    va = varsh(daily, gamma=float(cfg.get("metrics", {}).get("varsr", {}).get("gamma", 1.96)))
+    # VaRSR basis harian (Deng 2013 Eq. 12), TIDAK dikalikan sqrt(365) — keputusan OD-6.6/6.7.
+    # Supplementary metric; Sharpe/MDD/return kanonik di bawah tidak berubah.
 
     roll_max = curve["equity"].cummax()
     dd = curve["equity"] / roll_max - 1
@@ -228,7 +272,14 @@ def compute_metrics(curve: pd.DataFrame, trades: pd.DataFrame, dfs: dict[str, pd
     return {
         "total_return_pct": round(total_return * 100, 2),
         "cagr_pct": round(cagr * 100, 2),
+        "volatility_pct": round(volatility * 100, 2),
+        "skewness": round(va["skew"], 2),
+        "kurtosis": round(va["kurtosis"], 2),
         "sharpe": round(sharpe, 2),
+        "varsh": round(va["varsh"], 4),
+        "varsh_sigma_sr": round(va["sigma_sr"], 4),
+        "varsh_gamma": va["gamma"],
+        "varsh_n_obs": va["n"],
         "sortino": round(sortino, 2),
         "max_drawdown_pct": round(max_dd * 100, 2),
         "n_trades": len(trades),
@@ -292,11 +343,44 @@ def save_report(curve: pd.DataFrame, trades: pd.DataFrame, metrics: dict, dfs: d
     (REPORTS / "metrics.md").write_text("\n".join(lines))
 
 
+def check_metrics(daily: pd.Series, metrics: dict) -> None:
+    """Self-check metrik. Gagal kalau logika VaRSR / volatilitas rusak.
+
+    1) VaRSR <= Sharpe  (VaRSR harus lebih konservatif — inti maknanya)
+    2) Kasus normal (skew=0, kurt=3) sigma_hat(SR) harus persis persamaan (9) paper
+    3) Regression pin: hasil canonical tidak boleh diam-diam berubah
+    Jalankan: CHECK=1 python backtest/run_backtest.py
+    """
+    # 1) konservatisme: VaRSR harian <= SR harian (bukan vs Sharpe yang sudah di-annualisasi)
+    daily_sr = daily.mean() / daily.std()
+    assert metrics["varsh"] <= daily_sr + 1e-9, (
+        f"VaRSR ({metrics['varsh']}) harus <= SR harian ({daily_sr})")
+
+    # 2) sanity formula: skew=0 & kurt=3 -> persamaan (9) paper
+    n = metrics["varsh_n_obs"]
+    for sr_test in (0.01, 0.05, 0.28):
+        want = ((1.0 / (n - 1)) * (1 + 0.5 * sr_test**2)) ** 0.5
+        got = sigma_sr(n, sr_test, skew=0.0, kurt=3.0)
+        assert abs(got - want) < 1e-12, f"sigma_sr normal-case: {got} != {want}"
+
+    # 3) regression pin hasil canonical (config di config.yaml, 10 pair Cluster-A2)
+    expected = {"sharpe": 0.82, "max_drawdown_pct": -26.45, "n_trades": 94, "final_equity": 2520.02}
+    for key, want in expected.items():
+        assert metrics[key] == want, f"{key}: {metrics[key]} != {want} (hasil canonical berubah)"
+
+    print(f"OK  VaRSR <= SR harian       (VaRSR {metrics['varsh']} <= SR {daily_sr:.6f})")
+    print("OK  sigma_hat(SR) kasus normal = persamaan (9) Deng dkk. (2013)")
+    print("OK  regression pin hasil canonical (Sharpe 0.82 / MDD -26.45 / 94 trade / 2520.02)")
+
+
 def main() -> int:
     cfg = load_config()
     dfs = {s: load_ohlcv(s, cfg["strategy"]["timeframe"], cfg) for s in cfg["strategy"]["pairs"]}
     curve, trades = run_backtest(dfs, cfg)
     metrics = compute_metrics(curve, trades, dfs, cfg)
+    if os.environ.get("CHECK"):
+        check_metrics(curve["equity"].pct_change().dropna(), metrics)
+        return 0
     save_report(curve, trades, metrics, dfs, cfg)
     for k, v in metrics.items():
         log.info("%s = %s", k, v)

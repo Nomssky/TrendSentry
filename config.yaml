@@ -50,3 +50,14 @@ llm_filter:
 execution:
   mode: "paper"                    # backtest | paper | live
   exchange: "bitget"               # venue intent Fase 4: Bitget Exchange (API automation + exchange-side SL)
+
+metrics:
+  varsr:                            # VaRSR — kewajiban RQ1 (OD-3.11: IMPLEMENT). Formula & parameter dikunci.
+    formula: "deng2013_eq12"        # VaRSR = SR - gamma * sigma_hat(SR); sigma_hat via Deng dkk. (2013) Eq. (12) / Mertens (2002)
+    gamma: 1.96                     # two-sided 95% confidence (alpha = 0.05)
+    confidence: 0.95                # two-sided
+    return_frequency: "daily"       # daily strategy equity returns, pct_change().dropna()
+    risk_free: 0.0                  # rf = 0 (selaras OD-6.4 untuk Sharpe)
+    skewness: "sample"              # momen sampel miring (pandas .skew())
+    kurtosis: "raw"                 # dipakai RAW kurtosis = excess + 3 di Eq. (12) (pandas .kurt() + 3)
+    annualization: "none"           # TIDAK dikalikan sqrt(365) — Deng Eq. (12) tak menetapkan annualisasi; dilaporkan basis harian

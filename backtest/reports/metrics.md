@@ -4,7 +4,14 @@
 |---|---|
 | total_return_pct | 152.0 |
 | cagr_pct | 17.24 |
+| volatility_pct | 22.33 |
+| skewness | 2.41 |
+| kurtosis | 123.9 |
 | sharpe | 0.82 |
+| varsh | 0.0015 |
+| varsh_sigma_sr | 0.0212 |
+| varsh_gamma | 1.96 |
+| varsh_n_obs | 2119 |
 | sortino | 0.85 |
 | max_drawdown_pct | -26.45 |
 | n_trades | 94 |

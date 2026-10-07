@@ -152,14 +152,15 @@ def main():
     # Results table
     lines.append("## 2. Hasil Backtest per Konfigurasi Portfolio")
     lines.append("")
-    lines.append("| Config | Pairs | MaxConc | Sharpe | Return% | MaxDD% | Trades | WR% | PF | CAGR% | Gate |")
-    lines.append("|---|---|---|---|---|---|---|---|---|---|---|")
+    lines.append("| Config | Pairs | MaxConc | Sharpe | VaRSR | Vol% | Return% | MaxDD% | Trades | WR% | PF | CAGR% | Gate |")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     for m in results:
         passed_sharpe = m["sharpe"] >= 1.0
         passed_dd = abs(m["max_drawdown_pct"]) <= 30.0
         gate = "PASS" if (passed_sharpe and passed_dd) else "FAIL"
         lines.append(f"| {m['config_name']} | {m['n_pairs']} | {m['max_concurrent']} | "
-                     f"{m['sharpe']} | {m['total_return_pct']} | {m['max_drawdown_pct']} | "
+                     f"{m['sharpe']} | {m['varsh']} | {m['volatility_pct']} | "
+                     f"{m['total_return_pct']} | {m['max_drawdown_pct']} | "
                      f"{m['n_trades']} | {m['win_rate_pct']} | {m['profit_factor']} | "
                      f"{m['cagr_pct']} | {gate} |")
     lines.append("")

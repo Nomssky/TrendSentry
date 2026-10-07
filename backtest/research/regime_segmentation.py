@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from run_backtest import run_backtest, compute_metrics, load_ohlcv
+from run_backtest import run_backtest, compute_metrics, load_ohlcv, varsh
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("regime_segmentation")
@@ -74,6 +74,9 @@ def compute_metrics_in_period(curve: pd.DataFrame, trades: pd.DataFrame, start: 
     
     daily = seg["equity"].pct_change().dropna()
     sharpe = daily.mean() / daily.std() * (365**0.5) if daily.std() > 0 else 0.0
+    # VaRSR basis HARIAN, sengaja TIDAK dikalikan sqrt(365) — sama dengan compute_metrics()
+    # di engine utama (keputusan OD-6.6/6.7: Deng Eq.(12) tidak menetapkan konvensi annualisasi).
+    va = varsh(daily)
     
     roll_max = seg["equity"].cummax()
     dd = seg["equity"] / roll_max - 1
@@ -87,6 +90,7 @@ def compute_metrics_in_period(curve: pd.DataFrame, trades: pd.DataFrame, start: 
     return {
         "return_pct": round(total_ret * 100, 2),
         "sharpe": round(sharpe, 2),
+        "varsh": round(va["varsh"], 4),
         "max_dd_pct": round(max_dd * 100, 2),
         "cagr_pct": round(cagr * 100, 2) if not np.isnan(cagr) else "N/A",
         "n_trades": n_trades,
@@ -204,6 +208,7 @@ def main():
                 if m:
                     row[f"{bh_label}_ret"] = m["return_pct"]
                     row[f"{bh_label}_sharpe"] = m["sharpe"]
+                    row[f"{bh_label}_varsh"] = m["varsh"]
                     row[f"{bh_label}_dd"] = m["max_dd_pct"]
             
             # Strategy metrics per config
@@ -212,6 +217,7 @@ def main():
                 if m:
                     row[f"{cfg_name}_ret"] = m["return_pct"]
                     row[f"{cfg_name}_sharpe"] = m["sharpe"]
+                    row[f"{cfg_name}_varsh"] = m["varsh"]
                     row[f"{cfg_name}_dd"] = m["max_dd_pct"]
                     row[f"{cfg_name}_trades"] = m["n_trades"]
             
@@ -300,21 +306,21 @@ def main():
         
         lines.append(f"### {reg_label}")
         lines.append("")
-        header = "| Periode | BTC% | BH2 Ret% | BH2 DD% | BH2 Sharpe | BH10 Ret% | BH10 DD% | BH10 Sharpe | "
+        header = "| Periode | BTC% | BH2 Ret% | BH2 DD% | BH2 Sharpe | BH2 VaRSR | BH10 Ret% | BH10 DD% | BH10 Sharpe | BH10 VaRSR | "
         for cn in config_names:
             short = cn[:25]
-            header += f"{short} Ret% | {short} DD% | {short} Sharpe | "
+            header += f"{short} Ret% | {short} DD% | {short} Sharpe | {short} VaRSR | "
         header += "|"
         lines.append(header)
         
-        lines.append("|" + "---|" * (len(config_names) * 3 + 7))
+        lines.append("|" + "---|" * (len(config_names) * 4 + 9))
         
         for s in segs:
             row = f"| {s['start']}..{s['end']} | {s['btc_return']} | "
-            row += f"{s.get('BH 2-pair_ret', 'N/A')} | {s.get('BH 2-pair_dd', 'N/A')} | {s.get('BH 2-pair_sharpe', 'N/A')} | "
-            row += f"{s.get('BH 10-pair_ret', 'N/A')} | {s.get('BH 10-pair_dd', 'N/A')} | {s.get('BH 10-pair_sharpe', 'N/A')} | "
+            row += f"{s.get('BH 2-pair_ret', 'N/A')} | {s.get('BH 2-pair_dd', 'N/A')} | {s.get('BH 2-pair_sharpe', 'N/A')} | {s.get('BH 2-pair_varsh', 'N/A')} | "
+            row += f"{s.get('BH 10-pair_ret', 'N/A')} | {s.get('BH 10-pair_dd', 'N/A')} | {s.get('BH 10-pair_sharpe', 'N/A')} | {s.get('BH 10-pair_varsh', 'N/A')} | "
             for cn in config_names:
-                row += f"{s.get(f'{cn}_ret', 'N/A')} | {s.get(f'{cn}_dd', 'N/A')} | {s.get(f'{cn}_sharpe', 'N/A')} | "
+                row += f"{s.get(f'{cn}_ret', 'N/A')} | {s.get(f'{cn}_dd', 'N/A')} | {s.get(f'{cn}_sharpe', 'N/A')} | {s.get(f'{cn}_varsh', 'N/A')} | "
             lines.append(row)
         lines.append("")
     
@@ -424,7 +430,7 @@ def main():
                  "Data: Bitget, 2020-11-09 s.d. 2026-09-02.*")
     
     out = ROOT / "backtest" / "reports" / "regime_segmentation_analysis.md"
-    out.write_text("\n".join(lines))
+    out.write_text("\n".join(line.rstrip() for line in lines))
     print(f"\nReport written to {out}")
     print(f"Chart saved: {out_png}")
 

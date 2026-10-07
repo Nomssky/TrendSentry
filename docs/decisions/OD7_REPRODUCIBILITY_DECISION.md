@@ -417,7 +417,7 @@ carrying the run id (OD-7.17). A statistic without a working generator is not ci
 | Sharpe (OD-6.7: rf=0, ×√365, ddof=1) | series + **config-resident constants** | reproducible once rf/√365/α leave hardcoded position (repo register OD-7.5, §5 below) |
 | MDD (OD-6.9) | canonical curve with OD-5 semantics | same generator as Sharpe |
 | Paired test (OD-6.11, pre-registered `d_t`, exposure-matched subset) | aligned series + `scipy` | **`scipy` undeclared** (R10) → must be declared/pinned before it is citable |
-| VaRSR (OD-6.16) | series + formula | **BLOCKED — sub-gate open** (Deng 2013 formula/confidence/horizon/method) |
+| VaRSR (OD-6.16) | series + formula | **DECIDED 2026-10-07** — Deng 2013 Eq. (12), γ=1.96 two-sided 95%, daily equity returns, rf=0, sample skew/raw kurtosis, tanpa ×√365; generator `run_backtest.varsh` + `tests/test_varsr.py`; supplementary (Snapshot B unchanged) |
 | Correlation (OD-6.18), Regime (OD-6.19) | series + disclosed exploratory params | generators must exist and be pinned; both are exploratory, so they never gate the freeze |
 
 Rejected: citing frozen report `.md` values with no working generator (status quo — 3 research
@@ -503,7 +503,7 @@ runs after ARCH §16); still open elsewhere = **1** (**repo OD-7.1 → ARCH §16
 
 ### 6.2 vs OD-5 — see OD-7.15 (table + recorded divergence on `OD5` §23 item 8).
 
-### 6.3 vs OD-6 — see OD-7.16 (all eight inputs mapped; VaRSR blocked by its sub-gate).
+### 6.3 vs OD-6 — see OD-7.16 (all eight inputs mapped; VaRSR sub-gate now DECIDED 2026-10-07: OD-3.11/6.6/6.7).
 
 ### 6.4 Verdict
 
@@ -536,7 +536,7 @@ Reasons (all recorded, none silently resolved):
 3. **`ARCHITECTURE.md` §16** — canonical metric snapshot (A / B / new run) — **OPEN, next in chain**
    (also absorbs `repo OD-7.1` and `repo OD-7.6`).
 4. **OD-6 statistical sub-gates (3), all blocking the statistical freeze:**
-   (a) **VaRSR formula + confidence + horizon + method** from Deng 2013 (PPT:62/269–273) → OD-6.16;
+   (a) **VaRSR formula + confidence + horizon + method** from Deng 2013 (PPT:62/269–273) → OD-6.16 — **DECIDED 2026-10-07** (Deng Eq. (12), two-sided 95% γ=1.96, daily, rf=0, raw kurtosis, no √365; OD-3.11 IMPLEMENT; supplementary);
    (b) **Sharpe uncertainty / CI estimator method** → OD-6.15;
    (c) **deterministic cash-day classification rule** → the pre-registered exposure-matched subset
    in OD-6.11.
@@ -608,7 +608,7 @@ No refetch was attempted (blocked, R16).
 | `git status --porcelain` | 8 untracked: `OD3_…`, `OD4_…`, `OD5_…`, `OD6_…`, `OD7_THESIS_REPRODUCIBILITY_RESULT_TRACEABILITY_AUDIT.md`, `OD8_…`, `TREE_REFACTOR_AUDIT.md`, **`OD7_REPRODUCIBILITY_DECISION.md`** |
 
 **Exact unresolved sub-gates carried from OD-6:** three —
-(1) **VaRSR formula / confidence / horizon / method** (Deng 2013, PPT:62/269–273) → OD-6.16;
+(1) **VaRSR formula / confidence / horizon / method** (Deng 2013, PPT:62/269–273) → OD-6.16 — **DECIDED 2026-10-07** (OD-3.11 IMPLEMENT; OD-6.6/6.7 Deng Eq. (12), γ=1.96, daily, rf=0, no √365, supplementary);
 (2) **Sharpe CI estimator method** → OD-6.15;
 (3) **deterministic cash-day classification rule** for the pre-registered exposure-matched subset →
 OD-6.11.
