@@ -65,7 +65,7 @@ def main() -> int:
     rows: list[dict] = []
 
     # --- Baseline 2 pair ---
-    dfs2 = {s: load_ohlcv(s, cfg["strategy"]["timeframe"]) for s in BASE_PAIRS}
+    dfs2 = {s: load_ohlcv(s, cfg["strategy"]["timeframe"], cfg) for s in BASE_PAIRS}
     curve2, trades2 = run_backtest(dfs2, cfg)
     rows.append(metrics_row("2 pair, max 2 (baseline)", curve2, trades2, dfs2, cfg))
 
@@ -74,7 +74,7 @@ def main() -> int:
         rows.append(metrics_row(f"2 pair + yield {apy:.0f}% APY", curve2, trades2, dfs2, cfg, apy=apy))
 
     # --- 5 pair ---
-    dfs5 = {**dfs2, **{s: load_ohlcv(s, cfg["strategy"]["timeframe"]) for s in EXTRA_PAIRS}}
+    dfs5 = {**dfs2, **{s: load_ohlcv(s, cfg["strategy"]["timeframe"], cfg) for s in EXTRA_PAIRS}}
     for maxpos in (3, 5):
         cfg_n = deepcopy(cfg)
         cfg_n["risk"]["max_concurrent_positions"] = maxpos

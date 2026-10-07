@@ -118,7 +118,7 @@ def main():
         "risk": {"risk_per_trade_pct": 1.0, "max_concurrent_positions": 1},
         "backtest": {"initial_capital_usd": 1000, "fee_pct": 0.1, "slippage_pct": 0.05},
     }
-    dfs2 = {s: load_ohlcv(s, TIMEFRAME) for s in ALL_ORIG[:2]}
+    dfs2 = {s: load_ohlcv(s, TIMEFRAME, cfg2) for s in ALL_ORIG[:2]}
     curve2, trades2 = run_backtest(dfs2, cfg2)
     strat2_ret = curve2["equity"].pct_change().dropna()
     
@@ -131,7 +131,7 @@ def main():
         "risk": {"risk_per_trade_pct": 1.0, "max_concurrent_positions": 5},
         "backtest": {"initial_capital_usd": 1000, "fee_pct": 0.1, "slippage_pct": 0.05},
     }
-    dfs10 = {s: load_ohlcv(s, TIMEFRAME) for s in ALL_ORIG}
+    dfs10 = {s: load_ohlcv(s, TIMEFRAME, cfg10) for s in ALL_ORIG}
     curve10, trades10 = run_backtest(dfs10, cfg10)
     strat10_ret = curve10["equity"].pct_change().dropna()
     

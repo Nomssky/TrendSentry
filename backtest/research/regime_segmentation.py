@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from run_backtest import run_backtest, compute_metrics, load_ohlcv, load_config
+from run_backtest import run_backtest, compute_metrics, load_ohlcv
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("regime_segmentation")
@@ -137,16 +137,6 @@ def main():
         "backtest": {"initial_capital_usd": 1000, "fee_pct": 0.1, "slippage_pct": 0.05},
     }
     
-    # Also: Exp A2 from correlation experiment (2 pos/cluster)
-    CLUSTERS = {"A": {"BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT",
-                      "AVAX/USDT", "LINK/USDT", "DOGE/USDT", "ADA/USDT"},
-                "B": {"HYPE/USDT"}}
-    
-    def run_cluster_config(pairs, cfg):
-        """Run backtest with 2 positions per cluster (Exp A2)."""
-        from run_backtest import run_backtest as vanilla_run
-        return vanilla_run({s: load_ohlcv(s, TIMEFRAME) for s in pairs}, cfg)
-    
     # We'll run these configs:
     configs = [
         ("2-pair (BTC+ETH, max_conc=1)", ALL_ORIG[:2], 1, None),
@@ -159,20 +149,13 @@ def main():
     for name, pairs, max_conc, mode in configs:
         log.info("Running: %s", name)
         cfg = cfg_base(pairs, max_conc)
+        dfs = {s: load_ohlcv(s, TIMEFRAME, cfg) for s in pairs}
         if mode is None:
-            dfs = {s: load_ohlcv(s, TIMEFRAME) for s in pairs}
             curve, trades = run_backtest(dfs, cfg)
-        elif mode == "cluster":
-            # Use cluster-aware runner
+        else:  # "cluster": Exp A2 — 2 posisi per cluster korelasi
             from correlation_mitigation import run_corr_aware
-            dfs = {s: load_ohlcv(s, TIMEFRAME) for s in pairs}
             curve, trades = run_corr_aware(dfs, cfg, max_per_cluster=2)
-        elif mode == "risk0.5_cluster":
-            from correlation_mitigation import run_corr_aware
-            cfg_r = {**cfg, "risk": {**cfg["risk"], "risk_per_trade_pct": 0.5}}
-            dfs = {s: load_ohlcv(s, TIMEFRAME) for s in pairs}
-            curve, trades = run_corr_aware(dfs, cfg_r, max_per_cluster=1)
-        metrics = compute_metrics(curve, trades, {s: load_ohlcv(s, TIMEFRAME) for s in pairs}, cfg)
+        metrics = compute_metrics(curve, trades, dfs, cfg)
         results[name] = {"curve": curve, "trades": trades, "metrics": metrics}
         log.info("  Sharpe=%s  Ret=%s%%  DD=%s%%  Trades=%s",
                  metrics["sharpe"], metrics["total_return_pct"], metrics["max_drawdown_pct"], metrics["n_trades"])

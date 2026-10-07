@@ -58,10 +58,16 @@ def load_config() -> dict:
     return cfg
 
 
-def load_ohlcv(symbol: str, timeframe: str, cfg: dict | None = None) -> pd.DataFrame:
+def load_ohlcv(symbol: str, timeframe: str, cfg: dict) -> pd.DataFrame:
+    """Muat OHLCV + kolom indikator sesuai model di cfg["strategy"].
+
+    `cfg` WAJIB: indikatornya (Donchian/SMA/RSI) diambil dari cfg, jadi pemanggil
+    yang lupa mengoper cfg akan gagal di titik pemanggilan — bukan diam-diam
+    memakai default atau meledak jadi KeyError di dalam fungsi.
+    """
     csv = ROOT / "data" / "historical" / f"{symbol.replace('/', '_')}_{timeframe}.csv"
     df = pd.read_csv(csv, parse_dates=["date"]).set_index("date")
-    strat = (cfg or {}).get("strategy", {}) if cfg else {}
+    strat = cfg["strategy"]
     model = strat.get("model", "donchian")
     df["atr"] = atr(df, strat.get("atr_period", 14))
     if model == "donchian":

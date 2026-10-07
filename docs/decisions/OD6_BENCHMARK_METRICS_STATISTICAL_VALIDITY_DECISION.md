@@ -35,8 +35,9 @@ Temuan utama (semua direproduksi sendiri sesi ini, kecuali disebut frozen artifa
    mengalami MDD −58,49%"*; PPT menatribusikan B&H rentang *"> −75% s.d. −85%"*).
    `decision_log.md:99` mengaitkan "B&H −58.49" — mislabel yang sudah ditandai Phase 2H
    (AR-03/OD-11). Config vanilla 10p/max_conc=5: frozen artifact −58.49; re-run HEAD =
-   **−58.64** (`PARTIAL` — engine berubah pasca-report: cash-fix `c22ad1c`, Wilder seed
-   `029a311`, `0ad6cc6`). Klaim PPT B&H (−75..−85) **konsisten** dengan `bh_max_drawdown.md`
+   **−58.64** (`PARTIAL` — penyebab tunggal `VERIFIED by OD-9 §4`: Wilder ATR seed `029a311`;
+   `c22ad1c` dan `0ad6cc6` nol perubahan). Klaim PPT B&H (−75..−85) **konsisten** dengan
+   `bh_max_drawdown.md`
    −77.63% (rekonstruksi audit ini −77.54%).
 5. **VaRSR: `NOT IMPLEMENTED / VERIFIED ABSENCE`** — 0 hit `VaR`/`VaRSR`/`value_at_risk` di
    seluruh kode, laporan, dan web (hanya muncul di dokumen audit + PPT). PPT mewajibkannya
@@ -237,8 +238,9 @@ masing-masing → harga bergerak tanpa rebalancing → fee 0 → nilai akhir Σ1
   `DESIGN.md:132` *"DD turun dari −58.49% (vanilla) ke −26.19% (Cluster-A2)"*. Re-run HEAD oleh
   audit ini: **−58.64** (trough 2023-01-18, 171 trades, return 158.46) → **`PARTIAL`** — angka
   eksak −58.49 tidak lagi keluar dari HEAD; divergensi 0.15pp/2.6pp kelasnya = engine berubah
-  setelah tanggal report (cash-fix `c22ad1c`, Wilder seed `029a311`, `0ad6cc6`) — kelas sebab
-  `INFERRED`, bisect per-commit tidak dilakukan (§29).
+  setelah tanggal report. **`VERIFIED by OD-9 §4`**: commit `029a311` (Wilder ATR seed) adalah
+  penyebab tunggal yang teridentifikasi dari drift `−58.49 → −58.64` dan `155.82 → 158.46`;
+  `c22ad1c` dan `0ad6cc6` menghasilkan **nol** perubahan metrik.
 - Jika owner pernah memahami "-58.49 = B&H": sumbernya `decision_log.md:99`
   *"DD −26.19% vs B&H −58.49%"* — **mislabel**, sudah tercatat Phase 2H (AR-03; perbaikan =
   Phase 2H OD-11, tidak diduplikasi di sini).
@@ -677,8 +679,9 @@ yang diposisikan kanonik.
 
 **Taxonomy kenapa angka berbeda (`STRONGLY SUPPORTED`):** (a) konstruksi (idle-cash vs
 fully-deployed vs period-limited); (b) vintage data (Binance pre-swap vs Bitget); (c) jendela
-periode (staggered vs common-start vs label "2020-08"); (d) evolusi engine (cash-fix `c22ad1c`,
-Wilder seed `029a311`) — lihat −58.49→−58.64 dan 155.82→158.46 (§7); (e) denominator (nominal
+periode (staggered vs common-start vs label "2020-08"); (d) evolusi engine (`029a311` Wilder ATR
+seed — penyebab tunggal yang teridentifikasi, OD-9 §4) — lihat −58.49→−58.64 dan
+155.82→158.46 (§7); (e) denominator (nominal
 1000 vs benar-benar terinvestasi). Pemilihan canonical = **OD-6.1** (konsolidasi Phase 2H OD-3
 + input OD-5.7) — **audit ini tidak memilih**.
 
@@ -784,8 +787,8 @@ OD-2..OD-5):
 - **Verifikasi eksternal mustahil dari lingkungan ini** — filter ISP memblokir domain exchange
   (OD-5 §26): klaim PPT "data Bitget 2020–2026" tidak dapat dicek terhadap venue; tidak ada data
   eksternal yang disubstitusi ke repo.
-- **Tiga script research crash di HEAD** (`sharpe_benchmark:121/134`, `regime_segmentation:148/…`,
-  `portfolio_size_experiment:73` — KeyError sejak `0ad6cc6`); angka report = frozen artifact;
+- ~~**Tiga script research crash di HEAD**~~ **CLOSED — diperbaiki OD9** (blast radius sebenarnya
+  10 call site di 5 skrip, `cfg` jadi parameter wajib); angka report tetap frozen artifact;
   audit ini mereproduksi angkanya via rekonstruksi read-only, **bukan** dengan menjalankan script
   asli (jalannya akan menulis ke `backtest/reports/` — dilarang mode ini).
 - **`scipy` tidak tercatat di `requirements.txt`** (REPO_MAP #6) → install bersih tidak bisa
@@ -793,8 +796,10 @@ OD-2..OD-5):
 - **Variant #5 (rebalance-on-listing) tidak punya script** — reconstruksi audit ini mencocokkan
   MDD/trough (−77.54 vs −77.63; trough 2022-12-30 identik) tetapi **endpoint deviasi +9.3%**
   (94,799 vs 86,714) → mekanik persis `UNKNOWN`; +767% tidak reproduksi.
-- **Divergensi −58.49 → −58.64 dan 155.82 → 158.46** hanya dikarakterisasi pada kelas-sebab
-  (commit engine pasca-report `c22ad1c`/`029a311`/`0ad6cc6`, `INFERRED`) — tanpa bisect per-commit.
+- ~~Divergensi −58.49 → −58.64 dan 155.82 → 158.46 hanya dikarakterisasi pada kelas-sebab
+  (`INFERRED`, tanpa bisect per-commit).~~ **CLOSED — `VERIFIED by OD-9 §4`**: bisect per-commit
+  dilakukan; penyebab tunggal = `029a311` (Wilder ATR seed), sedangkan `c22ad1c` dan `0ad6cc6`
+  nol perubahan metrik.
 - **Status eks-ante threshold regime `UNKNOWN`** — tidak ada artefak pre-registration; tidak ada
   akses ke riwayat pikiran pemilihan parameter.
 - **Sensitivitas §26 bukan hasil tesis** — tidak boleh dipakai memilih metodologi/angka; angka
