@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { SiteShell } from "../components/marketing/SiteShell";
-import { GlassCard, NeonButton, TechLabel } from "../components/marketing/ui";
+import { GlassCard, PrimaryButton, TechLabel } from "../components/marketing/ui";
 import { BACKTEST_REFERENCE } from "@/lib/reference";
 import { SITE } from "@/lib/site";
 
@@ -39,22 +39,22 @@ export default function Proof() {
     <SiteShell>
       <main className="px-5 pb-20 pt-32 sm:px-10 sm:pt-40 lg:px-16">
         <TechLabel>[ PROOF // CLUSTER-A2 ]</TechLabel>
-        <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-[-0.04em] sm:text-6xl">
-          The receipts, <span className="bg-gradient-to-r from-[#ccff00] to-white bg-clip-text italic text-transparent">not the pitch.</span>
+        <h1 className="font-display mt-4 max-w-3xl text-4xl tracking-[-0.02em] sm:text-6xl">
+          The receipts, <span className="bg-gradient-to-r from-accent to-primary bg-clip-text italic text-transparent">not the pitch.</span>
         </h1>
-        <p className="mt-6 max-w-2xl text-white/60">
+        <p className="mt-6 max-w-2xl text-secondary">
           Cluster-A2 is our own system — dogfood, not product. Full parameters, full numbers, full caveats.
-          The ongoing live record is at <Link href="/papertrading" className="text-[#ccff00] underline">/papertrading</Link>.
+          The ongoing live record is at <Link href="/papertrading" className="text-accent underline">/papertrading</Link>.
         </p>
 
         <div className="mt-12 grid grid-cols-12 gap-4">
           <GlassCard className="col-span-12 p-7 lg:col-span-7">
-            <TechLabel className="text-white/40">BACKTEST REFERENCE // 6 TAHUN</TechLabel>
-            <dl className="mt-5 divide-y divide-white/10">
+            <TechLabel className="text-muted">BACKTEST REFERENCE // 6 TAHUN</TechLabel>
+            <dl className="mt-5 divide-y divide-line">
               {ROWS.map(([k, v]) => (
                 <div key={k} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between">
-                  <dt className="tech-label text-white/40">{k}</dt>
-                  <dd className="font-mono-tech text-sm font-medium text-right">{v}</dd>
+                  <dt className="tech-label text-muted">{k}</dt>
+                  <dd className="font-mono text-sm font-medium text-right">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -62,23 +62,23 @@ export default function Proof() {
 
           <div className="col-span-12 space-y-4 lg:col-span-5">
             <GlassCard className="p-7">
-              <TechLabel className="text-white/40">CAVEATS // BACA DULU</TechLabel>
-              <ul className="mt-4 space-y-3 text-sm leading-relaxed text-white/65">
+              <TechLabel className="text-muted">CAVEATS // BACA DULU</TechLabel>
+              <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
                 {CAVEATS.map((c) => (
                   <li key={c.slice(0, 24)} className="flex gap-3">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#ccff00]" />
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
                     {c}
                   </li>
                 ))}
               </ul>
             </GlassCard>
             <GlassCard className="p-7">
-              <TechLabel className="text-white/40">REPRODUCE IT</TechLabel>
-              <p className="mt-3 text-sm leading-relaxed text-white/65">
+              <TechLabel className="text-muted">REPRODUCE IT</TechLabel>
+              <p className="mt-3 text-sm leading-relaxed text-muted">
                 All scripts, reports, and the decision log are open on GitHub. Don&apos;t trust the numbers — rerun
                 them yourself.
               </p>
-              <a href={SITE.decisionLog} className="tech-label mt-4 inline-block text-[#ccff00]">
+              <a href={SITE.decisionLog} className="tech-label mt-4 inline-block text-accent">
                 decision_log.md →
               </a>
             </GlassCard>
@@ -86,7 +86,7 @@ export default function Proof() {
         </div>
 
         <div className="mt-12 flex flex-wrap gap-4">
-          <NeonButton href="/papertrading">Check the live record →</NeonButton>
+          <PrimaryButton href="/papertrading">Check the live record →</PrimaryButton>
         </div>
       </main>
     </SiteShell>

@@ -61,7 +61,7 @@ export default async function DashboardPage() {
           title="Bot health"
           action={
             bots.length > 0 ? (
-              <Link href="/app/deployments" className="text-xs font-medium text-[#ccff00] hover:underline">
+              <Link href="/app/deployments" className="text-xs font-medium text-accent hover:underline">
                 Manage bots →
               </Link>
             ) : undefined
@@ -87,13 +87,13 @@ export default async function DashboardPage() {
               <Link
                 key={b.id}
                 href={`/app/deployments/${b.id}`}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-colors hover:border-white/20"
+                className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4 transition-colors hover:border-line-strong"
               >
                 <span className="flex min-w-0 items-center gap-3">
                   <StatusBadge status={b.status} />
-                  <span className="truncate font-medium text-white">{b.name}</span>
+                  <span className="truncate font-medium text-primary">{b.name}</span>
                 </span>
-                <span className="shrink-0 text-xs text-white/40">
+                <span className="shrink-0 text-xs text-muted">
                   {b.last_heartbeat
                     ? `Active ${new Date(b.last_heartbeat).toLocaleString()}`
                     : "Never checked in"}
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
           </div>
         )}
         {bots.length > 0 && runningBots.length === 0 && failedBots.length === 0 && (
-          <p className="mt-2 text-xs text-white/40">
+          <p className="mt-2 text-xs text-muted">
             No bot is currently running. Stopped bots keep their history — run one again from
             your runner when ready.
           </p>
@@ -114,42 +114,42 @@ export default async function DashboardPage() {
       {!isSetupComplete && (
         <section aria-label="Setup checklist">
           <SectionHeader title="Setup checklist" />
-          <ol className="space-y-3 rounded-2xl border border-[#ccff00]/20 bg-[#ccff00]/[0.04] p-6">
+          <ol className="space-y-3 rounded-2xl border border-accent/20 bg-accent/[0.05] p-6">
             <li className="flex items-start gap-3">
-              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${hasApiKey ? "bg-[#ccff00] text-black" : "border border-white/20 text-white/40"}`}>
+              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${hasApiKey ? "bg-action text-on-action" : "border border-line-strong text-muted"}`}>
                 {hasApiKey ? "✓" : "1"}
               </span>
               <div>
-                <p className={`text-sm font-medium ${hasApiKey ? "text-white/40 line-through" : "text-white"}`}>Connect Bitget API key</p>
-                {!hasApiKey && <p className="mt-0.5 text-xs text-white/40">A read-only key — no trade or withdraw permission.</p>}
-                {!hasApiKey && <Link href="/app/settings" className="mt-1 inline-block text-xs font-medium text-[#ccff00] hover:underline">Go to Settings →</Link>}
+                <p className={`text-sm font-medium ${hasApiKey ? "text-muted line-through" : "text-primary"}`}>Connect Bitget API key</p>
+                {!hasApiKey && <p className="mt-0.5 text-xs text-muted">A read-only key — no trade or withdraw permission.</p>}
+                {!hasApiKey && <Link href="/app/settings" className="mt-1 inline-block text-xs font-medium text-accent hover:underline">Go to Settings →</Link>}
               </div>
             </li>
             <li className="flex items-start gap-3">
-              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${hasStrategy ? "bg-[#ccff00] text-black" : "border border-white/20 text-white/40"}`}>
+              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${hasStrategy ? "bg-action text-on-action" : "border border-line-strong text-muted"}`}>
                 {hasStrategy ? "✓" : "2"}
               </span>
               <div>
-                <p className={`text-sm font-medium ${hasStrategy ? "text-white/40 line-through" : "text-white"}`}>Create a strategy</p>
-                {!hasStrategy && <p className="mt-0.5 text-xs text-white/40">Pick a template (Donchian, SMA, RSI) and set your parameters.</p>}
-                {!hasStrategy && <Link href="/app/strategies/new" className="mt-1 inline-block text-xs font-medium text-[#ccff00] hover:underline">Create strategy →</Link>}
+                <p className={`text-sm font-medium ${hasStrategy ? "text-muted line-through" : "text-primary"}`}>Create a strategy</p>
+                {!hasStrategy && <p className="mt-0.5 text-xs text-muted">Pick a template (Donchian, SMA, RSI) and set your parameters.</p>}
+                {!hasStrategy && <Link href="/app/strategies/new" className="mt-1 inline-block text-xs font-medium text-accent hover:underline">Create strategy →</Link>}
               </div>
             </li>
             <li className="flex items-start gap-3">
-              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${hasBot ? "bg-[#ccff00] text-black" : hasApiKey && hasStrategy ? "border border-[#ccff00]/40 text-[#ccff00]" : "border border-white/20 text-white/40"}`}>
+              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${hasBot ? "bg-action text-on-action" : hasApiKey && hasStrategy ? "border border-accent/35 text-accent" : "border border-line-strong text-muted"}`}>
                 {hasBot ? "✓" : "3"}
               </span>
               <div>
-                <p className={`text-sm font-medium ${hasBot ? "text-white/40 line-through" : hasApiKey && hasStrategy ? "text-white" : "text-white/40"}`}>Set up a bot</p>
-                {!hasBot && <p className="mt-0.5 text-xs text-white/40">{hasApiKey && hasStrategy ? "Creates the versioned configuration — you run it from your runner." : "Complete steps 1 and 2 first."}</p>}
-                {!hasBot && hasApiKey && hasStrategy && <Link href="/app/deployments" className="mt-1 inline-block text-xs font-medium text-[#ccff00] hover:underline">Set up a bot →</Link>}
+                <p className={`text-sm font-medium ${hasBot ? "text-muted line-through" : hasApiKey && hasStrategy ? "text-primary" : "text-muted"}`}>Set up a bot</p>
+                {!hasBot && <p className="mt-0.5 text-xs text-muted">{hasApiKey && hasStrategy ? "Creates the versioned configuration — you run it from your runner." : "Complete steps 1 and 2 first."}</p>}
+                {!hasBot && hasApiKey && hasStrategy && <Link href="/app/deployments" className="mt-1 inline-block text-xs font-medium text-accent hover:underline">Set up a bot →</Link>}
               </div>
             </li>
           </ol>
         </section>
       )}
       {hasApiKey && hasStrategy && !hasFills && (
-        <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs text-white/40">
+        <p className="rounded-2xl border border-line bg-surface p-4 text-xs text-muted">
           No trading activity yet — fills appear here after your first synced trades (daily sync)
           or your bot&apos;s first run.
         </p>
@@ -159,33 +159,39 @@ export default async function DashboardPage() {
       <section aria-label="Performance">
         <SectionHeader title="Performance" />
         <div className="grid gap-4 lg:grid-cols-5">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 lg:col-span-2">
-            <p className="text-xs text-white/40">Discipline Score (avg)</p>
-            <p className="mt-2 font-mono-tech text-6xl font-bold tabular-nums tracking-tight text-white sm:text-7xl">
-              {avgScore != null ? avgScore : "—"}
-            </p>
-            <p className="mt-2 text-xs text-white/40">
+          <div className="rounded-2xl border border-line bg-surface p-6 lg:col-span-2">
+            <p className="text-xs text-muted">Discipline Score (avg)</p>
+            {/* No giant em dash for "no value": at 72px an em dash reads as a
+                solid bar and looks like a rendering fault, not an empty state.
+                The design has no display-size placeholder glyph — the caption
+                below carries the message instead. */}
+            {avgScore != null && (
+              <p className="mt-2 font-mono text-6xl font-bold tabular-nums tracking-tight text-primary sm:text-7xl">
+                {avgScore}
+              </p>
+            )}
+            <p className="mt-2 text-xs text-muted">
               {avgScore != null
                 ? "Average of your last 30 daily scores. Higher means fewer rule breaks."
                 : "Not available yet — needs logged trades."}
             </p>
           </div>
-          <div className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03] px-6 lg:col-span-3">
+          <div className="divide-y divide-line rounded-2xl border border-line bg-surface px-6 lg:col-span-3">
             <div className="flex items-baseline justify-between gap-4 py-4">
-              <p className="text-xs text-white/40">Active strategies</p>
-              <p className="font-mono-tech text-2xl font-bold tabular-nums text-white">
+              <p className="text-xs text-muted">Active strategies</p>
+              <p className="font-mono text-2xl font-bold tabular-nums text-primary">
                 {strategies.data?.filter((s) => s.is_active).length ?? 0}
               </p>
             </div>
             <div className="flex items-baseline justify-between gap-4 py-4">
-              <p className="text-xs text-white/40">
-                Fills logged <span className="text-white/30">· fills, not P&amp;L</span>
+              <p className="text-xs text-muted">
+                Fills logged <span className="text-muted">· fills, not P&amp;L</span>
               </p>
-              <p className="font-mono-tech text-2xl font-bold tabular-nums text-white">{totalTrades}</p>
+              <p className="font-mono text-2xl font-bold tabular-nums text-primary">{totalTrades}</p>
             </div>
             <div className="flex items-baseline justify-between gap-4 py-4">
-              <p className="text-xs text-white/40">Deviations</p>
-              <p className={`font-mono-tech text-2xl font-bold tabular-nums ${(totalDeviations.count ?? 0) > 0 ? "text-rose-400" : "text-emerald-400"}`}>
+              <p className="text-xs text-muted">Deviations</p>
+              <p className={`font-mono text-2xl font-bold tabular-nums ${(totalDeviations.count ?? 0) > 0 ? "text-danger" : "text-success"}`}>
                 {totalDeviations.count ?? 0}
               </p>
             </div>
@@ -196,7 +202,7 @@ export default async function DashboardPage() {
       {scoreData.length > 1 && (
         <section aria-label="Score trend">
           <SectionHeader title="Score trend" />
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <div className="rounded-2xl border border-line bg-surface p-5">
             <ScoreTrendChart data={scoreData} />
           </div>
         </section>
@@ -207,28 +213,28 @@ export default async function DashboardPage() {
         <SectionHeader
           title="Latest activity"
           action={
-            <Link href="/app/deviation-log" className="text-xs font-medium text-[#ccff00] hover:underline">
+            <Link href="/app/deviation-log" className="text-xs font-medium text-accent hover:underline">
               View all →
             </Link>
           }
         />
         <div className="space-y-2">
           {!deviations.data?.length && (
-            <p className="text-sm text-white/40">
+            <p className="text-sm text-muted">
               No deviations detected. {hasFills ? "Keep it up!" : "Activity appears after your first synced trades."}
             </p>
           )}
           {deviations.data?.slice(0, 5).map((d) => (
-            <div key={d.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">
+            <div key={d.id} className="rounded-xl border border-line bg-surface p-4 text-sm">
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={d.severity === "critical" ? "error" : "warning"} label={d.severity} />
-                <span className="font-mono-tech text-xs uppercase text-white/30">{d.rule_key}</span>
+                <span className="font-mono text-xs uppercase text-muted">{d.rule_key}</span>
               </div>
-              <p className="mt-1 text-white/70">
-                Expected <span className="text-[#ccff00]">{d.expected}</span> · Actual{" "}
-                <span className="text-rose-400">{d.actual}</span>
+              <p className="mt-1 text-secondary">
+                Expected <span className="text-accent">{d.expected}</span> · Actual{" "}
+                <span className="text-danger">{d.actual}</span>
               </p>
-              <p className="text-xs text-white/30">{new Date(d.detected_at).toLocaleString()}</p>
+              <p className="text-xs text-muted">{new Date(d.detected_at).toLocaleString()}</p>
             </div>
           ))}
         </div>

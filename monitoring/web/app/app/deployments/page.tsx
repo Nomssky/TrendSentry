@@ -149,7 +149,7 @@ export default function DeploymentsPage() {
         action={
           <Link
             href="/app/strategies"
-            className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/60 hover:text-white"
+            className="rounded-full border border-control-border px-5 py-2 text-sm text-secondary hover:text-primary"
           >
             ← Strategies
           </Link>
@@ -157,33 +157,33 @@ export default function DeploymentsPage() {
       />
 
       {error && (
-        <p className="text-sm text-rose-400" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {error}
         </p>
       )}
 
       {issued && (
-        <section aria-label="One-time setup token" className="space-y-3 rounded-2xl border border-[#ccff00]/40 bg-[#ccff00]/[0.06] p-5">
-          <h2 className="font-medium text-[#ccff00]">Bot access token — shown once</h2>
-          <p className="text-sm text-white/70">
-            Save it now. This token will <span className="text-white">never be shown again</span> —
+        <section aria-label="One-time setup token" className="space-y-3 rounded-2xl border border-accent/35 bg-accent/[0.05] p-5">
+          <h2 className="font-medium text-accent">Bot access token — shown once</h2>
+          <p className="text-sm text-secondary">
+            Save it now. This token will <span className="text-primary">never be shown again</span> —
             only its fingerprint is stored on the server. Closing this panel or leaving the page
             erases it from this browser for good. Creating the bot did not start it — follow the
             steps below to connect your runner.
           </p>
-          <ol className="list-decimal space-y-1 pl-5 text-sm text-white/70">
+          <ol className="list-decimal space-y-1 pl-5 text-sm text-secondary">
             <li>Copy the settings block below into your bot runner (self-hosted machine or CI).</li>
             <li>
-              Run <span className="font-mono-tech text-xs">python paper_trading/run_deployment.py</span>{" "}
+              Run <span className="font-mono text-xs">python paper_trading/run_deployment.py</span>{" "}
               with those three values set.
             </li>
             <li>Click Test connection below to confirm the token works.</li>
           </ol>
-          <p className="text-xs text-white/40">
+          <p className="text-xs text-muted">
             Lost the token? It cannot be recovered — create a new bot (the old one will never run
             without it).
           </p>
-          <pre className="overflow-x-auto rounded-lg border border-white/10 bg-black/40 p-4 text-xs text-white/80">
+          <pre className="overflow-x-auto rounded-lg border border-line bg-canvas/40 p-4 text-xs text-secondary">
             {runtimeEnvBlock(issued)}
           </pre>
           <div className="flex flex-wrap items-center gap-3">
@@ -197,7 +197,7 @@ export default function DeploymentsPage() {
                   setCopied(false)
                 }
               }}
-              className="rounded-full border border-[#ccff00]/50 px-5 py-2 text-sm text-[#ccff00] hover:bg-[#ccff00]/10"
+              className="rounded-full border border-accent/40 px-5 py-2 text-sm text-accent hover:bg-accent/10"
             >
               {copied ? "Copied ✓" : "Copy settings"}
             </button>
@@ -218,12 +218,12 @@ export default function DeploymentsPage() {
                   setTesting(false)
                 }
               }}
-              className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/70 hover:text-white disabled:opacity-40"
+              className="rounded-full border border-control-border px-5 py-2 text-sm text-secondary hover:text-primary disabled:opacity-40"
             >
               {testing ? "Testing…" : "Test connection"}
             </button>
-            {tested === "ok" && <span className="text-sm text-emerald-400">Token works ✓</span>}
-            {tested === "fail" && <span className="text-sm text-rose-400">Token not accepted — double-check.</span>}
+            {tested === "ok" && <span className="text-sm text-success">Token works ✓</span>}
+            {tested === "fail" && <span className="text-sm text-danger">Token not accepted — double-check.</span>}
             <button
               type="button"
               onClick={() => {
@@ -231,7 +231,7 @@ export default function DeploymentsPage() {
                 setCopied(false)
                 setTested(null)
               }}
-              className="rounded-full border border-white/15 px-5 py-2 text-sm text-white/60 hover:text-white"
+              className="rounded-full border border-control-border px-5 py-2 text-sm text-secondary hover:text-primary"
             >
               I saved it — close
             </button>
@@ -245,8 +245,8 @@ export default function DeploymentsPage() {
           body="Set one up below: pick a Donchian strategy, give the bot a name, then run it from your runner to paper-trade on its own. Other strategy types are discipline-tracking only."
         />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-white/10">
-          <div className="hidden grid-cols-[1fr_150px_130px_40px] items-center gap-4 border-b border-white/10 bg-white/[0.02] px-5 py-2.5 text-[11px] uppercase tracking-wider text-white/35 sm:grid">
+        <div className="overflow-hidden rounded-2xl border border-line">
+          <div className="hidden grid-cols-[1fr_150px_130px_40px] items-center gap-4 border-b border-line bg-surface px-5 py-2.5 text-[11px] uppercase tracking-wider text-muted sm:grid">
             <span>Bot</span>
             <span>Status</span>
             <span className="text-right">Last activity</span>
@@ -256,21 +256,21 @@ export default function DeploymentsPage() {
             <Link
               key={d.id}
               href={`/app/deployments/${d.id}`}
-              className="grid grid-cols-1 gap-1.5 border-b border-white/[0.06] px-5 py-4 transition-colors last:border-0 hover:bg-white/[0.02] sm:grid-cols-[1fr_150px_130px_40px] sm:items-center sm:gap-4"
+              className="grid grid-cols-1 gap-1.5 border-b border-line px-5 py-4 transition-colors last:border-0 hover:bg-surface sm:grid-cols-[1fr_150px_130px_40px] sm:items-center sm:gap-4"
             >
               <span className="min-w-0">
-                <span className="block truncate font-medium text-white">{d.name}</span>
-                <span className="mt-0.5 block truncate text-xs text-white/40">
+                <span className="block truncate font-medium text-primary">{d.name}</span>
+                <span className="mt-0.5 block truncate text-xs text-muted">
                   {d.strategy_name ?? "Donchian strategy"} · Paper · Bitget
                 </span>
               </span>
               <span>
                 <StatusBadge status={d.status} />
               </span>
-              <span className="text-xs text-white/40 sm:text-right">
+              <span className="text-xs text-muted sm:text-right">
                 {relativeTime(d.last_heartbeat)}
               </span>
-              <span aria-hidden className="hidden text-white/30 sm:block sm:text-right">
+              <span aria-hidden className="hidden text-muted sm:block sm:text-right">
                 →
               </span>
             </Link>
@@ -278,10 +278,10 @@ export default function DeploymentsPage() {
         </div>
       )}
 
-      <form onSubmit={handleCreate} className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+      <form onSubmit={handleCreate} className="space-y-4 rounded-2xl border border-line bg-surface p-5">
         <div>
-          <h2 className="font-medium text-white">Set up a new bot</h2>
-          <p className="mt-1 text-xs text-white/40">
+          <h2 className="font-medium text-primary">Set up a new bot</h2>
+          <p className="mt-1 text-xs text-muted">
             Only Donchian Breakout strategies can run — other templates are discipline-tracking only.
             Creating the bot only prepares its configuration — run the command from the setup token
             below (or connect your runner) to actually start it.
@@ -290,7 +290,7 @@ export default function DeploymentsPage() {
         {donchianStrategies.length === 0 ? (
           <Alert tone="info">
             No Donchian strategy yet.{" "}
-            <Link href="/app/strategies/new" className="font-medium text-[#ccff00] hover:underline">
+            <Link href="/app/strategies/new" className="font-medium text-accent hover:underline">
               Create one first →
             </Link>
           </Alert>
@@ -301,14 +301,14 @@ export default function DeploymentsPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="My bot"
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50"
+                className="w-full rounded-lg border border-control-border bg-surface px-4 py-3 text-primary placeholder-muted focus:border-accent/40"
               />
             </FormField>
             <FormField label="Strategy" help="Donchian strategies you own.">
               <select
                 value={strategyId ?? ""}
                 onChange={(e) => setStrategyId(Number(e.target.value) || null)}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-[#ccff00]/50"
+                className="w-full rounded-lg border border-control-border bg-surface px-4 py-3 text-primary focus:border-accent/40"
               >
                 <option value="">Choose a Donchian strategy…</option>
                 {donchianStrategies.map((s) => (
@@ -319,12 +319,12 @@ export default function DeploymentsPage() {
             <button
               type="submit"
               disabled={busy || !formValid}
-              className="w-full rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00] disabled:cursor-not-allowed disabled:opacity-40"
+              className="w-full rounded-full bg-action px-6 py-3 font-semibold text-on-action transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
             >
               {busy ? "Creating…" : "Create bot"}
             </button>
             {!formValid && (
-              <p className="text-center text-xs text-white/30">Choose a strategy and name the bot to continue.</p>
+              <p className="text-center text-xs text-muted">Choose a strategy and name the bot to continue.</p>
             )}
           </>
         )}

@@ -1,4 +1,4 @@
-// Public landing (W1): Obsidian & Lime marketing site.
+// Public landing (W1): marketing site.
 // Read-only: stats come from the static backtest reference only — no DB access.
 
 import { BentoFeatures } from "./components/marketing/BentoFeatures";

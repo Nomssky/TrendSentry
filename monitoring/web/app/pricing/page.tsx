@@ -53,13 +53,13 @@ export default function Pricing() {
     <SiteShell>
       <main className="px-5 pb-20 pt-32 sm:px-10 sm:pt-40 lg:px-16">
         <TechLabel>[ PRICING // PRIVATE BETA ]</TechLabel>
-        <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-[-0.04em] sm:text-6xl">
+        <h1 className="font-display mt-4 max-w-3xl text-4xl tracking-[-0.02em] sm:text-6xl">
           Free to log.{" "}
-          <span className="bg-gradient-to-r from-[#ccff00] to-white bg-clip-text italic text-transparent">
+          <span className="bg-gradient-to-r from-accent to-primary bg-clip-text italic text-transparent">
             Subscribe to stay honest.
           </span>
         </h1>
-        <p className="mt-6 max-w-2xl text-white/60">
+        <p className="mt-6 max-w-2xl text-secondary">
           The Watcher tier is open now — connect your exchange and start logging your discipline for
           free. Premium tiers unlock real-time alerts and the Discipline Benchmark.
         </p>
@@ -70,14 +70,14 @@ export default function Pricing() {
               key={t.name}
               className={
                 t.hot
-                  ? "noise-overlay rounded-3xl bg-[#ccff00] p-8 text-black"
-                  : "glass noise-overlay rounded-3xl p-8 transition-colors duration-300 hover:border-[#ccff00]/40"
+                  ? "noise-overlay rounded-3xl bg-action p-8 text-on-action"
+                  : "glass noise-overlay rounded-3xl p-8 transition-colors duration-300 hover:border-accent/35"
               }
             >
-              <p className={`tech-label ${t.hot ? "text-black/60" : "text-white/40"}`}>{t.state}</p>
-              <h2 className="mt-3 text-2xl font-bold">{t.name}</h2>
-              <p className={`mt-1 font-mono-tech text-3xl font-bold ${t.hot ? "" : "text-[#ccff00]"}`}>{t.price}</p>
-              <ul className={`mt-6 space-y-2.5 text-sm ${t.hot ? "text-black/75" : "text-white/65"}`}>
+              <p className={`tech-label ${t.hot ? "text-on-action/65" : "text-muted"}`}>{t.state}</p>
+              <h2 className="font-display mt-3 text-2xl">{t.name}</h2>
+              <p className={`mt-1 font-display text-3xl ${t.hot ? "" : "text-accent"}`}>{t.price}</p>
+              <ul className={`mt-6 space-y-2.5 text-sm ${t.hot ? "text-on-action/80" : "text-muted"}`}>
                 {t.features.map((f) => (
                   <li key={f} className="flex gap-2.5">
                     <span>{t.hot ? "→" : "✓"}</span>
@@ -86,7 +86,7 @@ export default function Pricing() {
                 ))}
               </ul>
               {"comingSoon" in t && t.comingSoon ? (
-                <span className="mt-8 block w-full cursor-not-allowed rounded-full bg-white/5 px-6 py-3 text-center font-semibold text-white/40">
+                <span className="mt-8 block w-full cursor-not-allowed rounded-full bg-surface px-6 py-3 text-center font-semibold text-muted">
                   Coming soon
                 </span>
               ) : t.plan ? (
@@ -94,7 +94,7 @@ export default function Pricing() {
               ) : (
                 <Link
                   href="/auth/signup"
-                  className="mt-8 block w-full rounded-full bg-white/10 px-6 py-3 text-center font-semibold text-white transition hover:bg-white/20"
+                  className="mt-8 block w-full rounded-full bg-elevated px-6 py-3 text-center font-semibold text-primary transition hover:bg-elevated"
                 >
                   Start free
                 </Link>
@@ -106,20 +106,20 @@ export default function Pricing() {
         <GlassCard className="mt-8 p-8 sm:p-10">
           <div id="waitlist" className="scroll-mt-32">
             <TechLabel>[ WAITLIST ]</TechLabel>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight">Paper Beta is invite-only for now.</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/60">
+            <h2 className="font-display mt-3 text-3xl tracking-tight">Paper Beta is invite-only for now.</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-secondary">
               While we finish validation, the waitlist runs through GitHub. Open an issue or start a
               discussion with subject{" "}
-              <span className="font-mono-tech text-[#ccff00]">[WAITLIST]</span> — you&apos;ll be first
+              <span className="font-mono text-accent">[WAITLIST]</span> — you&apos;ll be first
               in line when accounts open. In the meantime, start with Watcher.
             </p>
             <div className="mt-6 flex flex-wrap gap-4">
-              <a href={SITE.github} target="_blank" rel="noopener noreferrer" className="inline-block rounded-full bg-[#ccff00] px-8 py-4 text-sm font-semibold text-black transition hover:bg-[#aadd00]">
+              <a href={SITE.github} target="_blank" rel="noopener noreferrer" className="inline-block rounded-full bg-action px-8 py-4 text-sm font-semibold text-on-action transition hover:bg-accent-hover">
                 Join waitlist on GitHub →
               </a>
               <Link
                 href="/start"
-                className="inline-block rounded-full border border-white/15 bg-white/5 px-8 py-4 text-sm font-medium text-white/80 backdrop-blur transition hover:border-[#ccff00]/40 hover:text-white"
+                className="inline-block rounded-full border border-control-border bg-surface px-8 py-4 text-sm font-medium text-secondary backdrop-blur transition hover:border-accent/35 hover:text-primary"
               >
                 Start Watcher for free
               </Link>

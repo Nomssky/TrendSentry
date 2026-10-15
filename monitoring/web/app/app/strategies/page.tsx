@@ -37,7 +37,7 @@ export default async function StrategiesPage() {
         action={
           <Link
             href="/app/strategies/new"
-            className="rounded-full bg-[#ccff00] px-5 py-2 text-sm font-semibold text-black transition hover:bg-[#aadd00]"
+            className="rounded-full bg-action px-5 py-2 text-sm font-semibold text-on-action transition hover:bg-accent-hover"
           >
             + New strategy
           </Link>
@@ -54,20 +54,20 @@ export default async function StrategiesPage() {
       ) : (
         <>
           {hasDonchian && deployedCount === 0 && (
-            <div className="rounded-2xl border border-[#ccff00]/20 bg-[#ccff00]/[0.04] p-5">
-              <p className="text-sm text-white/80">
+            <div className="rounded-2xl border border-accent/20 bg-accent/[0.05] p-5">
+              <p className="text-sm text-secondary">
                 Your Donchian strategy can run automatically as an isolated paper-trading bot.{" "}
-                <Link href="/app/deployments" className="font-medium text-[#ccff00] hover:underline">
+                <Link href="/app/deployments" className="font-medium text-accent hover:underline">
                   Set up a bot →
                 </Link>
               </p>
-              <p className="mt-1 text-xs text-white/40">
+              <p className="mt-1 text-xs text-muted">
                 Other templates are discipline-tracking only — only Donchian can run.
               </p>
             </div>
           )}
-          <div className="overflow-hidden rounded-2xl border border-white/10">
-            <div className="hidden grid-cols-[1fr_auto] items-center gap-4 border-b border-white/10 bg-white/[0.02] px-5 py-2.5 text-[11px] uppercase tracking-wider text-white/35 sm:grid sm:grid-cols-[1fr_220px_130px]">
+          <div className="overflow-hidden rounded-2xl border border-line">
+            <div className="hidden grid-cols-[1fr_auto] items-center gap-4 border-b border-line bg-surface px-5 py-2.5 text-[11px] uppercase tracking-wider text-muted sm:grid sm:grid-cols-[1fr_220px_130px]">
               <span>Strategy</span>
               <span>Status</span>
               <span className="text-right">Running in</span>
@@ -79,11 +79,11 @@ export default async function StrategiesPage() {
               return (
                 <div
                   key={s.id}
-                  className="grid grid-cols-1 gap-2 border-b border-white/[0.06] px-5 py-4 transition-colors last:border-0 hover:bg-white/[0.02] sm:grid-cols-[1fr_220px_130px] sm:items-center sm:gap-4"
+                  className="grid grid-cols-1 gap-2 border-b border-line px-5 py-4 transition-colors last:border-0 hover:bg-surface sm:grid-cols-[1fr_220px_130px] sm:items-center sm:gap-4"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-white">{s.name}</p>
-                    <p className="mt-0.5 text-xs text-white/40">
+                    <p className="truncate font-medium text-primary">{s.name}</p>
+                    <p className="mt-0.5 text-xs text-muted">
                       {template?.name ?? "Custom"} · Created{" "}
                       {new Date(s.created_at).toLocaleDateString()}
                     </p>
@@ -96,9 +96,9 @@ export default async function StrategiesPage() {
                       <StatusBadge status="backtest_only" label="Tracking only" />
                     )}
                   </div>
-                  <p className="text-xs text-white/50 sm:text-right">
+                  <p className="text-xs text-muted sm:text-right">
                     {bots > 0 ? (
-                      <span className="text-[#ccff00]">
+                      <span className="text-accent">
                         {bots} bot{bots === 1 ? "" : "s"}
                       </span>
                     ) : executable ? (

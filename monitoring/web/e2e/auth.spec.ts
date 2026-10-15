@@ -26,7 +26,13 @@ test("halaman proteksi tanpa login redirect ke login", async ({ page }) => {
 test("signup render + field wajib", async ({ page }) => {
   await page.goto("/auth/signup")
   await expect(page.getByPlaceholder("Email")).toBeVisible()
-  await expect(page.getByPlaceholder("Password (min 6)")).toBeVisible()
+  // Assert the policy, not the placeholder copy. The password rule was
+  // tightened (min 6 -> min 10, plus upper/lower/digit) and this test still
+  // matched the old string, so it failed against correct code. minLength is the
+  // contract; the placeholder is decoration that a copy change must not break.
+  const password = page.locator('input[name="password"]')
+  await expect(password).toBeVisible()
+  await expect(password).toHaveAttribute("minlength", "10")
   // Submit kosong diblokir browser (required) — TIDAK submit data nyata.
   const emailRequired = await page.getByPlaceholder("Email").getAttribute("required")
   expect(emailRequired).not.toBeNull()

@@ -28,19 +28,19 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black px-4">
+    <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
         <div className="flex items-center gap-2.5">
-          <LogoMark tone="light" className="h-9 w-9" />
-          <span className="text-lg font-semibold tracking-tight text-white">TrendSentry</span>
+          <LogoMark className="h-9 w-9" />
+          <span className="text-lg font-semibold tracking-tight text-primary">TrendSentry</span>
         </div>
-        <h1 className="text-2xl font-bold text-white">Create account</h1>
-        {error && <p className="text-sm text-rose-400">{error}</p>}
-        <input name="name" placeholder="Name" required className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
-        <input name="email" type="email" placeholder="Email" required className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
-        <input name="password" type="password" placeholder="Password (min 10, huruf besar/kecil + angka)" required minLength={10} className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
-        <button className="w-full rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00]">Sign up</button>
-        <p className="text-center text-sm text-white/40">Already have one? <a href="/auth/login" className="text-[#ccff00] hover:underline">Sign in</a></p>
+        <h1 className="font-display text-2xl text-primary">Create account</h1>
+        {error && <p className="text-sm text-danger">{error}</p>}
+        <input name="name" placeholder="Name" required className="w-full rounded-lg border border-control-border bg-surface px-4 py-3 text-primary placeholder-muted focus:border-accent/40" />
+        <input name="email" type="email" placeholder="Email" required className="w-full rounded-lg border border-control-border bg-surface px-4 py-3 text-primary placeholder-muted focus:border-accent/40" />
+        <input name="password" type="password" placeholder="Password (min 10, huruf besar/kecil + angka)" required minLength={10} className="w-full rounded-lg border border-control-border bg-surface px-4 py-3 text-primary placeholder-muted focus:border-accent/40" />
+        <button className="w-full rounded-full bg-action px-6 py-3 font-semibold text-on-action transition hover:bg-accent-hover">Sign up</button>
+        <p className="text-center text-sm text-muted">Already have one? <a href="/auth/login" className="text-accent hover:underline">Sign in</a></p>
       </form>
     </div>
   )

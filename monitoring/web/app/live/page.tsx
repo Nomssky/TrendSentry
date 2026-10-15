@@ -4,7 +4,7 @@
 
 import Link from "next/link";
 import { SiteShell } from "../components/marketing/SiteShell";
-import { GlassCard, NeonButton, StatusTag, TechLabel } from "../components/marketing/ui";
+import { GlassCard, PrimaryButton, StatusTag, TechLabel } from "../components/marketing/ui";
 import { SITE } from "@/lib/site";
 
 const GATES = [
@@ -33,13 +33,13 @@ export default function LiveAccount() {
     <SiteShell>
       <main className="mx-auto max-w-4xl px-5 pb-20 pt-32 sm:px-10 sm:pt-40">
         <StatusTag text="REAL ACCOUNT // NOT LIVE" />
-        <h1 className="mt-4 text-4xl font-bold tracking-[-0.04em] sm:text-6xl">
+        <h1 className="font-display mt-4 text-4xl tracking-[-0.02em] sm:text-6xl">
           Real money comes{" "}
-          <span className="bg-gradient-to-r from-[#ccff00] to-white bg-clip-text italic text-transparent">
+          <span className="bg-gradient-to-r from-accent to-primary bg-clip-text italic text-transparent">
             after proof.
           </span>
         </h1>
-        <p className="mt-6 max-w-2xl text-white/60">
+        <p className="mt-6 max-w-2xl text-secondary">
           This is where the real account will live. It is deliberately empty: Fase 4 has a decision gate and
           paper trading hasn&apos;t cleared it yet. Anything shown here before then would be marketing, not
           evidence.
@@ -49,17 +49,17 @@ export default function LiveAccount() {
           {GATES.map((g) => (
             <GlassCard key={g.n} className="p-7">
               <div className="flex items-start gap-5">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/20 font-mono-tech text-sm font-bold">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line-strong font-mono text-sm font-bold">
                   {g.n}
                 </span>
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
                     <h2 className="text-xl font-bold">{g.title}</h2>
-                    <span className="rounded-full bg-white/10 px-2.5 py-0.5 font-mono-tech text-[11px] text-white/50">
+                    <span className="rounded-full bg-elevated px-2.5 py-0.5 font-mono text-[11px] text-muted">
                       {g.done ? "CLEARED" : "PENDING"}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed text-white/65">{g.body}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">{g.body}</p>
                 </div>
               </div>
             </GlassCard>
@@ -67,16 +67,16 @@ export default function LiveAccount() {
         </div>
 
         <GlassCard className="mt-4 p-7">
-          <TechLabel className="text-white/40">MEANWHILE</TechLabel>
-          <p className="mt-3 text-sm leading-relaxed text-white/65">
+          <TechLabel className="text-muted">MEANWHILE</TechLabel>
+          <p className="mt-3 text-sm leading-relaxed text-muted">
             The paper engine runs daily on real market data with zero capital risk — every HOLD, entry, exit,
             and slippage sample logged. That&apos;s the record to judge us by.
           </p>
           <div className="mt-6 flex flex-wrap gap-4">
-            <NeonButton href={SITE.liveDashboard}>Watch paper trading →</NeonButton>
+            <PrimaryButton href={SITE.liveDashboard}>Watch paper trading →</PrimaryButton>
             <Link
               href={SITE.waitlistAnchor}
-              className="inline-block rounded-full border border-white/15 bg-white/5 px-8 py-4 text-sm font-medium text-white/80 backdrop-blur transition hover:border-[#ccff00]/40 hover:text-white"
+              className="inline-block rounded-full border border-control-border bg-surface px-8 py-4 text-sm font-medium text-secondary backdrop-blur transition hover:border-accent/35 hover:text-primary"
             >
               Get notified at launch
             </Link>

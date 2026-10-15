@@ -21,23 +21,23 @@ export function ProofStrip() {
       <div className="glass noise-overlay rounded-[2rem] p-6 sm:p-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <StatusTag text="CLUSTER-A2 // OUR OWN DOGFOOD — NOT FOR SALE" />
-          <Link href="/proof" className="tech-label text-white/50 underline-offset-4 hover:text-[#ccff00] hover:underline">
+          <Link href="/proof" className="tech-label text-muted underline-offset-4 hover:text-accent hover:underline">
             FULL METHODOLOGY →
           </Link>
         </div>
         <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
           {STATS.map((s) => (
             <div key={s.label}>
-              <p className="tech-label mb-2 text-white/40">{s.label}</p>
-              <p className="font-mono-tech text-2xl font-bold sm:text-3xl">{s.value}</p>
+              <p className="tech-label mb-2 text-muted">{s.label}</p>
+              <p className="font-mono text-2xl font-bold sm:text-3xl">{s.value}</p>
             </div>
           ))}
         </div>
-        <p className="mt-6 max-w-3xl text-xs leading-relaxed text-white/40">
+        <p className="mt-6 max-w-3xl text-xs leading-relaxed text-muted">
           Backtest 2020-08 → 2026-08, 10 pairs, Donchian 20/10 + ATR(14)×2, long-only, risk 1%. Reference
           figures contain survivorship bias and a wide confidence interval — they are an upper expectation
           from historical data, not a promise.           The live paper dashboard at{" "}
-          <Link href={SITE.liveDashboard} className="text-[#ccff00] underline">
+          <Link href={SITE.liveDashboard} className="text-accent underline">
             /papertrading
           </Link>{" "}
           is the honest, ongoing record.

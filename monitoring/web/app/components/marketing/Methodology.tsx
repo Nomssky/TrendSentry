@@ -24,11 +24,11 @@ const STEPS = [
 
 export function Methodology() {
   return (
-    <section className="mt-8 rounded-t-[4rem] bg-[#e5e5e5] px-5 py-16 text-black sm:px-10 lg:px-16">
-      <p className="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-black/50">
+    <section className="mt-8 rounded-t-[4rem] bg-ink px-5 py-16 text-on-dark sm:px-10 lg:px-16">
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-on-dark/60">
         [ METHODOLOGY // TURTLE-STYLE TREND FOLLOWING ]
       </p>
-      <h2 className="mt-4 max-w-2xl text-4xl font-bold tracking-[-0.04em] sm:text-5xl">
+      <h2 className="font-display mt-4 max-w-2xl text-4xl tracking-[-0.02em] sm:text-5xl">
         Boring rules. Relentlessly followed.
       </h2>
 
@@ -36,19 +36,19 @@ export function Methodology() {
         <ol className="col-span-12 space-y-8 lg:col-span-7">
           {STEPS.map((s) => (
             <li key={s.n} className="flex gap-5">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-black/20 font-mono-tech text-sm font-bold">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-on-dark/25 font-mono text-sm font-bold">
                 {s.n}
               </span>
               <div>
                 <h3 className="text-xl font-bold">{s.title}</h3>
-                <p className="mt-1 max-w-xl text-sm leading-relaxed text-black/65">{s.body}</p>
+                <p className="mt-1 max-w-xl text-sm leading-relaxed text-on-dark/70">{s.body}</p>
               </div>
             </li>
           ))}
           <li>
             <Link
               href="/proof"
-              className="ml-[68px] font-mono-tech text-[11px] font-bold uppercase tracking-[0.2em] underline underline-offset-4"
+              className="ml-[68px] font-mono text-[11px] font-bold uppercase tracking-[0.2em] underline underline-offset-4"
             >
               Read the full proof →
             </Link>
@@ -56,21 +56,21 @@ export function Methodology() {
         </ol>
 
         <div className="col-span-12 lg:col-span-5">
-          <div className="relative overflow-hidden rounded-[2rem] bg-black">
+          <div className="relative overflow-hidden rounded-[2rem] bg-canvas">
             {/* greyscale visual: stylized drawdown/equity field */}
-            <div className="grid-bg h-80 opacity-70 grayscale" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-            <div className="absolute inset-x-5 bottom-5 rounded-3xl border border-white/15 bg-white/[0.07] p-5 backdrop-blur-2xl">
-              <p className="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-white/50">
+            <div className="field-grid h-80 opacity-70" />
+            <div className="absolute inset-0 bg-gradient-to-t from-canvas/80 via-transparent to-transparent" />
+            <div className="absolute inset-x-5 bottom-5 rounded-3xl border border-line bg-surface p-5 backdrop-blur-2xl">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
                 FIELD NOTE // DECISION LOG
               </p>
-              <p className="mt-2 text-sm leading-relaxed text-white/85">
+              <p className="mt-2 text-sm leading-relaxed text-secondary">
                 “Top-5 trades carried ~100% of net PnL. That&apos;s normal for trend-following — the edge is
                 cutting losses fast and letting winners run, not precision.”
               </p>
               <Link
                 href={SITE.decisionLog}
-                className="mt-3 inline-block font-mono-tech text-[10px] uppercase tracking-[0.2em] text-[#ccff00]"
+                className="mt-3 inline-block font-mono text-[10px] uppercase tracking-[0.2em] text-accent"
               >
                 decision_log.md →
               </Link>

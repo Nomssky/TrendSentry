@@ -34,7 +34,7 @@ function SchemaField({ name, schema, value, onChange }: {
   onChange: (v: unknown) => void
 }) {
   const inputClass =
-    "w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white outline-none focus:border-[#ccff00]/50"
+    "w-full rounded-lg border border-control-border bg-surface px-4 py-3 text-primary focus:border-accent/40"
   const help =
     schema.description ??
     (schema.minimum !== undefined && schema.maximum !== undefined
@@ -162,7 +162,7 @@ export default function NewStrategyPage() {
   if (loadError) {
     return (
       <div className="mx-auto max-w-2xl space-y-6">
-        <h1 className="text-3xl font-bold text-white">New strategy</h1>
+        <h1 className="font-display text-3xl text-primary">New strategy</h1>
         <Alert tone="error">{loadError}</Alert>
       </div>
     )
@@ -171,8 +171,8 @@ export default function NewStrategyPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white">New strategy</h1>
-        <p className="mt-1 text-sm text-white/50">
+        <h1 className="font-display text-3xl text-primary">New strategy</h1>
+        <p className="mt-1 text-sm text-muted">
           Your rules live here. TrendSentry checks every fill against them — or runs a Donchian
           strategy automatically as a bot.
         </p>
@@ -180,7 +180,7 @@ export default function NewStrategyPage() {
       <Stepper steps={STEPS} current={step} />
 
       {error && (
-        <p className="text-sm text-rose-400" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {error}
         </p>
       )}
@@ -195,7 +195,7 @@ export default function NewStrategyPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="My strategy"
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50"
+              className="w-full rounded-lg border border-control-border bg-surface px-4 py-3 text-primary placeholder-muted focus:border-accent/40"
             />
           </FormField>
           <div className="grid gap-4 md:grid-cols-2">
@@ -210,21 +210,21 @@ export default function NewStrategyPage() {
                   aria-pressed={active}
                   className={`rounded-2xl border p-5 text-left transition ${
                     active
-                      ? "border-[#ccff00] bg-[#ccff00]/10"
-                      : "border-white/10 bg-white/5 hover:border-white/20"
+                      ? "border-accent/40 bg-accent/10"
+                      : "border-line bg-surface hover:border-line-strong"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <h2 className="font-semibold text-white">{t.name}</h2>
+                    <h2 className="font-semibold text-primary">{t.name}</h2>
                     {executable ? (
                       <StatusBadge status="paper" label="Can run" />
                     ) : (
                       <StatusBadge status="backtest_only" label="Tracking only" />
                     )}
                   </div>
-                  <p className="mt-2 text-xs leading-relaxed text-white/50">{t.description}</p>
+                  <p className="mt-2 text-xs leading-relaxed text-muted">{t.description}</p>
                   {!executable && (
-                    <p className="mt-2 text-[11px] text-white/30">
+                    <p className="mt-2 text-[11px] text-muted">
                       Discipline tracking only — automatic execution supports Donchian for now.
                     </p>
                   )}
@@ -235,23 +235,23 @@ export default function NewStrategyPage() {
           <button
             type="button"
             onClick={() => (canContinueFromChoose ? setStep(1) : setError("Choose a template and name your strategy first."))}
-            className="w-full rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00]"
+            className="w-full rounded-full bg-action px-6 py-3 font-semibold text-on-action transition hover:bg-accent-hover"
           >
             Continue →
           </button>
           {!canContinueFromChoose && (
-            <p className="text-center text-xs text-white/30">Pick a template and name it to continue.</p>
+            <p className="text-center text-xs text-muted">Pick a template and name it to continue.</p>
           )}
         </div>
       )}
 
       {step === 1 && selectedTemplate && (
         <div className="space-y-5">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h3 className="font-medium text-white">
-              {selectedTemplate.name} <span className="text-white/40">· “{name.trim()}”</span>
+          <div className="rounded-2xl border border-line bg-surface p-5">
+            <h3 className="font-medium text-primary">
+              {selectedTemplate.name} <span className="text-muted">· “{name.trim()}”</span>
             </h3>
-            <p className="mt-1 text-xs text-white/40">
+            <p className="mt-1 text-xs text-muted">
               Strategy parameters below. Risk guardrails are engine-wide and read-only here: 1%
               risk per trade, max 5 concurrent positions, stop loss mandatory on every order.
             </p>
@@ -271,14 +271,14 @@ export default function NewStrategyPage() {
             <button
               type="button"
               onClick={() => setStep(0)}
-              className="rounded-full border border-white/15 px-6 py-3 text-sm text-white/70 hover:text-white"
+              className="rounded-full border border-control-border px-6 py-3 text-sm text-secondary hover:text-primary"
             >
               ← Back
             </button>
             <button
               type="button"
               onClick={() => setStep(2)}
-              className="flex-1 rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00]"
+              className="flex-1 rounded-full bg-action px-6 py-3 font-semibold text-on-action transition hover:bg-accent-hover"
             >
               Review →
             </button>
@@ -288,32 +288,32 @@ export default function NewStrategyPage() {
 
       {step === 2 && selectedTemplate && (
         <div className="space-y-5">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <h3 className="font-medium text-white">Review</h3>
+          <div className="rounded-2xl border border-line bg-surface p-5">
+            <h3 className="font-medium text-primary">Review</h3>
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between gap-4">
-                <dt className="text-white/40">Name</dt>
-                <dd className="text-white">{name.trim()}</dd>
+                <dt className="text-muted">Name</dt>
+                <dd className="text-primary">{name.trim()}</dd>
               </div>
               <div className="flex justify-between gap-4">
-                <dt className="text-white/40">Template</dt>
-                <dd className="text-white">{selectedTemplate.name}</dd>
+                <dt className="text-muted">Template</dt>
+                <dd className="text-primary">{selectedTemplate.name}</dd>
               </div>
               <div className="flex justify-between gap-4">
-                <dt className="text-white/40">Can run automatically</dt>
-                <dd className="text-white">
+                <dt className="text-muted">Can run automatically</dt>
+                <dd className="text-primary">
                   {selectedTemplate.name === DONCHIAN_TEMPLATE_NAME ? "Yes — as a paper-trading bot" : "No — discipline tracking only"}
                 </dd>
               </div>
               {Object.entries(params).map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4">
-                  <dt className="text-white/40">{humanLabel(k)}</dt>
-                  <dd className="font-mono-tech text-white">{String(v ?? "—")}</dd>
+                  <dt className="text-muted">{humanLabel(k)}</dt>
+                  <dd className="font-mono text-primary">{String(v ?? "—")}</dd>
                 </div>
               ))}
             </dl>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-xs leading-relaxed text-white/40">
+          <div className="rounded-2xl border border-line bg-surface p-4 text-xs leading-relaxed text-muted">
             Account guardrails always apply: every order needs a stop loss, no leverage, no
             martingale. Creating a strategy never places orders.
           </div>
@@ -321,7 +321,7 @@ export default function NewStrategyPage() {
             <button
               type="button"
               onClick={() => setStep(1)}
-              className="rounded-full border border-white/15 px-6 py-3 text-sm text-white/70 hover:text-white"
+              className="rounded-full border border-control-border px-6 py-3 text-sm text-secondary hover:text-primary"
             >
               ← Back
             </button>
@@ -329,7 +329,7 @@ export default function NewStrategyPage() {
               type="button"
               onClick={handleCreate}
               disabled={busy}
-              className="flex-1 rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00] disabled:opacity-40"
+              className="flex-1 rounded-full bg-action px-6 py-3 font-semibold text-on-action transition hover:bg-accent-hover disabled:opacity-40"
             >
               {busy ? "Creating…" : "Create strategy"}
             </button>

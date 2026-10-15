@@ -32,8 +32,8 @@ export function CheckoutButton({ plan, hot }: { plan: string; hot?: boolean }) {
       disabled={loading}
       className={`mt-8 w-full rounded-full px-6 py-3 font-semibold transition disabled:opacity-50 ${
         hot
-          ? "bg-black text-[#ccff00] hover:bg-black/80"
-          : "bg-[#ccff00] text-black hover:bg-[#aadd00]"
+          ? "bg-canvas text-accent hover:bg-canvas/80"
+          : "bg-action text-on-action hover:bg-accent-hover"
       }`}
     >
       {loading ? "Redirecting…" : "Subscribe"}

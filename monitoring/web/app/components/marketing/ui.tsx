@@ -1,23 +1,23 @@
-// Shared Obsidian & Lime primitives: glass card, neon button, status tag, labels.
+// Shared primitives: glass card, primary button, status tag, labels.
 // Server components only — pure display, no trading logic.
 
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 export function TechLabel({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <p className={`tech-label text-[#ccff00] ${className}`}>{children}</p>;
+  return <p className={`tech-label text-accent ${className}`}>{children}</p>;
 }
 
 export function StatusTag({ text = "SYSTEM // ONLINE" }: { text?: string }) {
   return (
-    <span className="tech-label flex items-center gap-2 text-white/70">
-      <span className="pulse-dot inline-block h-[6px] w-[6px] rounded-full bg-[#ccff00]" />
+    <span className="tech-label flex items-center gap-2 text-secondary">
+      <span className="pulse-dot inline-block h-[6px] w-[6px] rounded-full bg-accent" />
       {text}
     </span>
   );
 }
 
-export function NeonButton({
+export function PrimaryButton({
   href,
   children,
   className = "",
@@ -27,7 +27,7 @@ export function NeonButton({
   className?: string;
 }) {
   return (
-    <Link href={href} className={`neon-btn inline-block px-8 py-4 text-sm ${className}`}>
+    <Link href={href} className={`btn-primary inline-block px-8 py-4 text-sm ${className}`}>
       {children}
     </Link>
   );
@@ -37,7 +37,7 @@ export function GhostButton({ href, children }: { href: string; children: ReactN
   return (
     <Link
       href={href}
-      className="inline-block rounded-full border border-white/15 bg-white/5 px-8 py-4 text-sm font-medium text-white/80 backdrop-blur transition hover:border-[#ccff00]/40 hover:text-white"
+      className="inline-block rounded-full border border-control-border bg-surface px-8 py-4 text-sm font-medium text-secondary backdrop-blur transition hover:border-accent/35 hover:text-primary"
     >
       {children}
     </Link>

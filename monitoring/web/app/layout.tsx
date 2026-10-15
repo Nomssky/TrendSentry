@@ -1,18 +1,31 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { AnalyticsBeacon } from "./components/AnalyticsBeacon";
+import { ThemeScript } from "./components/ThemeScript";
 
-const display = Space_Grotesk({
-  variable: "--font-display",
+// Display serif — headings, numerals, the discipline score.
+// Italic is loaded explicitly: the landing hero sets "NO DEVIATION." in italic
+// by design, and next/font loads style:"normal" only unless asked, which would
+// leave the browser synthesising a slanted face instead of the real italic.
+const display = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  axes: ["opsz", "SOFT", "WONK"],
+  style: ["normal", "italic"],
 });
 
-const mono = JetBrains_Mono({
-  variable: "--font-mono-tech",
+// UI sans — body copy, labels, controls.
+const ui = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+});
+
+// Mono — data, timestamps, tabular numbers, tech labels.
+const mono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const viewport: Viewport = {
@@ -29,8 +42,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${display.variable} ${mono.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-black font-display text-[#ebebeb]"><AnalyticsBeacon />{children}</body>
+    <html
+      lang="en"
+      className={`${display.variable} ${ui.variable} ${mono.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Applies the saved theme before first paint so there is no flash of
+            the wrong surface. Runs before hydration on purpose. */}
+        <ThemeScript />
+      </head>
+      <body className="flex min-h-full flex-col bg-canvas font-ui text-primary">
+        <AnalyticsBeacon />
+        {children}
+      </body>
     </html>
   );
 }

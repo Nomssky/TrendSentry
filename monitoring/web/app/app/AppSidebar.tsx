@@ -37,13 +37,13 @@ export function AppSidebar() {
   const linkClass = (href: string) =>
     `flex items-center gap-2.5 rounded-lg px-3 py-[7px] text-[13px] transition-colors ${
       isActive(pathname, href)
-        ? "bg-white/[0.07] text-white"
-        : "text-white/55 hover:bg-white/5 hover:text-white"
+        ? "bg-surface text-primary"
+        : "text-muted hover:bg-surface hover:text-primary"
     }`
 
   const ActiveDot = ({ href }: { href: string }) =>
     isActive(pathname, href) ? (
-      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#ccff00]" />
+      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
     ) : (
       <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-transparent" />
     )
@@ -55,7 +55,7 @@ export function AppSidebar() {
         onKeyDown={(e) => {
           if (e.key === "Escape") setOpen(false)
         }}
-        className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 backdrop-blur md:hidden"
+        className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg border border-control-border bg-surface text-secondary backdrop-blur md:hidden"
         aria-label="Toggle menu"
         aria-expanded={open}
       >
@@ -70,21 +70,21 @@ export function AppSidebar() {
 
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-canvas/60 backdrop-blur-sm md:hidden"
           onClick={() => setOpen(false)}
         />
       )}
 
       <nav
         aria-label="Product"
-        className={`fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-white/10 bg-black p-4 pt-20 text-sm transition-transform duration-200 md:static md:translate-x-0 md:p-4 md:pt-6 ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-line bg-canvas p-4 pt-20 text-sm transition-transform duration-200 md:static md:translate-x-0 md:p-4 md:pt-6 ${open ? "translate-x-0" : "-translate-x-full"}`}
       >
         <Link href="/app/dashboard" className="mb-5 flex items-center gap-2.5 px-1" aria-label="TrendSentry overview">
-          <LogoMark tone="light" className="h-7 w-7" />
-          <span className="text-sm font-semibold tracking-tight text-white">TrendSentry</span>
+          <LogoMark className="h-7 w-7" />
+          <span className="text-sm font-semibold tracking-tight text-primary">TrendSentry</span>
         </Link>
 
-        <p className="mb-1 px-3 font-mono-tech text-[10px] uppercase tracking-[0.15em] text-white/30">
+        <p className="mb-1 px-3 font-mono text-[10px] uppercase tracking-[0.15em] text-muted">
           Workspace
         </p>
         <div className="flex flex-col gap-0.5" role="list">
@@ -96,10 +96,10 @@ export function AppSidebar() {
           ))}
         </div>
 
-        <div className="my-4 border-t border-white/10" />
+        <div className="my-4 border-t border-line" />
 
         <div className="flex flex-col gap-0.5">
-          <p className="mb-1 px-3 font-mono-tech text-[10px] uppercase tracking-[0.15em] text-white/30">
+          <p className="mb-1 px-3 font-mono text-[10px] uppercase tracking-[0.15em] text-muted">
             Public proof
           </p>
           {secondaryLinks.map((l) => (
@@ -110,8 +110,8 @@ export function AppSidebar() {
           ))}
         </div>
 
-        <div className="mt-auto border-t border-white/10 pt-4">
-          <p className="px-3 text-[11px] leading-relaxed text-white/30">
+        <div className="mt-auto border-t border-line pt-4">
+          <p className="px-3 text-[11px] leading-relaxed text-muted">
             Paper mode — no real orders, no real capital.
           </p>
         </div>

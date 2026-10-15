@@ -29,9 +29,9 @@ export default async function DeviationLogPage() {
           actionLabel="Back to overview"
         />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-white/10">
+        <div className="overflow-x-auto rounded-2xl border border-line">
           <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="bg-white/[0.02] text-[11px] uppercase tracking-wider text-white/35">
+            <thead className="bg-surface text-[11px] uppercase tracking-wider text-muted">
               <tr>
                 <th className="px-4 py-2.5 font-medium">Severity</th>
                 <th className="px-4 py-2.5 font-medium">Rule</th>
@@ -42,17 +42,17 @@ export default async function DeviationLogPage() {
             </thead>
             <tbody>
               {deviations?.map((d) => (
-                <tr key={d.id} className="border-t border-white/[0.06] transition-colors hover:bg-white/[0.02]">
+                <tr key={d.id} className="border-t border-line transition-colors hover:bg-surface">
                   <td className="px-4 py-3">
                     <StatusBadge
                       status={d.severity === "critical" ? "error" : d.severity === "info" ? "ready" : "warning"}
                       label={d.severity}
                     />
                   </td>
-                  <td className="px-4 py-3 font-mono-tech text-xs uppercase text-white/50">{d.rule_key}</td>
-                  <td className="px-4 py-3 text-[#ccff00]">{d.expected}</td>
-                  <td className="px-4 py-3 text-rose-400">{d.actual}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right text-xs tabular-nums text-white/40">
+                  <td className="px-4 py-3 font-mono text-xs uppercase text-muted">{d.rule_key}</td>
+                  <td className="px-4 py-3 text-accent">{d.expected}</td>
+                  <td className="px-4 py-3 text-danger">{d.actual}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right text-xs tabular-nums text-muted">
                     {new Date(d.detected_at).toLocaleString()}
                   </td>
                 </tr>
@@ -61,9 +61,9 @@ export default async function DeviationLogPage() {
           </table>
         </div>
       )}
-      <p className="text-xs text-white/30">
-        New to this? <Link href="/app/strategies" className="text-[#ccff00] hover:underline">Define your rules</Link> and{" "}
-        <Link href="/app/settings" className="text-[#ccff00] hover:underline">connect your exchange key</Link> —
+      <p className="text-xs text-muted">
+        New to this? <Link href="/app/strategies" className="text-accent hover:underline">Define your rules</Link> and{" "}
+        <Link href="/app/settings" className="text-accent hover:underline">connect your exchange key</Link> —
         the daily check runs automatically after that.
       </p>
     </div>
