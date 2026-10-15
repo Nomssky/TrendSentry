@@ -22,59 +22,59 @@
 
 ## 2. Hasil Backtest (10 pair di semua config)
 
-| Config | Pairs | MaxConc | ClusterLimit | Risk% | Sharpe | Return% | MaxDD% | Trades | WR% | PF | CAGR% | Gate |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Baseline (10-pair original) | 10 | 5 | none | 1.0% | 0.53 | 155.82 | -58.49 | 171 | 33.33 | 1.64 | 17.54 | FAIL |
-| Exp A1: 1 pos/cluster | 10 | 5 | 1/cluster | 1.0% | 0.47 | 54.73 | -24.73 | 56 | 33.93 | 1.93 | 7.8 | FAIL |
-| Exp A2: 2 pos/cluster | 10 | 5 | 2/cluster | 1.0% | 0.82 | 149.59 | -26.19 | 94 | 36.17 | 2.26 | 17.04 | FAIL |
-| Exp A3: 1p/cluster+risk-reduce | 10 | 5 | 1/cluster | 1.0% | 0.47 | 54.73 | -24.73 | 56 | 33.93 | 1.93 | 7.8 | FAIL |
-| Exp B3: LINK->PAXG (1 swap) | 10 | 5 | none | 1.0% | 0.28 | -17.34 | -72.84 | 183 | 36.61 | 1.89 | -3.21 | FAIL |
-| Exp B4: DOGE->PAXG (1 swap) | 10 | 5 | none | 1.0% | 0.28 | -12.63 | -70.45 | 185 | 36.22 | 1.9 | -2.29 | FAIL |
-| Exp C: A2(2p/cluster)+PAXG | 10 | 5 | none | 1.0% | 0.27 | 16.76 | -51.82 | 128 | 37.5 | 2.33 | 2.69 | FAIL |
-| Exp D: risk 0.5% (10-pair) | 10 | 5 | none | 0.5% | 0.44 | 68.21 | -32.89 | 171 | 33.33 | 1.8 | 9.36 | FAIL |
-| Exp E: risk 0.5% + 1p/cluster | 10 | 5 | 1/cluster | 0.5% | 0.44 | 25.58 | -13.36 | 56 | 33.93 | 2.07 | 4.0 | FAIL |
+| Config | Pairs | MaxConc | ClusterLimit | Risk% | Sharpe | VaRSR | Vol% | Return% | MaxDD% | Trades | WR% | PF | CAGR% | Gate |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Baseline (10-pair original) | 10 | 5 | none | 1.0% | 0.53 | -0.0074 | 71.72 | 158.46 | -58.64 | 171 | 33.33 | 1.64 | 17.75 | FAIL |
+| Exp A1: 1 pos/cluster | 10 | 5 | 1/cluster | 1.0% | 0.48 | -0.0157 | 20.24 | 56.28 | -24.73 | 56 | 33.93 | 1.95 | 7.98 | FAIL |
+| Exp A2: 2 pos/cluster | 10 | 5 | 2/cluster | 1.0% | 0.82 | 0.0015 | 22.33 | 152.0 | -26.45 | 94 | 36.17 | 2.27 | 17.24 | FAIL |
+| Exp A3: 1p/cluster+risk-reduce | 10 | 5 | 1/cluster | 1.0% | 0.48 | -0.0157 | 20.24 | 56.28 | -24.73 | 56 | 33.93 | 1.95 | 7.98 | FAIL |
+| Exp B3: LINK->PAXG (1 swap) | 10 | 5 | none | 1.0% | 0.34 | -0.026 | 54.75 | 0.94 | -71.98 | 184 | 36.41 | 1.88 | 0.16 | FAIL |
+| Exp B4: DOGE->PAXG (1 swap) | 10 | 5 | none | 1.0% | 0.36 | -0.0254 | 51.93 | 13.63 | -69.11 | 185 | 36.22 | 1.87 | 2.21 | FAIL |
+| Exp C: A2(2p/cluster)+PAXG | 10 | 5 | none | 1.0% | 0.28 | -0.0307 | 33.49 | 17.91 | -51.82 | 128 | 37.5 | 2.33 | 2.86 | FAIL |
+| Exp D: risk 0.5% (10-pair) | 10 | 5 | none | 0.5% | 0.44 | -0.0172 | 31.29 | 69.16 | -33.03 | 171 | 33.33 | 1.8 | 9.47 | FAIL |
+| Exp E: risk 0.5% + 1p/cluster | 10 | 5 | 1/cluster | 0.5% | 0.45 | -0.0187 | 10.03 | 26.26 | -13.36 | 56 | 33.93 | 2.09 | 4.09 | FAIL |
 
 ## 3. Analisis per Eksperimen
 
 ### Baseline — Baseline (10-pair original)
-Sharpe 0.53, DD -58.49%, 171 trades
+Sharpe 0.53, DD -58.64%, 171 trades
 
 ### Exp A1: 1 pos/cluster
-Sharpe 0.47, DD -24.73%, 56 trades
-vs baseline: Sharpe -0.06, DD -33.76pp, Trades -115
+Sharpe 0.48, DD -24.73%, 56 trades
+vs baseline: Sharpe -0.05, DD -33.91pp, Trades -115
 
 ### Exp A2: 2 pos/cluster
-Sharpe 0.82, DD -26.19%, 94 trades
-vs baseline: Sharpe +0.29, DD -32.30pp, Trades -77
+Sharpe 0.82, DD -26.45%, 94 trades
+vs baseline: Sharpe +0.29, DD -32.19pp, Trades -77
 
 ### Exp A3: 1p/cluster+risk-reduce
-Sharpe 0.47, DD -24.73%, 56 trades
-vs baseline: Sharpe -0.06, DD -33.76pp, Trades -115
+Sharpe 0.48, DD -24.73%, 56 trades
+vs baseline: Sharpe -0.05, DD -33.91pp, Trades -115
 
 ### Exp B3: LINK->PAXG (1 swap)
-Sharpe 0.28, DD -72.84%, 183 trades
-vs baseline: Sharpe -0.25, DD +14.35pp, Trades +12
+Sharpe 0.34, DD -71.98%, 184 trades
+vs baseline: Sharpe -0.19, DD +13.34pp, Trades +13
 
 ### Exp B4: DOGE->PAXG (1 swap)
-Sharpe 0.28, DD -70.45%, 185 trades
-vs baseline: Sharpe -0.25, DD +11.96pp, Trades +14
+Sharpe 0.36, DD -69.11%, 185 trades
+vs baseline: Sharpe -0.17, DD +10.47pp, Trades +14
 
 ### Exp C: A2(2p/cluster)+PAXG
-Sharpe 0.27, DD -51.82%, 128 trades
-vs baseline: Sharpe -0.26, DD -6.67pp, Trades -43
+Sharpe 0.28, DD -51.82%, 128 trades
+vs baseline: Sharpe -0.25, DD -6.82pp, Trades -43
 
 ### Exp D: risk 0.5% (10-pair)
-Sharpe 0.44, DD -32.89%, 171 trades
-vs baseline: Sharpe -0.09, DD -25.60pp, Trades 0
+Sharpe 0.44, DD -33.03%, 171 trades
+vs baseline: Sharpe -0.09, DD -25.61pp, Trades 0
 
 ### Exp E: risk 0.5% + 1p/cluster
-Sharpe 0.44, DD -13.36%, 56 trades
-vs baseline: Sharpe -0.09, DD -45.13pp, Trades -115
+Sharpe 0.45, DD -13.36%, 56 trades
+vs baseline: Sharpe -0.08, DD -45.28pp, Trades -115
 
 ## 4. Kesimpulan
 
 ### Tidak ada config yang LOLOS kedua gate
-- **Terbaik: Exp A2: 2 pos/cluster** — Sharpe 0.82, DD -26.19%, 94 trades
+- **Terbaik: Exp A2: 2 pos/cluster** — Sharpe 0.82, DD -26.45%, 94 trades
 - **Gap Sharpe: 0.18 point** dari threshold 1.0
 
 - Config paling mendekati gate: **Exp A2: 2 pos/cluster**
@@ -87,8 +87,8 @@ vs baseline: Sharpe -0.09, DD -45.13pp, Trades -115
 
 ### Opsi ke Depan (perlu diskusi user)
 1. **Terima config 2-pair (BTC+ETH, max_conc=1)** yang paling mendekati gate (Sharpe 0.94, DD -7.42%) — ukurannya kecil (32 trades) tapi paling aman.
-2. **Gunakan Exp A2 (2 pos/cluster, 10-pair)** dengan Sharpe 0.82 dan DD -26.19% — trade count naik, tapi masih di bawah gate.
-3. **Kombinasi cluster limit + risk 0.5%** (Exp E) — Sharpe 0.44, DD -13.36% — pendekatan paling balanced.
+2. **Gunakan Exp A2 (2 pos/cluster, 10-pair)** dengan Sharpe 0.82 dan DD -26.45% — trade count naik, tapi masih di bawah gate.
+3. **Kombinasi cluster limit + risk 0.5%** (Exp E) — Sharpe 0.45, DD -13.36% — pendekatan paling balanced.
 4. **Parameter tuning diizinkan** (Donchian period, ATR multiplier) jika user setuju untuk mengubah parameter strategi inti.
 
 ---

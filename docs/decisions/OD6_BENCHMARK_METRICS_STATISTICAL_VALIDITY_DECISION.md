@@ -35,13 +35,15 @@ Temuan utama (semua direproduksi sendiri sesi ini, kecuali disebut frozen artifa
    mengalami MDD −58,49%"*; PPT menatribusikan B&H rentang *"> −75% s.d. −85%"*).
    `decision_log.md:99` mengaitkan "B&H −58.49" — mislabel yang sudah ditandai Phase 2H
    (AR-03/OD-11). Config vanilla 10p/max_conc=5: frozen artifact −58.49; re-run HEAD =
-   **−58.64** (`PARTIAL` — engine berubah pasca-report: cash-fix `c22ad1c`, Wilder seed
-   `029a311`, `0ad6cc6`). Klaim PPT B&H (−75..−85) **konsisten** dengan `bh_max_drawdown.md`
+   **−58.64** (`PARTIAL` — penyebab tunggal `VERIFIED by OD-9 §4`: Wilder ATR seed `029a311`;
+   `c22ad1c` dan `0ad6cc6` nol perubahan). Klaim PPT B&H (−75..−85) **konsisten** dengan
+   `bh_max_drawdown.md`
    −77.63% (rekonstruksi audit ini −77.54%).
-5. **VaRSR: `NOT IMPLEMENTED / VERIFIED ABSENCE`** — 0 hit `VaR`/`VaRSR`/`value_at_risk` di
+5. **VaRSR: `NOT IMPLEMENTED / VERIFIED ABSENCE`** (keadaan saat audit) — 0 hit `VaR`/`VaRSR`/`value_at_risk` di
    seluruh kode, laporan, dan web (hanya muncul di dokumen audit + PPT). PPT mewajibkannya
    (Deng 2013, :62/:115/:269–273). Spesifikasi formula belum pernah ditentukan → OD-6.6/OD-6.7
-   (melengkapi OD-3.11 yang sudah terdaftar).
+   (melengkapi OD-3.11 yang sudah terdaftar). **Superseded 2026-10-07:** OD-3.11 IMPLEMENT,
+   OD-6.6/6.7 decided (lihat addendum §14); VaRSR kini supplementary metric.
 6. **Paired t-test: `VERIFIED` implemented** (`sharpe_benchmark.py:149–150`, `scipy.stats.ttest_rel`)
    dan angkanya direproduksi (n=1919/2119; t/p: −1.783/0.0747 dan −2.340/0.0194 vs frozen
    −1.785/0.0743 dan −2.342/0.0193). **Tapi**: (a) dijalankan pada config **bukan baseline kini**
@@ -125,7 +127,7 @@ Semua baris dari ekstrak PPT (label status terhadap repo — detail di §25):
 | P3 | RQ1: risk-adjusted return "**Sharpe Ratio / VaRSR**" vs B&H portofolio 10 aset | :114–116 | Sharpe `VERIFIED`; VaRSR `NOT IMPLEMENTED` |
 | P4 | RQ2: performa bervariasi bull/bear/sideways | :115–116 | `VERIFIED` implemented (§18) |
 | P5 | RQ3: jumlah aset & korelasi (diversifikasi) | :116 | `PARTIAL` (§17) |
-| P6 | VaR-adjusted Sharpe Ratio (**Deng, 2013**) untuk koreksi skew/kurtosis | :62, :269–273 | `NOT IMPLEMENTED` |
+| P6 | VaR-adjusted Sharpe Ratio (**Deng, 2013**) untuk koreksi skew/kurtosis | :62, :269–273 | `NOT IMPLEMENTED` saat audit → **DECIDED/implemented (supplementary) 2026-10-07** (OD-3.11, OD-6.6/6.7) |
 | P7 | **Paired t-test**: "Membandingkan return harian strategi terhadap buy-and-hold, **dengan koreksi metodologis untuk hari-hari posisi tunai (cash days) agar tidak bias**" | :236–242 | t-test `VERIFIED`; koreksi cash-day `NOT IMPLEMENTED` |
 | P8 | **Cross-Correlation Matrix**: "Memetakan korelasi return antar 10 aset untuk menentukan sejauh mana diversifikasi jumlah pair benar-benar mengurangi risiko portofolio" | :243–245 | `PARTIAL` (§16–§17) |
 | P9 | **Regime**: "Membagi periode sampel menjadi rezim bull, bear, sideways **berdasarkan distribusi imbal hasil bergulir**" + "membandingkan **MDD** antara strategi aktif dan pasif pada segmen **bear/crash**" | :246–256 | `VERIFIED` implemented (parameternya tidak ada di PPT → §18) |
@@ -237,8 +239,9 @@ masing-masing → harga bergerak tanpa rebalancing → fee 0 → nilai akhir Σ1
   `DESIGN.md:132` *"DD turun dari −58.49% (vanilla) ke −26.19% (Cluster-A2)"*. Re-run HEAD oleh
   audit ini: **−58.64** (trough 2023-01-18, 171 trades, return 158.46) → **`PARTIAL`** — angka
   eksak −58.49 tidak lagi keluar dari HEAD; divergensi 0.15pp/2.6pp kelasnya = engine berubah
-  setelah tanggal report (cash-fix `c22ad1c`, Wilder seed `029a311`, `0ad6cc6`) — kelas sebab
-  `INFERRED`, bisect per-commit tidak dilakukan (§29).
+  setelah tanggal report. **`VERIFIED by OD-9 §4`**: commit `029a311` (Wilder ATR seed) adalah
+  penyebab tunggal yang teridentifikasi dari drift `−58.49 → −58.64` dan `155.82 → 158.46`;
+  `c22ad1c` dan `0ad6cc6` menghasilkan **nol** perubahan metrik.
 - Jika owner pernah memahami "-58.49 = B&H": sumbernya `decision_log.md:99`
   *"DD −26.19% vs B&H −58.49%"* — **mislabel**, sudah tercatat Phase 2H (AR-03; perbaikan =
   Phase 2H OD-11, tidak diduplikasi di sini).
@@ -435,6 +438,14 @@ dicampur** (state ini dipertahankan; treatment = OD-3.6/OD-3.11 lintas-tema, tid
 parametric/apa pun), tidak ada confidence level, horizon, return series, denominator, atau
 annualization yang terdefinisi di repo; tidak pernah dipakai di laporan mana pun.
 **Audit ini tidak mengarang implementasi.**
+
+> **Decision addendum (2026-10-07, owner):** OD-3.11 memutuskan **IMPLEMENT** VaRSR;
+> OD-6.6/OD-6.7 dikunci (Deng 2013 Eq. (12); γ=1.96 two-sided 95%; daily equity returns;
+> rf=0; sample skewness; raw kurtosis di Eq. (12); tanpa ×√365; supplementary; Snapshot B
+> unchanged). Implementasi pertama: `backtest/run_backtest.py` (`varsh`, `sigma_sr`,
+> `check_metrics`) + `config.yaml` `metrics.varsr` + `tests/test_varsr.py`.
+> Baris "NOT IMPLEMENTED" di tabel bukti §14 di atas adalah keadaan saat audit — kini superseded
+> untuk bagian VaRSR saja; VaR klasik (historical/parametrik) tetap tidak diimplementasikan.
 
 **Audit K — spesifikasi yang masih butuh persetujuan owner (tidak dipilih di sini):**
 formula VaRSR mana: (a) `Sharpe/VaR`, (b) `(excess return)/VaR`, (c) modified Sharpe
@@ -677,8 +688,9 @@ yang diposisikan kanonik.
 
 **Taxonomy kenapa angka berbeda (`STRONGLY SUPPORTED`):** (a) konstruksi (idle-cash vs
 fully-deployed vs period-limited); (b) vintage data (Binance pre-swap vs Bitget); (c) jendela
-periode (staggered vs common-start vs label "2020-08"); (d) evolusi engine (cash-fix `c22ad1c`,
-Wilder seed `029a311`) — lihat −58.49→−58.64 dan 155.82→158.46 (§7); (e) denominator (nominal
+periode (staggered vs common-start vs label "2020-08"); (d) evolusi engine (`029a311` Wilder ATR
+seed — penyebab tunggal yang teridentifikasi, OD-9 §4) — lihat −58.49→−58.64 dan
+155.82→158.46 (§7); (e) denominator (nominal
 1000 vs benar-benar terinvestasi). Pemilihan canonical = **OD-6.1** (konsolidasi Phase 2H OD-3
 + input OD-5.7) — **audit ini tidak memilih**.
 
@@ -693,7 +705,7 @@ Wilder seed `029a311`) — lihat −58.49→−58.64 dan 155.82→158.46 (§7); 
 | "−58.49%" (PPT: baseline **strategi**) | `sharpe_discrepancy_report` table · `DESIGN:132` · re-run HEAD −58.64 | Ya (asalnya strategi-vanilla, bukan B&H) | Frozen ya / HEAD `PARTIAL` (0.15pp drift); `decision_log:99` mengaitkan ke B&H = mislabel | `PARTIAL` |
 | Sharpe strategy 0.82 | `compute_metrics:189–190` | Ya | Ya — 0.8234 → 0.82, Snapshot B eksak | `VERIFIED` |
 | Sharpe B&H 0.83 / 0.98 | `sharpe_benchmark` + report | Ya | Ya — 0.8288 / 0.9809; tanpa artefak 0.8787 | `VERIFIED` |
-| VaRSR (Deng 2013) | — | **Tidak** | — | `NOT IMPLEMENTED` (0 hit; OD-3.11) |
+| VaRSR (Deng 2013) | — | **Tidak** (saat audit) | — | `NOT IMPLEMENTED` (0 hit; OD-3.11) saat audit → **DECIDED 2026-10-07** (OD-3.11 IMPLEMENT; OD-6.6/6.7, supplementary) |
 | Paired t-test (+ koreksi cash-day) | `sharpe_benchmark:149–150` | **Parsial** — uji ya, **koreksi cash-day tidak** | Angka ya (0.0747/0.0194 vs frozen 0.0743/0.0193) via rekonstruksi; **script crash di HEAD**; config non-baseline; tabel strategy hardcoded | `PARTIAL` |
 | Correlation matrix (10 aset) | `portfolio_size_experiment:32–49` + report | Ya | Ya — sel persis; **jendela 615 hari ≠ periode studi**; backtest-bagian script crash | `PARTIAL` |
 | Regime analysis (rolling) | `regime_segmentation.py` + report | Ya | Script crash di HEAD; report frozen; parameter tak ada di PPT | `PARTIAL` |
@@ -740,8 +752,8 @@ atau gagal (§34). Presentasi sensitivitas di tesis (robustness table vs tidak) 
 | **OD-6.3** | **B&H rebalancing policy** — tanpa rebalancing vs rebalance-on-listing vs periodik (variant #5 report-only, tak reproduksi persis) | §5 B3, §24 #5 | `OWNER DECISION REQUIRED` |
 | **OD-6.4** | **Sharpe definition/annualization** — konfirmasi rf=0 · √365 (vs √252) · arithmetic · ddof · perlakuan 35.9% hari-nol; **konsolidasi Phase 2H OD-10** (rf=0/Sortino/entry-fee sudah terdaftar — tidak diduplikasi) | §9, §10; `run_backtest:189–190`; `DESIGN:169` | `OWNER DECISION REQUIRED` |
 | **OD-6.5** | **Return-series date alignment** — date set kanonik pembanding (union 2120 identik ✓ vs common-start 620 vs window per-tes); interaksi OD-5.4 kalender + OD-5.5 periode | §10, §21 (tabel date set) | `OWNER DECISION REQUIRED` |
-| **OD-6.6** | **VaRSR formula** — varian (Sharpe/VaR · excess/VaR · modified · ES-denominator · abs vs % VaR) & sumber Deng 2013; **melengkapi OD-3.11** (implement-vs-amend, tidak diduplikasi) | §14; PPT :62/:115/:269 | `OWNER DECISION REQUIRED` |
-| **OD-6.7** | **VaR confidence/horizon** — 95%/99%, horizon 1-day, method (historical/parametric/CF), series yang dipakai, annualization | §14 | `OWNER DECISION REQUIRED` |
+| **OD-6.6** | **VaRSR formula** — varian (Sharpe/VaR · excess/VaR · modified · ES-denominator · abs vs % VaR) & sumber Deng 2013; **melengkapi OD-3.11** (implement-vs-amend, tidak diduplikasi) | §14; PPT :62/:115/:269 | **DECIDED (2026-10-07, owner): Deng dkk. (2013) Eq. (12)** — `VaRSR = SR − γ·σ̂(SR)`, `σ̂(SR) = sqrt(1/(n−1)·(1 + ½SR² − SR·skew + SR²(kurt−3)/4))` (Mertens 2002; sample skewness; kurtosis RAW = excess+3). Varian lain (Sharpe/VaR, excess/VaR, modified, ES, abs-vs-%) ditolak. |
+| **OD-6.7** | **VaR confidence/horizon** — 95%/99%, horizon 1-day, method (historical/parametric/CF), series yang dipakai, annualization | §14 | **DECIDED (2026-10-07, owner):** two-sided 95% → γ = 1.96; seri = daily strategy equity returns `pct_change().dropna()`; rf = 0; method = parametric via Deng (Mertens) Δ-method (sebagaimana paper); horizon = frekuensi return harian (VaRSR tidak punya horizon VaR eksplisit — ia penalti uncertainty SR); **annualization = none** (tanpa ×√365); CI kedua tidak dibuat. VaRSR mulai sebagai **supplementary metric** — Snapshot B tetap. Konstanta di `config.yaml` `metrics.varsr`. |
 | **OD-6.8** | **Paired t-test: koreksi cash-day** — pairing unit SUDAH ditetapkan PPT (daily return, `VERIFIED`); metode koreksi hari-nol yang diminta PPT belum terdefinisi/diimplementasi | §15; PPT :236–242; report caveat | `OWNER DECISION REQUIRED` |
 | **OD-6.9** | **Correlation methodology** — window (615-hari HYPE-limited vs full 2120), frekuensi, Pearson vs lain, perlakuan missing (9 hari terbuang senyap) | §16 | `OWNER DECISION REQUIRED` |
 | **OD-6.10** | **Regime definition** — aset (BTC vs portofolio), window 90d, threshold −20/+40, pendaftaran eks-ante (parametertidak ada di PPT; pemilihan `INFERRED` post-hoc) | §18, §19 | `OWNER DECISION REQUIRED` |
@@ -784,8 +796,8 @@ OD-2..OD-5):
 - **Verifikasi eksternal mustahil dari lingkungan ini** — filter ISP memblokir domain exchange
   (OD-5 §26): klaim PPT "data Bitget 2020–2026" tidak dapat dicek terhadap venue; tidak ada data
   eksternal yang disubstitusi ke repo.
-- **Tiga script research crash di HEAD** (`sharpe_benchmark:121/134`, `regime_segmentation:148/…`,
-  `portfolio_size_experiment:73` — KeyError sejak `0ad6cc6`); angka report = frozen artifact;
+- ~~**Tiga script research crash di HEAD**~~ **CLOSED — diperbaiki OD9** (blast radius sebenarnya
+  10 call site di 5 skrip, `cfg` jadi parameter wajib); angka report tetap frozen artifact;
   audit ini mereproduksi angkanya via rekonstruksi read-only, **bukan** dengan menjalankan script
   asli (jalannya akan menulis ke `backtest/reports/` — dilarang mode ini).
 - **`scipy` tidak tercatat di `requirements.txt`** (REPO_MAP #6) → install bersih tidak bisa
@@ -793,8 +805,10 @@ OD-2..OD-5):
 - **Variant #5 (rebalance-on-listing) tidak punya script** — reconstruksi audit ini mencocokkan
   MDD/trough (−77.54 vs −77.63; trough 2022-12-30 identik) tetapi **endpoint deviasi +9.3%**
   (94,799 vs 86,714) → mekanik persis `UNKNOWN`; +767% tidak reproduksi.
-- **Divergensi −58.49 → −58.64 dan 155.82 → 158.46** hanya dikarakterisasi pada kelas-sebab
-  (commit engine pasca-report `c22ad1c`/`029a311`/`0ad6cc6`, `INFERRED`) — tanpa bisect per-commit.
+- ~~Divergensi −58.49 → −58.64 dan 155.82 → 158.46 hanya dikarakterisasi pada kelas-sebab
+  (`INFERRED`, tanpa bisect per-commit).~~ **CLOSED — `VERIFIED by OD-9 §4`**: bisect per-commit
+  dilakukan; penyebab tunggal = `029a311` (Wilder ATR seed), sedangkan `c22ad1c` dan `0ad6cc6`
+  nol perubahan metrik.
 - **Status eks-ante threshold regime `UNKNOWN`** — tidak ada artefak pre-registration; tidak ada
   akses ke riwayat pikiran pemilihan parameter.
 - **Sensitivitas §26 bukan hasil tesis** — tidak boleh dipakai memilih metodologi/angka; angka

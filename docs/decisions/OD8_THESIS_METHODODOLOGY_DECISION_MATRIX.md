@@ -190,7 +190,7 @@ Affects: DATA / STRATEGY / PORTFOLIO / BENCHMARK / STATISTICS / REPRO.
 | OD-3.8 | Same-day capacity reuse setelah exit | OD-3 §22 | `OWNER DECISION REQUIRED` | — | STRATEGY | BLOCKER | Case I; 498 hari terblokir cluster; membawa OD-4.7 |
 | OD-3.9 | Multi-asset same-day entry ordering (tie-break) | OD-3 §22 | `CARRIED` (→ OD-4.8) | — | PORTFOLIO | via canonical | substansi identik dengan OD-4.8 (`INFERRED`) |
 | OD-3.10 | Cash-shortfall handling (clamp vs skip) | OD-3 §22 | `CARRIED` (→ OD-4.9) | — | PORTFOLIO | via canonical | substansi identik dengan OD-4.9 (`INFERRED`); 0 historical binds di keduanya |
-| OD-3.11 | VaRSR: implement sesuai PPT vs amend RQ2/RQ3 dengan rationale | OD-3 §22 | `OWNER DECISION REQUIRED` | — | STATISTICS | PRE-FREEZE | PPT menjanjikan VaRSR; implementasi `NOT IMPLEMENTED` |
+| OD-3.11 | VaRSR: implement sesuai PPT vs amend RQ2/RQ3 dengan rationale | OD-3 §22 | **DECIDED 2026-10-07: IMPLEMENT** | — | STATISTICS | PRE-FREEZE | PPT menjanjikan VaRSR; implementasi supplementary (OD-6.6/6.7), Snapshot B unchanged |
 
 ### 4.4 OD-4 (11 ID)
 
@@ -232,8 +232,8 @@ Affects: DATA / STRATEGY / PORTFOLIO / BENCHMARK / STATISTICS / REPRO.
 | OD-6.3 | B&H rebalancing policy: tanpa rebalancing vs rebalance-on-listing vs periodik | OD-6 §27 | `OWNER DECISION REQUIRED` | — | BENCHMARK | BLOCKER | OD-6 §24 |
 | OD-6.4 | Konvensi Sharpe: rf=0 vs RF, annualization, ddof, hari-nol 35.9%; konsolidasi P2H OD-10 | OD-6 §27 | `OWNER DECISION REQUIRED` | — (facet hari-nol mengikuti OD-5.3) | STATISTICS | BLOCKER | nilai ada di dalam `compute_metrics` runner → ikut run final |
 | OD-6.5 | Date alignment benchmark (window, first/last bar, listing) | OD-6 §27 | `CONDITIONAL` | OD-5.4, OD-5.5 | BENCHMARK | BLOCKER | OD-6 §28 butir 3 |
-| OD-6.6 | Formula VaRSR (CVD/DLV variant, edge correction) | OD-6 §27 | `CONDITIONAL` | OD-3.11 (pilih implementasi), OD-6.4 | STATISTICS | PRE-FREEZE | VaR/VaRSR `NOT IMPLEMENTED` |
-| OD-6.7 | Parameter VaRSR: confidence level & horizon (PPT tidak menyebut) | OD-6 §27 | `CONDITIONAL` | OD-6.6 | STATISTICS | PRE-FREEZE | PPT hanya menyebut nama VaRSR |
+| OD-6.6 | Formula VaRSR (CVD/DLV variant, edge correction) | OD-6 §27 | **DECIDED 2026-10-07: Deng 2013 Eq. (12)** | OD-3.11 (pilih implementasi), OD-6.4 | STATISTICS | PRE-FREEZE | VaR `NOT IMPLEMENTED`; VaRSR implemented supplementary |
+| OD-6.7 | Parameter VaRSR: confidence level & horizon (PPT tidak menyebut) | OD-6 §27 | **DECIDED 2026-10-07: γ=1.96, two-sided 95%, daily, rf=0, no √365** | OD-6.6 | STATISTICS | PRE-FREEZE | PPT hanya menyebut nama VaRSR; dikunci owner |
 | OD-6.8 | t-test: cash-day correction & multiple-testing policy | OD-6 §27 | `CONDITIONAL` | OD-5.3, OD-5.4, OD-6.12 | STATISTICS | PRE-FREEZE | p=0.0743/0.0193 vs cash-day 0.0430/0.0391 = `FORENSIC SENSITIVITY — NOT CANONICAL` |
 | OD-6.9 | Korelasi: window/detrend/estimator (pairwise vs listwise, Pearson vs Spearman) | OD-6 §27 | `CONDITIONAL` | OD-5.5, OD-5.7 | STATISTICS | PRE-FREEZE | 615 vs 2.120 observasi mengubah matriks |
 | OD-6.10 | Regime definition: threshold pre-registered vs post-hoc, segment data, multiple-testing | OD-6 §27 | `CONDITIONAL` | OD-5.5 | STATISTICS | PRE-FREEZE | threshold sempat diubah post-hoc 0.50→0.33/0.66 |
@@ -590,10 +590,10 @@ bukan hasil tesis, bukan dasar memilih opsi.
 
 | Decision | Raw dataset | Signal dates | Exec price | Stop | Position size | Trade PnL | Equity curve | Return | Sharpe | MDD | B&H | t-test | Corr | Regime | Thesis conclusion | Sensitivitas / catatan |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| OD-3.11 | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | INDIRECT | VaRSR dijanjikan PPT, `NOT IMPLEMENTED` — memengkapi RQ2/RQ3 |
+| OD-3.11 | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | INDIRECT | VaRSR **decided+implemented (supplementary) 2026-10-07** |
 | OD-6.4 | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | DIRECT | NONE | NONE | INDIRECT | NONE | NONE | DIRECT | rf=0, √365, ddof, hari-nol 35.9% — nilai dihasilkan di dalam runner |
-| OD-6.6 | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | INDIRECT | formula VaRSR (CVD/DLV, edge correction) |
-| OD-6.7 | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | INDIRECT | confidence & horizon tidak disebut PPT |
+| OD-6.6 | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | INDIRECT | formula VaRSR decided: Deng 2013 Eq. (12) (2026-10-07) |
+| OD-6.7 | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | INDIRECT | confidence/horizon decided: two-sided 95%, γ=1.96, daily, no √365 (2026-10-07) |
 | OD-6.8 | INDIRECT | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | DIRECT | NONE | NONE | DIRECT | p=0.0743/0.0193 vs cash-day 0.0430/0.0391 — `FORENSIC SENSITIVITY — NOT CANONICAL` |
 | OD-6.9 | INDIRECT | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | DIRECT | NONE | DIRECT | 615 vs 2.120 observasi mengubah matriks korelasi |
 | OD-6.10 | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | NONE | DIRECT | DIRECT | threshold regime pernah diubah post-hoc 0.50→0.33/0.66 |
@@ -685,9 +685,9 @@ bukti yang relevan bila muncul — bukan dorongan ke arah opsi tertentu.
 | ID | Pertanyaan keputusan | Mengapa penting | Output terdampak | Dependensi | Opsi terdokumentasi | Apa yang mengubah keputusan |
 | --- | --- | --- | --- | --- | --- | --- |
 | OD-6.4 | Konvensi Sharpe: rf (0 vs RF), annualization (√365 vs lain), ddof, perlakuan hari-nol? | dihasilkan di dalam runner → ikut run final | Sharpe, verdict gate | facet hari-nol → OD-5.3 | OD-6 §11 (konvensi), Phase 2H OD-10 | selesainya OD-5.3 (facet hari-nol) |
-| OD-3.11 | VaRSR: implement sesuai PPT atau amend RQ2/RQ3 dengan rationale? | PPT menjanjikan; `NOT IMPLEMENTED` | kelengkapan RQ | — | OD-3 §22 (opsi implement vs amend) | — |
-| OD-6.6 | Formula VaRSR (CVD/DLV, edge correction)? | menentukan angka VaRSR | VaRSR | OD-3.11 (pilih implementasi), OD-6.4 | OD-6 §14 | selesainya OD-3.11 |
-| OD-6.7 | Parameter VaRSR: confidence level & horizon? | PPT tidak menyebut | VaRSR | OD-6.6 | OD-6 §14 | selesainya OD-6.6 |
+| OD-3.11 | VaRSR: implement sesuai PPT atau amend RQ2/RQ3 dengan rationale? | PPT menjanjikan | kelengkapan RQ | — | OD-3 §22 (opsi implement vs amend) | **DECIDED 2026-10-07: IMPLEMENT** |
+| OD-6.6 | Formula VaRSR (CVD/DLV, edge correction)? | menentukan angka VaRSR | VaRSR | OD-3.11 (pilih implementasi), OD-6.4 | OD-6 §14 | **DECIDED 2026-10-07: Deng 2013 Eq. (12)** |
+| OD-6.7 | Parameter VaRSR: confidence level & horizon? | PPT tidak menyebut | VaRSR | OD-6.6 | OD-6 §14 | **DECIDED 2026-10-07: two-sided 95%, γ=1.96, daily, rf=0, no √365** |
 | OD-6.8 | t-test: cash-day correction & policy terkait? | p=0.0743/0.0193 vs 0.0430/0.0391 | p-value | OD-5.3, OD-5.4, OD-6.12 | OD-6 §16 (opsi koreksi) | selesainya OD-5.3/5.4 (BUKAN nilai p yang diinginkan) |
 | OD-6.9 | Korelasi: window, detrend, pairwise vs listwise, Pearson vs Spearman? | 615 vs 2.120 observasi mengubah matriks | korelasi, klaim diversifikasi | OD-5.5, OD-5.7 | OD-6 §18 | selesainya OD-5.5/5.7 |
 | OD-6.10 | Regime: threshold pre-registered vs post-hoc, segmen data, multiple-testing? | threshold pernah diubah post-hoc | hasil regime | OD-5.5 | OD-6 §20 | selesainya OD-5.5 |
@@ -735,7 +735,7 @@ satu-satuan (aturan Part I).
 | 13 | Pembanding tesis = **buy-and-hold** (konsep) | PPT (RQ/pertanyaan pembanding) | *konstruksi* TIDAK decided (OD-6.1–6.3, 6.5) |
 | 14 | **Penarikan kriteria Sharpe ≥1.0** (owner, current conversation) | OD-2 §4 L2: "Sharpe ≥ 1 withdrawn as criterion (owner, current conversation)" | *penggantinya* terbuka = Phase 2H OD-5 |
 | 15 | Research objectives RQ1–3 | PPT | — |
-| 16 | Janji VaRSR di tesis (sebagai kewajiban) | PPT | *implement vs amend* terbuka = OD-3.11 |
+| 16 | Janji VaRSR di tesis (sebagai kewajiban) | PPT | dijawab 2026-10-07: **OD-3.11 IMPLEMENT** (OD-6.6/6.7 terkunci) |
 | 17 | Aturan risk repo: stop-loss wajib, tidak ada martingale/averaging-down, tidak ada auto-increase risk streak | `PLAN.md` §5 / AGENTS.md (owner-authored) | governance tetap berlaku untuk semua opsi di register ini |
 | 18 | Kebijakan audit: audit TIDAK memilih hasil/benchmark/snapshot; riset lama ditahan (`UNKNOWN ≠ DEAD`); tanpa commit/push; satu file baru | mandate owner (pembukaan OD-7/OD-8) | proses, bukan metodologi |
 | 19 | Sejarah kriteria terekam: 2026-08-14 gate "LOLOS" berbasis Sharpe ≥1.0 → revisi 2026-09-05 "> B&H" | `decision_log.md` (fakta sejarah, `VERIFIED`) | *status legitimasi & kriteria lanjutan* = Phase 2H OD-5 |
@@ -834,7 +834,7 @@ memutuskan apakah klaim benar** — hanya menentukan apakah bukti kelak bisa men
 | --- | --- | --- | --- | --- |
 | **Claim 1 — Strategi menghasilkan cumulative return positif** | OD-2.1/2.3 (stop), OD-3.1 (exit timing), OD-3.6 (period-end MTM), OD-4.1/4.2/4.3 (sizing), OD-4.8 (ordering), ARCH §16 (angka mana) | OD-5.1–5.5 (freeze dataset & periode) + OD-5.3 (gap) | total return, equity curve | `PARTIAL` — dua snapshot menunjukkan +149.59%/+152.00% positif, tetapi metodologi belum dibekukan → **`OWNER DECISION REQUIRED`** untuk keputusan di kolom 1 |
 | **Claim 2 — Kinerja risk-adjusted vs B&H** | OD-6.1/6.2/6.3/6.5 (benchmark), OD-6.4 (Sharpe), Phase 2H OD-5 (kriteria gate), Phase 2H OD-9 (OOS) | dataset terfreeze + B&H terdefinisi pada window yang sama | Sharpe strategy vs Sharpe B&H, verdict gate | `OWNER DECISION REQUIRED` — return-gate gagal di semua konstruksi terlokasi; Sharpe-gate berubah per konstruksi (`FORENSIC SENSITIVITY — NOT CANONICAL`); kebenaran klaim TIDAK dinilai di sini |
-| **Claim 3 — Downside risk berbeda dari B&H** | OD-5.3 (gap — DD trough = hari artefak 2023-01-22), OD-6.4 (definisi MDD/metrik), OD-3.11/6.6/6.7 (VaRSR) | dataset terfreeze dengan keputusan gap final | max drawdown, VaR/VaRSR | `BLOCKED` — DD sangat sensitif ke treatment gap (`FORENSIC SENSITIVITY — NOT CANONICAL`); VaRSR `NOT IMPLEMENTED` |
+| **Claim 3 — Downside risk berbeda dari B&H** | OD-5.3 (gap — DD trough = hari artefak 2023-01-22), OD-6.4 (definisi MDD/metrik), OD-3.11/6.6/6.7 (VaRSR) | dataset terfreeze dengan keputusan gap final | max drawdown, VaR/VaRSR | `BLOCKED` — DD sangat sensitif ke treatment gap (`FORENSIC SENSITIVITY — NOT CANONICAL`); VaRSR decided+implemented supplementary; VaR `NOT IMPLEMENTED` |
 | **Claim 4 — Performa bervariasi antar regime pasar** | OD-6.10 (definisi regime pre-registered), OD-6.12 (multiple testing), OD-5.5 (segmen periode) | periode final + seri return terfreeze | return per segmen, uji antar-segmen | `NOT IMPLEMENTED` sebagai analisis pre-registered (threshold pernah diubah post-hoc) → `OWNER DECISION REQUIRED` pada OD-6.10 |
 | **Claim 5 — Portofolio multi-aset memberi efek diversifikasi** | OD-6.9 (metode korelasi), OD-4.8/OD-4.10 (ordering & cap), OD-5.7 (staggered), OD-6.1 (relevansi pembanding) | universe terfreeze (OD-5.6) + window korelasi | korelasi pairwise, kontribusi risiko (analisis kontribusi risiko portofolia `NOT IMPLEMENTED` — OD-6 catatan) | `BLOCKED` — matriks korelasi berubah dengan window (615 vs 2.120) dan HYPE window → `OWNER DECISION REQUIRED` |
 
@@ -867,8 +867,8 @@ Gate B.
 ## 18. Strategy Decision Cluster
 
 **Isi:** 13 keputusan unik (OD-2.1–2.6 [5], OD-3.1–3.8 + OD-3.11 [9] − OD-3.5 decided =
-12 unresolved) + facet sizing OD-4.4/OD-4.7 (merged ke cluster lain). **Severity: 12
-BLOCKER · 1 PRE-FREEZE (OD-3.11).**
+12 unresolved) + facet sizing OD-4.4/OD-4.7 (merged ke cluster lain). **Severity: 11
+BLOCKER · 1 PRE-FREEZE · OD-3.11 DECIDED 2026-10-07 (IMPLEMENT; lihat §register STATISTICS).**
 
 **Keputusan yang sudah decided:** entry rule & timing, execution next-open + slippage,
 exit-channel predicate, exit fee rates/placement (OD-3.5 `DECIDED`), sifat stop (faktor
@@ -938,11 +938,13 @@ bergantung data, bukan konstruksi), gate restatement, Claim 2.
 
 ## 21. Statistical Decision Cluster
 
-**Isi:** 11 unresolved (OD-6.4, 6.6, 6.7, 6.8, 6.9, 6.10, 6.12, OD-3.11, Phase 2H OD-4,
-OD-5, OD-9). **Severity: 3 BLOCKER (OD-6.4, P2H OD-5, P2H OD-9) · 8 PRE-FREEZE.**
+**Isi:** 8 unresolved (OD-6.4, 6.8, 6.9, 6.10, 6.12, Phase 2H OD-4, OD-5, OD-9);
+OD-6.6/OD-6.7/OD-3.11 **DECIDED 2026-10-07** (VaRSR: Deng 2013 Eq. (12), γ=1.96 two-sided
+95%, daily, rf=0, raw kurtosis, tanpa ×√365, supplementary; Snapshot B unchanged).
+**Severity: 3 BLOCKER (OD-6.4, P2H OD-5, P2H OD-9) · 5 PRE-FREEZE.**
 
-**Keputusan yang sudah decided:** tidak ada — bahkan rf/annualization pun hardcoded
-(tanpa keputusan tertulis; nilai ada di `compute_metrics`).
+**Keputusan yang sudah decided:** OD-3.11/OD-6.6/OD-6.7 (VaRSR, 2026-10-07). Sharpe
+rfi/annualization pun hardcoded (tanpa keputusan tertulis; nilai ada di `compute_metrics`).
 
 **Bukti kunci:**
 - Sharpe rf=0, annualization √365, sortino non-standar (std dari subset negatif), n_trades
@@ -951,12 +953,12 @@ OD-5, OD-9). **Severity: 3 BLOCKER (OD-6.4, P2H OD-5, P2H OD-9) · 8 PRE-FREEZE.
   cash-day 0.0430/0.0391 — `FORENSIC SENSITIVITY — NOT CANONICAL`.
 - Korelasi: window 615 (staggered) vs 2.120 (semua) observasi mengubah matriks.
 - Regime: threshold pernah diubah post-hoc (0.50→0.33/0.66); best-of-9 config per segmen.
-- VaRSR: dijanjikan PPT, `NOT IMPLEMENTED` di repo.
+- VaRSR: dijanjikan PPT; **decided (OD-3.11 IMPLEMENT; OD-6.6/6.7) + implemented supplementary 2026-10-07** — bukan lagi janji tanpa pipeline.
 - Kriteria: pernah direvisi post-hoc (≥1.0 → >B&H 2026-09-05) — AR-05.
 - Pipeline stat rusak di HEAD: `sharpe_benchmark.py` + `regime_segmentation.py` →
   `KeyError: 'donchian_entry_period'` (re-verified; `pytest -q` 70 passed).
 
-**Dependensi masuk:** data (5.3/5.4/5.5/5.7), benchmark (6.1), OD-3.11.
+**Dependensi masuk:** data (5.3/5.4/5.5/5.7), benchmark (6.1). (OD-3.11 sudah DECIDED 2026-10-07.)
 **Dependensi keluar:** OD-6.12 (setelah uji final), Phase 2H OD-4 (setelah 6.1 + OD-5),
 OD-7.11, Gate E, Claim 2–5.
 
@@ -981,8 +983,8 @@ methodology/provenance.
 - `requirements.txt` unpinned (tetapi `pip check` bersih); drift lintas-env `UNKNOWN`.
 - 4 report tanpa generator: `bh_max_drawdown.md`, `bh_drawdown_and_btc_eth_corr.md`,
   `sharpe_discrepancy_report.md`, `decision_log.md` → `NOT TRACEABLE`.
-- 3 generator statistik crash di HEAD (`KeyError` sejak `0ad6cc6`); VaR/VaRSR +
-  cash-day correction `NOT IMPLEMENTED`.
+- 3 generator statistik crash di HEAD (`KeyError` sejak `0ad6cc6`); VaR +
+  cash-day correction `NOT IMPLEMENTED`. (VaRSR: decided + implemented supplementary 2026-10-07.)
 - `git status`: file OD-3..OD-7 (dan kini OD-8) untracked; semua tracked file tak tersentuh.
 
 **Dependensi keluar:** ARCH §16 adalah gerbang seluruh kutipan hasil; OD-7.12 = gerbang
@@ -1004,7 +1006,7 @@ Kontradiksi yang **masih terbuka** — dicatat, tidak diselesaikan sendiri. Prec
 | 5 | Label periode | `reference.json`/decision_log/config comment/"6 tahun" (2020-08..2026-08) | data aktual 2020-11-09..2026-09-02 = 5.81y (`VERIFIED`) | label warisan dataset pra-swap | semua jendela analisis | **Ya** — OD-5.5 (membawa P2H OD-6) |
 | 6 | Treatment missing-bar | keadaan sekarang: dibiarkan + MTM di-zero saat hole (DD trough = hari artefak 2023-01-22) | opsi refetch/ffill (DD −26.45↔−18.08; Sharpe 0.82↔1.10) | kebijakan default = pilihan tanpa keputusan; root cause hole `UNKNOWN` | DD, Sharpe, t-test, korelasi | **Ya** — OD-5.3 (+OD-3.7; membawa P2H OD-2, OD-6.11) |
 | 7 | Asset ordering | implementasi: urutan loop config (BTC-first, "artifact of dict order") | OD-4.8/OD-3.9: tidak ada aturan tertulis yang mendokumentasikannya | aturan de-facto ≠ metodologi terdokumentasi | 10.51pp spread, reproducibility | **Ya** — OD-4.8 (membawa OD-3.9, OD-7.9) |
-| 8 | VaRSR | PPT menjanjikan VaRSR (RQ) | repo: `NOT IMPLEMENTED` | janji metodologi tanpa pipeline | kelengkapan RQ2/RQ3 | **Ya** — OD-3.11 → OD-6.6/6.7 |
+| 8 | VaRSR | PPT menjanjikan VaRSR (RQ) | repo: `NOT IMPLEMENTED` saat audit | janji metodologi tanpa pipeline | kelengkapan RQ2/RQ3 | **dijawab 2026-10-07: DECIDED + implemented (supplementary, Snapshot B unchanged)** — OD-3.11 IMPLEMENT, OD-6.6/6.7 terkunci |
 | 9 | Konfigurasi t-test | asumsi implicit: hari tanpa bar = hari return nol | OD-6.8: cash-day correction `NOT IMPLEMENTED`; p berganti 0.0743/0.0193 ↔ 0.0430/0.0391 | keputusan metodologi terselubung dalam kode yang belum ada | signifikansi Claim 1/2 | **Ya** — OD-6.8 (+OD-6.12) |
 | 10 | Provenance hasil | `metrics.md` (Snapshot A, tracked) | `backtest-reference.json` (Snapshot B, hand-transcribed, label basi; ledger B hilang) | dua artefak klaim tanpa satu sumber; ledger B `PROVENANCE UNKNOWN` | seluruh kutipan + reproducibility | **Ya** — ARCH §16 + OD-7.2/7.10 |
 | 11 | Klaim gate vs aritmetika | `TASKS.md:18`/`PLAN.md:211` "terpenuhi", preset `sharpe_vs_bnh: above` | OD-6: return-gate 149.59/152.0 < 155.03 gagal; Sharpe 0.82 < 0.98 | dokumen menyatakan lulus; angka tidak | integritas klaim tesis | **Ya** — Phase 2H OD-4 |
@@ -1023,7 +1025,7 @@ Kontradiksi yang **masih terbuka** — dicatat, tidak diselesaikan sendiri. Prec
 | **Gate B — Data Frozen** | **`BLOCKED`** | OD-5.1/5.2/5.3/5.5/5.8/5.10 terbuka; 0 checksum/manifest (`NOT IMPLEMENTED`); label periode basi; dataset belum "thesis-frozen" |
 | **Gate C — Implementation Frozen** | **`PARTIAL`** | deterministik + 70 test passed (`VERIFIED`); entry/execution match PPT 94/94 (`VERIFIED`); TAPI stop anchor vs PPT masih mismatch (OD-2.1), ordering tak terdokumentasi (OD-4.8), gap precedence tak selaras — implementasi belum bisa di-klaim "match methodology" karena metodologinya belum dibekukan |
 | **Gate D — Reproduction Frozen** | **`PARTIAL`** | Snapshot B byte-identik 3× + cwd-independent (`VERIFIED`); Snapshot A reproduksi via checkout (`VERIFIED`); TAPI command of record tidak ada (default menimpa file tracked), env unpinned, ledger B `PROVENANCE UNKNOWN`, 4 report `NOT TRACEABLE` |
-| **Gate E — Statistical Pipeline Frozen** | **`BLOCKED`** | VaR/VaRSR + cash-day correction `NOT IMPLEMENTED`; 3 generator statistik crash (`KeyError: donchian_entry_period`); definisi statistik (OD-6.4, 6.6–6.12, P2H OD-5) belum diputuskan |
+| **Gate E — Statistical Pipeline Frozen** | **`BLOCKED`** | VaR + cash-day correction `NOT IMPLEMENTED`; 3 generator statistik crash (`KeyError: donchian_entry_period`); definisi statistik (OD-6.4, 6.8–6.12, P2H OD-5) belum diputuskan. VaRSR: decided + implemented supplementary (OD-3.11/6.6/6.7, 2026-10-07); keputusan belum final-canonical karena Snapshot B belum di-extend via generator OD-7 |
 | **Gate F — Final Simulation** | **`BLOCKED`** | prasyarat A–E tidak terpenuhi; simulasi final **tidak boleh dimulai** |
 
 ---
@@ -1063,7 +1065,8 @@ dihormati sebagai urutan decision-gate (tidak ada lompatan fase):
 
 ### Phase 4 — Statistical analysis
 1. Hitung semua metrik §4 sekali dari run kanonik dengan konvensi OD-6.4.
-2. VaRSR bila OD-3.11 memilih implementasi (OD-6.6 → OD-6.7); uji t dengan perlakuan
+2. VaRSR (OD-3.11 DECIDED: IMPLEMENT; OD-6.6/6.7 terkunci — Deng 2013 Eq. (12), γ=1.96,
+   daily, rf=0, raw kurtosis, tanpa ×√365; sekarang supplementary); uji t dengan perlakuan
    OD-6.8; korelasi OD-6.9; regime OD-6.10 (pre-registered); koreksi multipel OD-6.12.
 3. OOS/holdout bila Phase 2H OD-9 memilih; tentukan artefak otoritatif (OD-7.11).
 4. Bandingkan hasil vs eksplorasi awal (fase paper/backtest) — tanpa mengulang seleksi.
@@ -1138,8 +1141,8 @@ provenance-nya sudah di-freeze secara eksplisit — keberadaan implementasi TIDA
 [ ] Benchmark frozen                             — OD-6.1/6.2/6.3/6.5 terbuka
 [ ] Sharpe frozen                                — OD-6.4 terbuka
 [ ] MDD frozen                                   — OD-5.3 (trough artefak) + definisi via OD-6.4/P2H OD-10 terbuka
-[ ] VaR frozen                                   — OD-6.6/6.7 (menunggu OD-3.11) terbuka; NOT IMPLEMENTED
-[ ] VaRSR frozen                                 — OD-3.11 terbuka; NOT IMPLEMENTED
+[ ] VaR frozen                                   — VaR: tanpa keputusan formula + NOT IMPLEMENTED (OD-6.6/6.7 yang VaRSR-nya sudah decided TIDAK mencakup VaR klasik)
+[~] VaRSR — decided (OD-3.11/6.6/6.7) + implemented supplementary 2026-10-07; frozen-canonical menunggu ekstensi generator OD-7 |
 [ ] t-test frozen                                — OD-6.8 terbuka; cash-day NOT IMPLEMENTED
 [ ] correlation frozen                           — OD-6.9 terbuka
 [ ] regime frozen                                — OD-6.10 terbuka
@@ -1164,7 +1167,7 @@ terpecahkan):
 | 2 | Ledger raw Snapshot B tidak tersimpan — tidak ada jejak run yang memproduksi 152.00/0.82/−26.45/94/2520.02 selain artefak agregat | `PROVENANCE UNKNOWN` |
 | 3 | 4 report tanpa generator: `bh_max_drawdown.md`, `bh_drawdown_and_btc_eth_corr.md`, `sharpe_discrepancy_report.md`, `decision_log.md` | `NOT TRACEABLE` |
 | 4 | Root cause 1.635 hole belum diketahui (venue-side? fetch bug?) — refetch comparison belum pernah dilakukan | `UNKNOWN` |
-| 5 | VaR/VaRSR + cash-day correction tidak ada di pipeline | `NOT IMPLEMENTED` |
+| 5 | VaR + cash-day correction tidak ada di pipeline; VaRSR decided+implemented supplementary 2026-10-07 | VaR & cash-day: `NOT IMPLEMENTED` |
 | 6 | 3 generator statistik crash di HEAD (`KeyError: donchian_entry_period` sejak `0ad6cc6`) — angka report = frozen artifact, bukan output run ulang | `VERIFIED` (crash) + `NOT TRACEABLE` (regenerasi) |
 | 7 | Dataset manifest/checksum tidak ada di repo | `NOT IMPLEMENTED` |
 | 8 | Drift numerik lintas-environment (requirements unpinned) belum diukur lintas mesin | `UNKNOWN` |

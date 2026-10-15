@@ -282,8 +282,8 @@ def main():
     # Results table
     lines.append("## 2. Hasil Backtest (10 pair di semua config)")
     lines.append("")
-    lines.append("| Config | Pairs | MaxConc | ClusterLimit | Risk% | Sharpe | Return% | MaxDD% | Trades | WR% | PF | CAGR% | Gate |")
-    lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    lines.append("| Config | Pairs | MaxConc | ClusterLimit | Risk% | Sharpe | VaRSR | Vol% | Return% | MaxDD% | Trades | WR% | PF | CAGR% | Gate |")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
 
     def fmt_cl(r):
         # Extract name clues
@@ -302,7 +302,8 @@ def main():
     for r in all_results:
         cl, risk_s = fmt_cl(r)
         lines.append(f"| {r['_name']} | {r['_n_pairs']} | 5 | {cl} | {risk_s} | "
-                     f"{r['sharpe']} | {r['total_return_pct']} | {r['max_drawdown_pct']} | "
+                     f"{r['sharpe']} | {r['varsh']} | {r['volatility_pct']} | "
+                     f"{r['total_return_pct']} | {r['max_drawdown_pct']} | "
                      f"{r['n_trades']} | {r['win_rate_pct']} | {r['profit_factor']} | "
                      f"{r['cagr_pct']} | {gate_str(r)} |")
     lines.append("")

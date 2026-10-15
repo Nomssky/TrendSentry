@@ -172,7 +172,16 @@ def run_two_sided(dfs: dict, cfg: dict, allow_long: bool, allow_short: bool) -> 
 def main() -> int:
     selfcheck()
     cfg = load_config()
-    dfs = {s: load_ohlcv(s, cfg["strategy"]["timeframe"]) for s in ["BTC/USDT", "ETH/USDT"]}
+    # run_two_sided() accesses kolom donchian langsung (don_hi/don_lo) — tidak punya
+    # cabang SMA/RSI. Preset non-donchian akan gagal jauh di dalam loop dengan
+    # KeyError yang menyesatkan, jadi tolak di awal dengan pesan yang jujur.
+    if cfg["strategy"].get("model", "donchian") != "donchian":
+        raise SystemExit(
+            "run_longshort_backtest hanya mendukung model donchian "
+            f"(preset aktif: {cfg['strategy'].get('model')!r}). "
+            "Preset SMA/RSI belum diuji untuk long-short."
+        )
+    dfs = {s: load_ohlcv(s, cfg["strategy"]["timeframe"], cfg) for s in ["BTC/USDT", "ETH/USDT"]}
     OUT.mkdir(parents=True, exist_ok=True)
 
     configs = {
