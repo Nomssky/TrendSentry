@@ -114,13 +114,26 @@ def test_no_research_script_calls_load_ohlcv_without_cfg():
 
 
 def test_self_defined_loader_is_still_independent():
-    """Loader sendiri correlation_mitigation tetap utuh (dikecualikan, bukan ikut berubah)."""
-    from backtest.research.correlation_mitigation import load_ohlcv as own_loader
+    """Loader sendiri correlation_mitigation tetap utuh (dikecualikan, bukan ikut berubah).
 
-    import inspect
+    Diperiksa via AST, bukan import: modul itu menarik `yfinance` (hanya ada di
+    requirements-research.txt) yang TIDAK dipasang di env CI paper-trading
+    (`ccxt pandas pyyaml pytest rich`). Import akan menggagalkan test ini karena
+    dependency riset, bukan karena kontrak loader berubah.
+    """
+    path = ROOT / "backtest" / "research" / "correlation_mitigation.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
 
-    params = inspect.signature(own_loader).parameters
-    assert "cfg" not in params, (
+    loaders = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == "load_ohlcv"
+    ]
+    assert loaders, "correlation_mitigation.load_ohlcv hilang"
+
+    args = loaders[0].args
+    names = {a.arg for a in (*args.posonlyargs, *args.args, *args.kwonlyargs)}
+    assert "cfg" not in names, (
         "correlation_mitigation.load_ohlcv ikut berubah — loader itu punya parameter "
         "beku sendiri (14/20/10) dan sengaja tidak mengikuti kontrak engine"
     )
