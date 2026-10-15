@@ -10,9 +10,9 @@ export const clamp = (v: number, lo = 0, hi = 100) => Math.min(hi, Math.max(lo, 
 export function Card({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={`glass noise-overlay rounded-[2rem] p-5 transition-colors duration-300 hover:border-[#ccff00]/25 sm:p-6 ${className}`}
+      className={`glass noise-overlay rounded-[2rem] p-5 transition-colors duration-300 hover:border-accent/25 sm:p-6 ${className}`}
     >
-      <p className="tech-label mb-4 text-white/40">{title}</p>
+      <p className="tech-label mb-4 text-muted">{title}</p>
       {children}
     </div>
   );
@@ -20,30 +20,30 @@ export function Card({ title, children, className = "" }: { title: string; child
 
 export function Badge({ tone, children }: { tone: "ok" | "warn" | "neutral"; children: React.ReactNode }) {
   const tones = {
-    ok: "bg-[#ccff00]/10 text-[#ccff00]",
-    warn: "bg-rose-500/10 text-rose-400",
-    neutral: "bg-white/10 text-white/50",
+    ok: "bg-accent/10 text-accent",
+    warn: "bg-danger/10 text-danger",
+    neutral: "bg-elevated text-muted",
   };
-  return <span className={`rounded-full px-2.5 py-0.5 font-mono-tech text-[11px] font-medium ${tones[tone]}`}>{children}</span>;
+  return <span className={`rounded-full px-2.5 py-0.5 font-mono text-[11px] font-medium ${tones[tone]}`}>{children}</span>;
 }
 
 /** Thin meter bar with an optional reference marker. Pure presentation. */
 export function Meter({
   pct,
   markerPct,
-  tone = "lime",
+  tone = "accent",
 }: {
   pct: number;
   markerPct?: number;
-  tone?: "lime" | "rose";
+  tone?: "accent" | "danger";
 }) {
-  const fill = tone === "lime" ? "bg-[#ccff00]" : "bg-rose-400";
+  const fill = tone === "accent" ? "bg-accent" : "bg-danger";
   return (
-    <div className="relative h-1.5 overflow-visible rounded-full bg-white/10">
+    <div className="relative h-1.5 overflow-visible rounded-full bg-elevated">
       <div className={`h-full rounded-full ${fill}`} style={{ width: `${clamp(pct)}%` }} />
       {markerPct != null && (
         <div
-          className="absolute -top-0.5 h-2.5 w-0.5 rounded bg-white/70"
+          className="absolute -top-0.5 h-2.5 w-0.5 rounded bg-muted"
           style={{ left: `${clamp(markerPct)}%` }}
           title="reference"
         />
@@ -56,7 +56,7 @@ export function SectionHead({ n, title, right }: { n: string; title: string; rig
   return (
     <div className="flex items-end justify-between gap-4">
       <div className="flex items-center gap-4">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 font-mono-tech text-xs font-bold text-white/60">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-line font-mono text-xs font-bold text-secondary">
           {n}
         </span>
         <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{title}</h2>

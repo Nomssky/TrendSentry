@@ -108,12 +108,12 @@ export default function LiveSection({
 
   const badge =
     mode === "live"
-      ? { cls: "bg-[#ccff00]/10 text-[#ccff00]", dot: "pulse-dot bg-[#ccff00]", text: "LIVE" }
+      ? { cls: "bg-accent/10 text-accent", dot: "pulse-dot bg-accent", text: "LIVE" }
       : mode === "delayed"
-        ? { cls: "bg-amber-500/10 text-amber-400", dot: "bg-amber-400", text: "DELAYED" }
+        ? { cls: "bg-warning/10 text-warning", dot: "bg-warning", text: "DELAYED" }
         : mode === "offline"
-          ? { cls: "bg-rose-500/10 text-rose-400", dot: "bg-rose-400", text: "OFFLINE" }
-          : { cls: "bg-white/10 text-white/50", dot: "bg-white/40", text: "LOADING" };
+          ? { cls: "bg-danger/10 text-danger", dot: "bg-danger", text: "OFFLINE" }
+          : { cls: "bg-elevated text-muted", dot: "bg-elevated", text: "LOADING" };
 
   const calc = (pos: BoardPosition) => {
     const price = prices[pos.pair]?.price ?? pos.entry_price;
@@ -134,7 +134,7 @@ export default function LiveSection({
     <section className="space-y-4">
       {/* Live ticker */}
       <div className="space-y-3">
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono-tech text-[11px] font-medium ${badge.cls}`}>
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[11px] font-medium ${badge.cls}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${badge.dot}`} />
           {badge.text}
         </span>
@@ -146,11 +146,11 @@ export default function LiveSection({
             const up = (p?.changePct ?? 0) >= 0;
             return (
               <div key={pair} className="glass rounded-2xl px-3 py-2 sm:px-4">
-                <div className="font-mono-tech text-[10px] uppercase tracking-[0.2em] text-white/40">{pair}</div>
-                <div className="font-mono-tech text-base sm:text-lg">
+                <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted">{pair}</div>
+                <div className="font-mono text-base sm:text-lg">
                   <span className={flashCls}>{p ? `$${fmt(p.price)}` : "—"}</span>
                   {p?.changePct != null && (
-                    <span className={`ml-1.5 text-xs sm:ml-2 sm:text-sm ${up ? "text-[#ccff00]" : "text-rose-400"}`}>
+                    <span className={`ml-1.5 text-xs sm:ml-2 sm:text-sm ${up ? "text-accent" : "text-danger"}`}>
                       {up ? "+" : ""}
                       {p.changePct.toFixed(2)}%
                     </span>
@@ -164,7 +164,7 @@ export default function LiveSection({
 
       {/* Open positions — compact cards + detail popup */}
       {openPositions.length === 0 ? (
-        <div className="rounded-[2rem] border border-dashed border-white/15 bg-white/[0.02] p-6 text-sm text-white/50 backdrop-blur">
+        <div className="rounded-[2rem] border border-dashed border-line bg-surface p-6 text-sm text-muted backdrop-blur">
           No open positions — the bot is waiting for a 20-day breakout. Normal for this strategy
           (expected ~1 signal per 15 days across pairs), not a dead system.
         </div>
@@ -178,25 +178,25 @@ export default function LiveSection({
               <div key={pos.id} className="glass noise-overlay rounded-[2rem] p-5">
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-bold tracking-tight">{pos.pair}</span>
-                  <span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-mono-tech text-[11px] text-amber-400">OPEN</span>
+                  <span className="rounded-full bg-warning/10 px-2 py-0.5 font-mono text-[11px] text-warning">OPEN</span>
                 </div>
-                <p className="mt-1 font-mono-tech text-[11px] text-white/40">
+                <p className="mt-1 font-mono text-[11px] text-muted">
                   {c.daysOpen !== null ? `DAY ${c.daysOpen} SINCE ENTRY (${pos.entry_date})` : `SINCE ${pos.entry_date}`}
                 </p>
-                <p className="tech-label mt-4 text-white/40">UNREALIZED PNL</p>
-                <p className={`font-mono-tech text-2xl font-bold tracking-tight sm:text-3xl ${flashCls} ${c.up ? "text-[#ccff00]" : "text-rose-400"}`}>
+                <p className="tech-label mt-4 text-muted">UNREALIZED PNL</p>
+                <p className={`font-mono text-2xl font-bold tracking-tight sm:text-3xl ${flashCls} ${c.up ? "text-accent" : "text-danger"}`}>
                   {c.up ? "+" : ""}{fmt(c.unreal)} <span className="text-base">USD</span>
                 </p>
-                <div className="mt-1.5 flex items-baseline justify-between font-mono-tech text-xs">
-                  <span className={c.up ? "text-[#ccff00]" : "text-rose-400"}>
+                <div className="mt-1.5 flex items-baseline justify-between font-mono text-xs">
+                  <span className={c.up ? "text-accent" : "text-danger"}>
                     {c.pnlPct >= 0 ? "+" : ""}{c.pnlPct.toFixed(2)}%
                   </span>
-                  <span className="text-white/40">MKT ${fmt(c.marketValue)}</span>
+                  <span className="text-muted">MKT ${fmt(c.marketValue)}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setDetail(pos)}
-                  className="mt-4 w-full rounded-full border border-white/15 bg-white/5 px-6 py-2.5 text-sm font-medium text-white/80 transition hover:border-[#ccff00]/50 hover:text-[#ccff00]"
+                  className="mt-4 w-full rounded-full border border-control-border bg-surface px-6 py-2.5 text-sm font-medium text-secondary transition hover:border-accent/40 hover:text-accent"
                 >
                   Details
                 </button>
@@ -209,7 +209,7 @@ export default function LiveSection({
       {/* Detail popup */}
       {detail && d && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-canvas/70 p-4 backdrop-blur-sm"
           onClick={() => setDetail(null)}
         >
           <div
@@ -222,45 +222,45 @@ export default function LiveSection({
             <div className="flex items-center justify-between">
               <span className="text-xl font-bold tracking-tight">{detail.pair}</span>
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-mono-tech text-[11px] text-amber-400">OPEN</span>
+                <span className="rounded-full bg-warning/10 px-2 py-0.5 font-mono text-[11px] text-warning">OPEN</span>
                 <button
                   type="button"
                   aria-label="Close details"
                   onClick={() => setDetail(null)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-white/60 transition hover:border-[#ccff00]/50 hover:text-[#ccff00]"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-control-border text-secondary transition hover:border-accent/40 hover:text-accent"
                 >
                   ✕
                 </button>
               </div>
             </div>
             {d.daysOpen !== null && (
-              <p className="mt-1 font-mono-tech text-[11px] text-white/40">
+              <p className="mt-1 font-mono text-[11px] text-muted">
                 DAY {d.daysOpen} SINCE ENTRY ({detail.entry_date})
               </p>
             )}
             <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              <span className="text-white/50">Entry</span>
-              <span className="text-right font-mono-tech">{fmt(detail.entry_price)}</span>
-              <span className="text-white/50">Stop (2×ATR)</span>
-              <span className="text-right font-mono-tech text-rose-400">{fmt(detail.stop_price)}</span>
-              <span className="text-white/50">Units</span>
-              <span className="text-right font-mono-tech">{detail.units.toFixed(4)}</span>
-              <span className="text-white/50">Invested</span>
-              <span className="text-right font-mono-tech">${fmt(d.invested)}</span>
-              <span className="text-white/50">Market Value</span>
-              <span className="text-right font-mono-tech">${fmt(d.marketValue)}</span>
-              <span className="text-white/50">Unrealized PnL</span>
-              <span className={`text-right font-mono-tech font-bold ${d.up ? "text-[#ccff00]" : "text-rose-400"}`}>
+              <span className="text-muted">Entry</span>
+              <span className="text-right font-mono">{fmt(detail.entry_price)}</span>
+              <span className="text-muted">Stop (2×ATR)</span>
+              <span className="text-right font-mono text-danger">{fmt(detail.stop_price)}</span>
+              <span className="text-muted">Units</span>
+              <span className="text-right font-mono">{detail.units.toFixed(4)}</span>
+              <span className="text-muted">Invested</span>
+              <span className="text-right font-mono">${fmt(d.invested)}</span>
+              <span className="text-muted">Market Value</span>
+              <span className="text-right font-mono">${fmt(d.marketValue)}</span>
+              <span className="text-muted">Unrealized PnL</span>
+              <span className={`text-right font-mono font-bold ${d.up ? "text-accent" : "text-danger"}`}>
                 {d.up ? "+" : ""}${fmt(d.unreal)}
               </span>
-              <span className="text-white/50">PnL %</span>
-              <span className={`text-right font-mono-tech ${d.up ? "text-[#ccff00]" : "text-rose-400"}`}>
+              <span className="text-muted">PnL %</span>
+              <span className={`text-right font-mono ${d.up ? "text-accent" : "text-danger"}`}>
                 {d.pnlPct >= 0 ? "+" : ""}{d.pnlPct.toFixed(2)}%
               </span>
-              <span className="text-white/50">% Portfolio</span>
-              <span className="text-right font-mono-tech">{d.portfolioPct.toFixed(1)}%</span>
+              <span className="text-muted">% Portfolio</span>
+              <span className="text-right font-mono">{d.portfolioPct.toFixed(1)}%</span>
             </div>
-            <p className="mt-4 font-mono-tech text-[10px] uppercase tracking-[0.2em] text-white/30">
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted">
               PRICES TICK EVERY 3S // ESC TO CLOSE
             </p>
           </div>

@@ -19,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   )
 
   return (
-    <div className="flex min-h-screen bg-black">
+    <div className="flex min-h-screen bg-canvas">
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar email={user.email ?? null} statuses={statuses} botCount={statuses.length} />

@@ -53,39 +53,39 @@ function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
       <div className="flex items-center gap-2.5">
-        <LogoMark tone="light" className="h-9 w-9" />
-        <span className="text-lg font-semibold tracking-tight text-white">TrendSentry</span>
+        <LogoMark className="h-9 w-9" />
+        <span className="text-lg font-semibold tracking-tight text-primary">TrendSentry</span>
       </div>
-      <h1 className="text-2xl font-bold text-white">Sign in</h1>
+      <h1 className="font-display text-2xl text-primary">Sign in</h1>
       {checkEmail && (
-        <p className="rounded-lg border border-[#ccff00]/30 bg-[#ccff00]/10 px-4 py-3 text-sm text-[#ccff00]">
+        <p className="rounded-lg border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-accent">
           Check your email for a confirmation link, then sign in.
         </p>
       )}
-      {error && <p className="text-sm text-rose-400">{error}</p>}
-      {urlError && !error && <p className="text-sm text-rose-400">{friendlyError(urlError)}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {urlError && !error && <p className="text-sm text-danger">{friendlyError(urlError)}</p>}
       {resent && (
-        <p className="rounded-lg border border-[#ccff00]/30 bg-[#ccff00]/10 px-4 py-3 text-sm text-[#ccff00]">
+        <p className="rounded-lg border border-accent/30 bg-accent/10 px-4 py-3 text-sm text-accent">
           Email konfirmasi dikirim ulang — cek inbox/spam.
         </p>
       )}
-      <input name="email" type="email" placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
-      <input name="password" type="password" placeholder="Password" required className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-white/40 outline-none focus:border-[#ccff00]/50" />
-      <button disabled={loading} className="w-full rounded-full bg-[#ccff00] px-6 py-3 font-semibold text-black transition hover:bg-[#aadd00] disabled:opacity-50">
+      <input name="email" type="email" placeholder="Email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-lg border border-control-border bg-surface px-4 py-3 text-primary placeholder-muted focus:border-accent/40" />
+      <input name="password" type="password" placeholder="Password" required className="w-full rounded-lg border border-control-border bg-surface px-4 py-3 text-primary placeholder-muted focus:border-accent/40" />
+      <button disabled={loading} className="w-full rounded-full bg-action px-6 py-3 font-semibold text-on-action transition hover:bg-accent-hover disabled:opacity-50">
         {loading ? "Signing in..." : "Sign in"}
       </button>
-      <button type="button" onClick={resendConfirm} className="w-full text-center text-sm text-white/40 hover:text-[#ccff00] hover:underline">
+      <button type="button" onClick={resendConfirm} className="w-full text-center text-sm text-muted hover:text-accent hover:underline">
         Kirim ulang email konfirmasi
       </button>
-      <p className="text-center text-sm text-white/40">No account? <a href="/auth/signup" className="text-[#ccff00] hover:underline">Sign up</a></p>
+      <p className="text-center text-sm text-muted">No account? <a href="/auth/signup" className="text-accent hover:underline">Sign up</a></p>
     </form>
   )
 }
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black px-4">
-      <Suspense fallback={<div className="text-white/40">Loading...</div>}>
+    <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
+      <Suspense fallback={<div className="text-muted">Loading...</div>}>
         <LoginForm />
       </Suspense>
     </div>

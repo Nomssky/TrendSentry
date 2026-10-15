@@ -36,12 +36,12 @@ export function DeploymentSelector({ currentId }: { currentId: number }) {
   if (rows.length === 0) return null
 
   return (
-    <label className="flex items-center gap-2 text-sm text-white/50">
-      <span className="tech-label text-white/40">DEPLOYMENT</span>
+    <label className="flex items-center gap-2 text-sm text-muted">
+      <span className="tech-label text-muted">DEPLOYMENT</span>
       <select
         value={currentId}
         onChange={(e) => router.push(`/app/deployments/${e.target.value}`)}
-        className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white outline-none focus:border-[#ccff00]/50"
+        className="rounded-lg border border-control-border bg-surface px-3 py-2 text-primary focus:border-accent/40"
       >
         {rows.map((r) => (
           <option key={r.id} value={r.id}>

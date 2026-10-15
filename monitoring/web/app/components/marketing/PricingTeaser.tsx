@@ -1,7 +1,7 @@
 // Pricing teaser + FAQ. No fake prices: Watcher tier is live, Paper Beta waitlist.
 
 import Link from "next/link";
-import { NeonButton, TechLabel } from "./ui";
+import { PrimaryButton, TechLabel } from "./ui";
 
 const FAQS = [
   {
@@ -28,24 +28,24 @@ const FAQS = [
 
 export function PricingTeaser() {
   return (
-    <section className="bg-[#e5e5e5] px-5 pb-20 text-black sm:px-10 lg:px-16">
-      <div className="noise-overlay rounded-3xl bg-black p-8 text-[#ebebeb] sm:p-12">
+    <section className="bg-ink px-5 pb-20 text-on-dark sm:px-10 lg:px-16">
+      <div className="noise-overlay rounded-3xl bg-canvas p-8 text-primary sm:p-12">
         <div className="flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-center">
           <div>
             <TechLabel>[ PRICING // PRIVATE BETA ]</TechLabel>
-            <h2 className="mt-4 max-w-xl text-4xl font-bold tracking-[-0.04em] sm:text-5xl">
+            <h2 className="font-display mt-4 max-w-xl text-4xl tracking-[-0.02em] sm:text-5xl">
               Start free. Upgrade when you need alerts.
             </h2>
-            <p className="mt-4 max-w-xl text-white/60">
+            <p className="mt-4 max-w-xl text-secondary">
               Watcher tier is open now — connect your exchange, set your rules, and TrendSentry logs
               your discipline. Premium unlocks real-time deviation alerts.
             </p>
           </div>
           <div className="flex flex-col gap-3">
-            <NeonButton href="/start">Start tracking →</NeonButton>
+            <PrimaryButton href="/start">Start tracking →</PrimaryButton>
             <Link
               href="/pricing"
-              className="text-center font-mono-tech text-[10px] uppercase tracking-[0.2em] text-white/50 hover:text-[#ccff00]"
+              className="text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted hover:text-accent"
             >
               See full pricing →
             </Link>
@@ -54,16 +54,16 @@ export function PricingTeaser() {
       </div>
 
       <div id="faq" className="mx-auto mt-16 max-w-3xl">
-        <TechLabel className="text-black/50">[ FAQ ]</TechLabel>
-        <div className="mt-6 divide-y divide-black/10">
+        <TechLabel className="text-on-dark/60">[ FAQ ]</TechLabel>
+        <div className="mt-6 divide-y divide-on-dark/15">
           {FAQS.map((f) => (
             <div key={f.q} className="py-5">
               <h3 className="font-bold">{f.q}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-black/65">{f.a}</p>
+              <p className="mt-1 text-sm leading-relaxed text-on-dark/70">{f.a}</p>
             </div>
           ))}
         </div>
-        <p className="mt-6 text-xs text-black/50">
+        <p className="mt-6 text-xs text-on-dark/60">
           Still deciding? Start with the{" "}
           <Link href="/proof" className="underline">
             proof
