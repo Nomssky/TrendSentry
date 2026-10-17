@@ -6,11 +6,17 @@
 > eksekusi `pytest` (64 passed), `tsc --noEmit` (exit 0), `eslint` (exit 1: 2 error),
 > `next build` (exit 0), query SQLite `db/paper_trading.db`.
 >
-> **Re-verifikasi 2026-10-01 (HEAD `24c3ac4`):** `pytest` **224 passed**, `tsc --noEmit` **exit 0**,
-> `eslint` **2 error / 7 warning**, `next build` **exit 0**. Angka `64 passed` pada baris metode
-> di atas adalah hasil verifikasi Phase 0 pada `3a4dae8` — dibiarkan sebagai catatan riwayat,
-> bukan status sekarang. Angka di seluruh isi dokumen (§10 inventaris, §15 coverage, Lampiran B)
-> sudah diselaraskan ke status 2026-10-01, kecuali bagian yang ditandai sebagai riwayat.
+> **Re-verifikasi 2026-10-17 (HEAD `9093c1c`, branch `main`, working tree bersih):** `pytest`
+> **235 passed** (19 file test + `conftest.py`), `tsc --noEmit` **exit 0**, `eslint`
+> **0 error / 2 warning** (keduanya di `e2e/`, off-limits), `next build` **exit 0**.
+> Jumlah test bertambah dari 224 → 235 setelah merge PR #2 (kontrak `load_ohlcv` + VaRSR +
+> guard dependency riset CI). Angka `224` di sebagian isi dokumen adalah snapshot historis
+> 2026-10-01, bukan status sekarang.
+>
+> **Re-verifikasi 2026-10-01 (HEAD `24c3ac4`) — SNAPSHOT HISTORIS:** `pytest` **224 passed**,
+> `tsc --noEmit` **exit 0**, `eslint` **2 error / 7 warning**, `next build` **exit 0**.
+> Angka `64 passed` pada baris metode di atas adalah hasil verifikasi Phase 0 pada `3a4dae8` —
+> dibiarkan sebagai catatan riwayat, bukan status sekarang.
 >
 > **Tidak ada file yang dihapus, tidak ada kode yang diubah, tidak ada perilaku runtime yang diubah
 > dalam phase ini.** Setiap klaim dokumen lama diverifikasi terhadap kode sebelum dilaporkan.
@@ -46,7 +52,8 @@ Temuan utama:
 - **Kontradiksi dokumentasi terverifikasi: 28 butir** (dihitung per klaim di §12, tersebar di
   9 sub-bagian), termasuk Node.js-vs-Python untuk
   Fase 4, path migrasi yang salah, nama file yang tidak ada, klaim WebSocket yang tidak ada.
-- **Test** (status saat Phase 0, `3a4dae8`): 64 Python test (semua pass) — kini **224 Python test**;
+- **Test** (status saat Phase 0, `3a4dae8`): 64 Python test (semua pass) — kini **235 Python test**
+  (per re-verifikasi 2026-10-17, 19 file test);
   34 Playwright E2E + 1 API smoke script (angka E2E tetap).
   Typecheck bersih; **lint gagal dengan 2 error** (`react-hooks/set-state-in-effect`) —
   berbeda dari kesan "sudah bersih" di `AUDIT.md`.
@@ -64,10 +71,10 @@ Angka audit:
 | File di-track di git | 232 |
 | Baris inventory di dokumen ini (§10) | 174 baris — mencakup seluruh 239 file; file serupa (mis. 13 CSV data) dikelompokkan jadi satu baris |
 | File Python sumber (non-test) | 22 |
-| File Python test | 17 (224 test) + `conftest.py` |
+| File Python test | 19 (235 test) + `conftest.py` |
 | File TS/TSX | 78 (41 `.ts` + 37 `.tsx`) |
 | File test E2E | 34 test Playwright + 1 smoke script `.mjs` |
-| Python test | **224 passed** |
+| Python test | **235 passed** (re-verifikasi 2026-10-17; 224 = snapshot historis 2026-10-01) |
 | Web typecheck | **exit 0** |
 | Web lint | **exit 0 di `app/`+`lib/` (0 error, 0 warning)**; 2 warning tersisa di `e2e/` (off-limits §18 #16) |
 | Web build | **exit 0** |
@@ -128,7 +135,7 @@ Struktur aktual (HEAD), bukan struktur usulan di `PLAN.md` §4:
 ├── data/
 │   ├── historical/              # 13 CSV OHLCV (10 pair config + BCH/LTC/PAXG sisa riset)
 │   └── funding/                 # 2 CSV funding (riset long-short)
-└── tests/                       # 17 file pytest + conftest.py (224 test)
+└── tests/                       # 19 file pytest + conftest.py (235 test, 2026-10-17)
 ```
 
 Tidak ada: `execution/`, `llm_filter/deepseek_client.py`, `llm_filter/prompts/`,
@@ -448,7 +455,7 @@ SUSPICIOUS / DEAD / UNKNOWN (bukti di §13 bila bukan CORE/SUPPORT).
 | backtest/research/run_longshort_backtest.py | long-short vs long-only vs short-only (riset, "tidak dipakai paper") | reports/research/longshort/ | run_backtest, strategy, matplotlib | manual | RESEARCH |
 | backtest/research/sharpe_benchmark.py | Sharpe identik formula vs B&H | reports/sharpe_benchmark_comparison.md | run_backtest, **scipy (tidak di requirements)** | manual | RESEARCH |
 
-### 10.3 Python — tests (17 file, 224 test + `tests/conftest.py` bootstrap path)
+### 10.3 Python — tests (19 file, 235 test + `tests/conftest.py` bootstrap path)
 
 | Path | Test | Melindungi | Status |
 |---|---|---|---|
@@ -912,7 +919,7 @@ Metode: grep referensi lintas repo (Python/TS/TSX/YAML/MD) + penelusuran runtime
 
 ## 15. Test Coverage Map
 
-### 15.1 Python (pytest) — 17 file, **224 test, semua PASS**
+### 15.1 Python (pytest) — 19 file, **235 test, semua PASS** (re-verifikasi 2026-10-17)
 
 | Implementasi | Test yang melindungi | Status |
 |---|---|---|
@@ -940,7 +947,7 @@ Metode: grep referensi lintas repo (Python/TS/TSX/YAML/MD) + penelusuran runtime
 | isolasi file-per-deployment | test_two_deployments_isolation (16): SQLite/`fill_key`/`sync_key` tidak boleh menyilang | terlindungi |
 | ship gate MVP (E1–E7) | test_mvp_ship_gate (13): slice vertikal penuh, dua deployment tak terkontaminasi, tanpa credential hardcoded | terlindungi |
 
-**Test tanpa implementasi:** tidak ada — semua 224 test menunjuk file yang ada.
+**Test tanpa implementasi:** tidak ada — semua 235 test menunjuk file yang ada.
 **Duplicate coverage:** `position_size` sengaja diuji 2× (anti-drift, ada test khusus
 `position_size is strat_size`).
 **Test perilaku lama/deprecated:** tidak ditemukan.

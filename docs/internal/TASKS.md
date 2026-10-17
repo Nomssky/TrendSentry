@@ -32,15 +32,17 @@
 >
 > Referensi ekspektasi = **statistik backtest 10-pair 6 tahun** (win rate 36.17%, avg win +4.35R, avg loss -0.85R, PF 2.27, ~15.7 trade/tahun; laporan: backtest reports + monitoring/web/lib/reference.ts). **Keputusan canonical 2026-10-02:** re-run config beku = snapshot `backtest-reference.json` (+152.0%/−26.45%) — canonical, semua kutipan disatukan. **Caveat tercatat:** konfigurasi 10-pair mengandung survivorship bias (SOL/BNB/XRP dipilih sebagai survivor, + 7 pair lainnya) & DD backtest -26.45% — angka referensi adalah expectation atas basis historical data, bukan janji. Perbandingan "periode yang sama" hanya valid untuk window yang overlap dengan backtest; untuk periode baru gunakan referensi di atas.
 
-> **Snapshot status (2026-09-22, dari `db/paper_trading.db` commit `754e6f7`, `lastRun` 2026-09-22T05:35 UTC):**
+> **Snapshot status TERKINI (2026-10-17, dari `db/paper_trading.db`, `lastRun` 2026-10-15T05:24 UTC):**
 >
-> - Hari ke-28 sejak reset 2026-08-25 (minggu ke-4) — checkpoint review minggu ke-4 jatuh ≈ 22 Sep 2026.
-> - Signal tercatat: **245** (rentang 2026-08-24 .. 2026-09-21). Posisi: 6 (3 open, **3 tertutup = 3/10** gate).
-> - Trade tertutup: SOL/USDT −1.08R (`stop_loss`), HYPE/USDT −0.92R (`donchian_exit`), BNB/USDT −1.08R (`live_stop`) — ketiganya exit 2026-09-10.
-> - Slippage: **245 sampel, avg 0.0126%, max 0.0936%** (masih di bawah batas evaluasi 0.10%).
-> - `equity_log` 30 hari (2026-08-24 .. 2026-09-22), `yield_log` 28 hari, `paper_cash` 723.10.
+> - Hari ke-53 sejak reset 2026-08-25 (minggu ke-7,6) — **checkpoint minggu ke-8 jatuh ≈ 20 Okt 2026**.
+> - Signal tercatat: **475** (rentang 2026-08-24 .. 2026-10-14). Posisi: 6 (**semua tertutup = 6/10** gate; 0 open).
+> - Trade tertutup: SOL −1.081R, HYPE −0.922R, BNB −1.077R (semua exit 2026-09-10); HYPE −0.685R (exit 2026-09-29); SOL +0.337R (exit 2026-10-07); AVAX +1.529R (exit 2026-10-08).
+> - Win rate 33,33%; avg R −0.3165; avg win R +0.933; avg loss R −0.941 (n=6, belum evaluable).
+> - Slippage: **475 sampel, avg 0.0126%, max 0.0936%** (di bawah batas evaluasi 0.10%).
+> - `equity_log` 53 hari (2026-08-24 .. 2026-10-15), `yield_log` 38 hari (yield dinonaktifkan 2026-10-02), `paper_cash` 988,03.
+> - Gate Fase 2: **CONTINUE / INSUFFICIENT SAMPLE** — rincian di `PAPER_TRADING_GATE_REPORT.md`.
 >
-> Angka di blok ini adalah **snapshot operasional bertanggal** — perbarui saat snapshot berganti; jangan dianggap gate criteria.
+> **Snapshot historis (2026-09-22):** 245 signal, 3/10 tertutup, `paper_cash` 723.10. Angka di blok ini adalah **snapshot operasional bertanggal** — jangan dianggap gate criteria.
 
 - [x] Buat `paper_trading/live_signal.py` — jalankan signal engine di data real-time (dummy execution, log only)
 - [x] Alerting: Telegram — crash/fetch gagal (setelah retry) **+ ENTER/EXIT** (dimajukan dari Fase 4; `alerting/telegram_alert.py`, secrets di repo GitHub). HOLD tidak dinotifikasi (anti-spam harian)
@@ -119,7 +121,7 @@
 - [x] **Kaki data market untuk runtime deployment — DIJADWALKAN 2026-10-01 (keputusan owner: workflow CI baru):** `.github/workflows/run-deployment.yml` (cron 02:30 UTC + dispatch) menjalankan `run_deployment.py` per deployment (fail-closed) + sync deployment-aware + artifact DB 14 hari. **Butuh setup sekali:** vars `TREND_SENTRY_DEPLOYMENT_IDS` (+opsional `TREND_SENTRY_HOST`), secrets `TREND_SENTRY_CONFIG_TOKENS` (JSON) — tanpa ini job gagal dengan pesan jelas (bukan diam-diam sukses). Verifikasi operasional penuh setelah schedule pertama jalan.
 > **Terverifikasi 2026-10-01 (dispatch manual run 36856966129):** `config v1 (remote)` → `selesai bersih` (status `stopped`, heartbeat 11:42:38Z) → sync 30 records (`signals:10`, `equity_log:2`, deployment_id=2 di Supabase). Slice deployment end-to-end terhadap market nyata: LENGKAP.
 
-**Jumlah test saat ini: 224 (17 file + `tests/conftest.py`).**
+**Jumlah test saat ini: 235 (19 file + `tests/conftest.py`)** — diverifikasi 2026-10-17 (`pytest tests/ -q` → 235 passed), naik dari 224 setelah merge PR #2.
 
 ## Backlog UX — kejelasan UI/UX + warning/catatan (DICATAT 2026-10-01, JANGAN dikerjakan sebelum instruksi owner)
 
@@ -135,7 +137,21 @@ Bukti sesi (data live, bukan opini):
 - Panel token sekali-tampil hilang permanen bila halaman ditinggal (by design);
   tanpa panduan pemulihan dan tanpa endpoint rotasi token.
 
-- [ ] New strategy: tombol submit disabled sampai form lengkap + error wajib tampil
-- [ ] Deployments: badge "Deployable" khusus Donchian + kalimat penjelas kenapa strategi lain tidak muncul
-- [ ] Token panel: panduan pasca-dismiss (di mana token dipakai, apa bila hilang, tanpa endpoint rotasi)
-- [ ] Sapu-bersih umum: setiap aksi destruktif/satu-kali di UI wajib punya konfirmasi + catatan
+> **Diverifikasi 2026-10-17 (HEAD `9093c1c`):** keempat item di bawah sudah
+> terimplementasi di kode (commit frontend `be3869f`/`4384303`), bukan lagi backlog.
+> Status per item ada di bawah; tidak ada perubahan kode baru diperlukan.
+
+- [x] New strategy: tombol submit disabled sampai form lengkap + error wajib tampil
+      — `canContinueFromChoose` mengunci tombol Continue; `busy` mencegah double-submit;
+      error validasi/server ditampilkan (`role="alert"`); respons non-JSON & network failure
+      ditangani; tidak ada `return` senyap lagi (`app/app/strategies/new/page.tsx`).
+- [x] Deployments: badge "Deployable" khusus Donchian + kalimat penjelas kenapa strategi lain tidak muncul
+      — badge "Can run" vs "Tracking only" di pemilihan template + copy "Discipline tracking only —
+      automatic execution supports Donchian for now"; form deployment hanya menerima strategi Donchian.
+- [x] Token panel: panduan pasca-dismiss (di mana token dipakai, apa bila hilang, tanpa endpoint rotasi)
+      — panel `shown once` memuat langkah pemakaian + peringatan "cannot be recovered — create a new bot";
+      token hanya di state React (bukan localStorage/URL/log). Endpoint rotasi tetap **tidak dibuat**
+      (sesuai keputusan: jangan tambah endpoint rotasi yang tidak aman).
+- [x] Sapu-bersih umum: setiap aksi destruktif/satu-kali di UI wajib punya konfirmasi + catatan
+      — hapus akun butuh re-auth password + konfirmasi ketik "DELETE" + pesan error; ganti password
+      butuh password saat ini; aksi penting punya loading state + feedback.

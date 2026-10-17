@@ -1,6 +1,6 @@
 # PLAN.md — Crypto Trend-Following Bot
 
-> Status: Fase 2 — Paper Trading aktif (sejak 2026-08-25; snapshot 2026-09-22 = hari ke-28/56, minggu ke-4).
+> Status: Fase 2 — Paper Trading aktif (sejak 2026-08-25; snapshot 2026-10-17 = hari ke-53/56, minggu ke-7,6; 6 trade tertutup = 6/10 gate — lihat `PAPER_TRADING_GATE_REPORT.md`).
 > Tujuan: Capital growth jangka panjang, modal kecil, bukan sumber income rutin.
 > Prinsip: Business first, risk-managed, no overengineering, MVP-driven.
 
@@ -183,7 +183,7 @@ TrendSentry/
 ├── deploy/                        # persiapan VPS/Coolify (belum pernah dijalankan)
 ├── .github/workflows/             # paper-trading, trendsentry-daily-sync, fetch-bitget-data, run-deployment
 ├── data/historical/ (10 pair + sisa riset)  data/funding/ (riset)
-└── tests/                         # 17 file pytest + conftest.py, 224 test
+└── tests/                         # 19 file pytest + conftest.py, 235 test (2026-10-17)
 ```
 
 > Struktur lama (`execution/`, `llm_filter/deepseek_client.py`, `risk_manager/position_sizing.py`,

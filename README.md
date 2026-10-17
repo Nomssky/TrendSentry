@@ -116,7 +116,7 @@ cd TrendSentry
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env            # Telegram token etc. — never commit .env
-python -m pytest tests/         # 224 tests
+python -m pytest tests/         # 235 tests
 
 # Backtest
 python backtest/run_backtest.py
@@ -136,8 +136,10 @@ npm run test:e2e                # Playwright (needs local server + fixtures)
 ## Status
 
 **Fase 2 — Paper trading active** since 2026-08-25 (daily GitHub Actions run, no crashes).
-Waiting for the Phase 2 gate (≥ 10 closed trades, 8 weeks) before any Fase 3/Fase 4 work.
-See `docs/internal/TASKS.md` for gate criteria and `docs/internal/PLAN.md` for the roadmap.
+As of 2026-10-17: ~7.6 weeks elapsed, **6 of the 10 required closed trades** — the Phase 2 gate
+is therefore **CONTINUE / INSUFFICIENT SAMPLE** (see `PAPER_TRADING_GATE_REPORT.md`). No Fase 3/Fase 4
+work starts until the gate passes. See `docs/internal/TASKS.md` for gate criteria and
+`docs/internal/PLAN.md` for the roadmap.
 
 Web: [trendsentry.xyz](https://trendsentry.xyz)
 
