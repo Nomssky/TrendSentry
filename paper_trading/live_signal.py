@@ -373,7 +373,17 @@ def main(cfg: dict | None = None, db_path: Path | str | None = None) -> int:
         conn.commit()
     cash = get_cash(conn, cfg)
     exchange = make_exchange(cfg)
-    exchange.load_markets()
+    def load_markets_with_retry(exchange, retries=3, delay=2):
+        for attempt in range(retries):
+            try:
+                exchange.load_markets()
+                return
+            except Exception as e:
+                log.warning(f"Load markets gagal (attempt {attempt+1}/{retries}): {e}")
+                time.sleep(delay)
+        raise Exception("Gagal load markets setelah retry")
+
+    load_markets_with_retry(exchange)
     now_ms = exchange.milliseconds()
 
     # --- Live stop check: setiap run, cek semua open positions vs live price ---
